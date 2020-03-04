@@ -1,0 +1,1 @@
+GLUE42 CORE

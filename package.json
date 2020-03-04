@@ -1,0 +1,19 @@
+{
+  "name": "Glue42Core",
+  "version": "0.0.0",
+  "description": "Web interoperability framework",
+  "license": "Apache-2.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "lerna run build",
+    "test": "lerna run test"
+  },
+  "devDependencies": {
+    "lerna": "^3.20.2",
+    "lerna-changelog": "^1.0.0",
+    "simple-git": "^1.131.0"
+  }
+}
