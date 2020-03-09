@@ -1,2 +1,0 @@
-- Change @glue/desktop dependency and typings with @glue/web
-- Add generic for GlueProvider
