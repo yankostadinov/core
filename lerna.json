@@ -5,7 +5,11 @@
   ],
   "npmClient": "yarn",
   "useWorkspaces": true,
-  "ignoreChanges": ["**/tests/**"],
+  "ignoreChanges": [
+    "**/tests/**",
+    "*.md",
+    "*.txt"
+  ],
   "changelog": {
     "repo": "Glue42/Core",
     "labels": {
@@ -16,6 +20,11 @@
       "tag: documentation": ":memo: Documentation",
       "tag: internal": ":house: Internal",
       "tag: underlying tools": ":hammer: Underlying Tools"
+    }
+  },
+  "command": {
+    "version": {
+      "allowBranch": "release"
     }
   }
 }
