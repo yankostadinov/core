@@ -64,6 +64,12 @@ const setLatestTagPerPackage = async (allTags, packagesJsons) => {
     packagesJsons.forEach((pkgJson) => {
         const name = pkgJson.contents.name;
         const matchingTag = allTags.find((tag) => tag.includes(name));
+
+        if (!matchingTag) {
+            console.log(`No tag found for package ${name}, skipping version syncing.`);
+            return;
+        }
+
         const tagVersion = matchingTag.slice(matchingTag.lastIndexOf('@') + 1);
 
         if (tagVersion !== pkgJson.contents.version) {
