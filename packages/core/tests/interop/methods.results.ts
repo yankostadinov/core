@@ -52,7 +52,7 @@ describe("invoke results", () => {
         });
     });
 
-    it("multiple servers - when one fails, invoke should resolve and have correct structure", (done) => {
+    it.skip("multiple servers - when one fails, invoke should resolve and have correct structure", (done) => {
         shouldServer2Fail = true;
         glueClient.agm.invoke(methodName, { arg: 124 }, "all").then((result) => {
             // validate top level structure
