@@ -5,6 +5,7 @@ node_modules/
 *.swp
 dist/
 build/
+coverage/
 .DS_Store
 
 yarn.lock
