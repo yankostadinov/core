@@ -1,6 +1,6 @@
 {
   "name": "@glue42/react-hooks",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "React Hooks for Glue Web",
   "main": "./dist/npm/index.js",
   "module": "./dist/es/index.js",
@@ -31,7 +31,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "license": "Apache-2.0",
+  "license": "MIT",
   "peerDependencies": {
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
