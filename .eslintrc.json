@@ -11,6 +11,11 @@
         "ecmaVersion": 2018,
         "sourceType": "module"
     },
+    "ignorePatterns": [
+		"tutorials/**/*.min.js", 
+		"packages/web/**/*.js", 
+		"packages/core/**/*.js"
+	],
     "rules": {
         "indent": [
             "error",
