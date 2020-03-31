@@ -1,6 +1,6 @@
 {
     "name": "@glue42/web",
-    "version": "0.0.1-alpha.0",
+    "version": "1.0.0",
     "description": "",
     "main": "dist/web.umd.js",
     "module": "dist/web.es.js",
@@ -17,13 +17,12 @@
         "tslint": "tslint -t codeFrame ./src/**/*.ts",
         "validate-changelog": "node ./build/validate-config.js",
         "docs": "typedoc --options typedoc.json ./src",
-        "prepublishOnly": "npm run validate-changelog && npm run auditPackage && npm run test && npm run build",
+        "prepublishOnly": "npm run auditPackage && npm run test && npm run build",
         "test": "tsc -p ./tsconfig.test.json && mocha ./tests/ --recursive --exit",
         "auditPackage": "npm audit --registry=https://registry.npmjs.com",
         "coverage": "nyc npm run test",
         "publish:beta": "npm publish --tag beta",
-        "build": "npm run tslint && tsc -p ./tsconfig.json && rollup -c",
-        "buildTools": "npm run build && copyfiles -f ./dist/web.umd.js* tools/glue"
+        "build": "npm run tslint && tsc -p ./tsconfig.json && rollup -c"       
     },
     "author": {
         "name": "Glue42",
