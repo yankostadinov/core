@@ -15,7 +15,6 @@ export default GlueWebFactory;
  * @docmenuorder 1
  * @docname Glue42 Web
  * @intro
- * # Glue42 Web
  * Glue42 Web allows JavasScript applications to integrate with other applications, part of the same Glue42 Core project via a set of API. With Glue42 Web you can share data with other applications, expose functionality, manage windows and notifications.
  *
  * ## Referencing
