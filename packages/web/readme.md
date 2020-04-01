@@ -10,10 +10,10 @@ You can use Glue42 Web in a `script` tag include, e.g.:
 <script type="text/javascript" src="web.umd.js"></script>
 ```
 
-...or as a node.js module.
+...or as a module.
 
 ``` javascript
-const Glue = require("@glue42/web");
+import GlueWeb from "@glue42/web"
 ```
 
 When deploying your application in production, we recommend that you always reference a specific **minified** version, e.g.:
@@ -24,13 +24,14 @@ When deploying your application in production, we recommend that you always refe
 
 ## Initialization
 
-When Glue42 Web is executed, it will attach a factory function to the global (window) object at runtime called **GlueWeb**. This factory function should be invoked with an optional onfiguration object to init the library and connect to the Glue42 Core Environment The factory function returns a Promise object.
+When Glue42 Web is executed, it will attach a factory function to the global (window) object at runtime called **GlueWeb**. This factory function should be invoked with an optional configuration object to init the library and connect to the Glue42 Core Environment. The factory function returns a Promise that resolves with the glue API object.
 
 Example:
 ```javascript
   GlueWeb()
     .then((glue) => {
       window.glue = glue;
+      // access APIs from glue object
     })
     .catch(console.log);
 ```
