@@ -29,7 +29,7 @@ It is also a good idea to keep our [**Glue42 Core CLI**](../../glue42-core/what-
 
 The tutorial code is located in our [**github repo**](https://github.com/Glue42/core). Inside the repo you wil find a directory `/tutorials` with the following structure:
 
-```text
+```cmd
 /tutorials
   /guides
     /vanilla-js

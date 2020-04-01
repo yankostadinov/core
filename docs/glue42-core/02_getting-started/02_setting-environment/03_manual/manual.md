@@ -37,7 +37,7 @@ If you would like to serve the Glue42 Core environment from a different route, f
 
 Example with a `glue.config.json`:
 
-```text
+```cmd
 routes
     /my/other/assets/worker.js
     /my/other/assets/gateway.js
@@ -54,7 +54,7 @@ const config = {
 
 Example without a `glue.config.json`:
 
-```text
+```cmd
 routes
     /my/other/assets/worker.js
     /my/other/assets/gateway.js

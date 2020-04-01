@@ -6,7 +6,7 @@ Setting up a multi-app [**Glue42 Core environment**](../../../what-is-glue42-cor
 
 If you a working on a multi-app project, then your file structure looks something like this
 
-```text
+```cmd
 /ProjectA
     /ApplicationA-SRC
     /ApplicationB-SRC
