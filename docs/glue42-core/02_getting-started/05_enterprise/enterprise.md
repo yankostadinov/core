@@ -22,8 +22,6 @@ Your Glue42 Core application can run in [Glue42 Enterprise](https://glue42.com/d
     * Save it in your app definitions folder - usually *%LocalAppData%\Tick42\UserData\T42-DEMO\apps*
  
 3. Start Glue42 Enterprise and run your app from the toolbar
-    
-    ![](./glue-core-app.png)
 
 
 ## Use Enterprise specific features
