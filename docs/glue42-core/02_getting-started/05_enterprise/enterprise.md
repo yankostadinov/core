@@ -18,8 +18,26 @@ Your Glue42 Core application can run in [Glue42 Enterprise](https://glue42.com/d
     }
     ```
 3. Create a definition file for your application:
-    * Use the template attached [here](./app-template.json) - don't forget to change *name*, *title* and *url* 
-    * Save it in your app definitions folder - usually *%LocalAppData%\Tick42\UserData\T42-DEMO\apps*
+    * Use the template attached bellow changing *name*, *title* and *url* as a minimum:
+    ```json
+    [
+        {
+            "title": "Glue42 Core app",
+            "type": "window",
+            "name": "glue42-core-app",
+            "details": {
+                "url": "http://localhost:4242/",
+                "top": 100,
+                "left": 200,
+                "width": 600,
+                "height": 300,
+                "mode": "tab"      
+            }   
+        }
+     ]
+
+    ``` 
+    * Save it in your app definitions folder - usually *%LocalAppData%\Tick42\UserData\T42-DEMO\apps* - as a json file
  
 3. Start Glue42 Enterprise and run your app from the toolbar
 
