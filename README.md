@@ -18,7 +18,7 @@ Glue42 Core provides an abstraction layer on top of the standard browser window 
 
 Glue42 Core support persistence of window layouts, so that your users can start their day right where they left it the previous one.
 
-That is just the tip of the aisberg, check out the [Glue42 Core Capabilities](https://docs.glue42.com/glue42-core/what-is-glue42-core/capabilities/index.html) for detailed info.
+That is just the tip of the aisberg, check out the [Glue42 Core Capabilities](https://docs.glue42.com/core/what-is-glue42-core/capabilities/index.html) for detailed info.
 
 ### Glue42 Enterprise Compatibility
 
@@ -26,7 +26,7 @@ If you need advanced window management or connectivity to native applications, y
 
 ### React Bindings
 
-In addition to the standard JavaScript API, the interop methods are exposed through framework specific bindings for the most popular web frameworks, making the integration in your existing codebase a breeze. Currently we have [React bindings](https://docs.glue42.com/glue42-core/getting-started/setting-application/react/index.html) based on Hooks, with Angular on the way.
+In addition to the standard JavaScript API, the interop methods are exposed through framework specific bindings for the most popular web frameworks, making the integration in your existing codebase a breeze. Currently we have [React bindings](https://docs.glue42.com/core/getting-started/setting-application/react/index.html) based on Hooks, with Angular on the way.
 
 ## Roadmap
 
@@ -34,11 +34,11 @@ To see and help us shape the direction of Glue42 Core, review the [new feature t
 
 ## Getting Started
 
-Our documentation features [getting started](https://docs.glue42.com/glue42-core/getting-started/quick-start/index.html) sections with detailed explanations on how to set up and configure all Glue42 elements. We also have full Vanilla JS and React [tutorials](https://docs.glue42.com/glue42-core/tutorials/index.html), complete with start and solution files.
+Our documentation features [getting started](https://docs.glue42.com/core/getting-started/quick-start/index.html) sections with detailed explanations on how to set up and configure all Glue42 elements. We also have full Vanilla JS and React [tutorials](https://docs.glue42.com/core/tutorials/index.html), complete with start and solution files.
 
 ## Documentation
 
-The Glue42 Core [documentation](https://docs.glue42.com/glue42-core/what-is-glue42-core/introduction/index.html) contains detailed information about the platform's [capabilities](https://docs.glue42.com/glue42-core/what-is-glue42-core/capabilities/index.html), [getting started](https://docs.glue42.com/glue42-core/getting-started/quick-start/index.html) started guides, [API reference](https://docs.glue42.com/reference/core/latest/glue42%20web/index.html) section and full Vanilla JS and React tutorials. 
+The Glue42 Core [documentation](https://docs.glue42.com/core/what-is-glue42-core/introduction/index.html) contains detailed information about the platform's [capabilities](https://docs.glue42.com/core/what-is-glue42-core/capabilities/index.html), [getting started](https://docs.glue42.com/core/getting-started/quick-start/index.html) started guides, [API reference](https://docs.glue42.com/reference/core/latest/glue42%20web/index.html) section and full Vanilla JS and React tutorials. 
 
 ## Demos
 
