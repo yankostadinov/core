@@ -8,15 +8,17 @@ Glue42 Core works in all modern browsers, and focuses on Progressive Web Applica
 
 ### Interop Services
 
-[Glue42 Core](https://docs.glue42.com/glue42-core/what-is-glue42-core/capabilities/index.html) exposes a rich set of interoperability methods which allow web applications to seamlessly communicate and interact with each other. The message exchange happens on the client, through a shared web worker process.
+Glue42 Core exposes a rich set of interoperability methods which allow web applications to seamlessly communicate and interact with each other. The message exchange happens on the client, through a shared web worker process.
 
 ### Window Management
 
-[Glue42 Core](https://docs.glue42.com/glue42-core/what-is-glue42-core/capabilities/index.html) provides an abstraction layer on top of the standard browser window management APIs, which makes your app portable between Glue42 Core and Glue42 Enterprise. This layers allows you create, close and manipulate browser/PWA windows.
+Glue42 Core provides an abstraction layer on top of the standard browser window management APIs, which makes your app portable between Glue42 Core and Glue42 Enterprise. This layers allows you create, close and manipulate browser/PWA windows.
 
 #### Layout Persistence
 
-[Glue42 Core](https://docs.glue42.com/glue42-core/what-is-glue42-core/capabilities/index.html) support persistence of window layouts, so that your users can start their day right where they left it the previous one.
+Glue42 Core support persistence of window layouts, so that your users can start their day right where they left it the previous one.
+
+That is just the tip of the aisberg, check out the [Glue42 Core Capabilities](https://docs.glue42.com/glue42-core/what-is-glue42-core/capabilities/index.html) for detailed info.
 
 ### Glue42 Enterprise Compatibility
 
