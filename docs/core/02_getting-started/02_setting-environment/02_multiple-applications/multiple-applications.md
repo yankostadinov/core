@@ -2,9 +2,9 @@
 
 There are situations where your project is not a single app with multiple modules or components, but instead it is composed of multiple applications. Some created using Vanilla JS, others with React maybe Angular, etc. This is exactly the case where Glue42 Core and it's [**CLI**](../../../what-is-glue42-core/core-concepts/cli/index.html) really expands your dev toolkit.
 
-Setting up a multi-app [**Glue42 Core environment**](../../../what-is-glue42-core/core-concepts/environment/index.html) is easy and almost identical to single-app environment, discussed in the [**Single Application**](../single-application/index.html) Set Up. That's why we are not going into details, rather we will go over each step and expand on the information from the [**Single Application**](../single-application/index.html) page.
+Setting up a multi-app [**Glue42 Core environment**](../../../what-is-glue42-core/core-concepts/environment/index.html) is easy and almost identical to the single-app environment, discussed in the [**Single Application**](../single-application/index.html) Set Up. That's why we are not going into details, rather we will go over each step and expand on the information from the [**Single Application**](../single-application/index.html) page.
 
-If you a working on a multi-app project, then your file structure looks something like this
+If you are working on a multi-app project, then your file structure looks something like this
 
 ```cmd
 /ProjectA
@@ -30,7 +30,7 @@ First, go to your project's root, in our case `/ProjectA` and initiate Glue42 Co
 gluec init
 ```
 
-Naturally, we are doing this in the project root, not inside the applications like we did in [**Single Application Set Up**](../single-application/index.html). The output of this command will be identical - we have the dependencies in `./node_modules` and the three scaffolded Glue42 Environment files. 
+Naturally, we are doing this in the project root, not inside the applications like we did in [**Single Application Set Up**](../single-application/index.html). The output of this command will be identical - we have the dependencies in `./node_modules` and the three scaffolded Glue42 Environment files.
 
 ### Step Two
 
@@ -155,6 +155,6 @@ You can use this to define entire directories like we have done, or you can just
 
 ## Manual
 
-If you wish to set everything up on your own, because none of the built-in solutions fits you, then we got you covered too. Head over to the manual section of [**Single Application Set Up**](../single-application/index.html). The procedures and steps are identical with the only exception that you have to do them on project level, not on application level.  
+If you wish to set everything up on your own, because none of the built-in solutions fits you, then we got you covered too. Head over to the manual section of [**Single Application Set Up**](../single-application/index.html). The procedures and steps are identical with the only exception that you have to do them on project level, not on application level.
 
 However, bear in mind that setting up our example case (as defined in the beginning of this section) is harder than it seems, because the major requirement of Glue42 Core is that all Glue42 Clients and Glue42 Environment must be hosted on the same domain and port.

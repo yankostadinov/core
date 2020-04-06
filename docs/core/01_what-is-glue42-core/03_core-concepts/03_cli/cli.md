@@ -52,7 +52,7 @@ The Glue42 CLI requires a file named `glue.config.dev.json` to be available in t
 
 Options that specify files can be given as absolute paths, or as paths relative to the configuration file.
 
-The interface of the config object looks like this: 
+The interface of the config object looks like this:
 ```javascript
 interface GlueDevConfig {
     glueAssets?: GlueAssets;
@@ -93,9 +93,9 @@ Example:
 }
 ```
 
-In this example, the user has a `lib` directory where he has put the built dist files of the `@glue42/worker-web` and `@glue42/gateway-web` packages. The CLI will use these locations (for serving and building) and will fail with an error if any of the files where not found.
+In this example, the user has a `lib` directory where he has put the built dist files of the `@glue42/worker-web` and `@glue42/gateway-web` packages. The CLI will use these locations (for serving and building) and will fail with an error if any of the files is not found.
 
-Here the user has also overwritten the default `route` to `"/shared/glue"`. This could be useful, if the user wishes to keep all shared resources like images, scripts, styles, etc and Glue42 Core files under the same base path. However now all [**Glue42 Clients**](../glue42-client/index.html) need to be instructed where to find the [**Glue42 Core Environment**](../environment/index.html) files. For detailed information on how to do that head over to the [**Glue42 Clients**](../glue42-client/index.html) section. 
+Here the user has also overwritten the default `route` to `"/shared/glue"`. This could be useful, if the user wishes to keep all shared resources like images, scripts, styles, etc and Glue42 Core files under the same base path. However now all [**Glue42 Clients**](../glue42-client/index.html) need to be instructed where to find the [**Glue42 Core Environment**](../environment/index.html) files. For detailed information on how to do that head over to the [**Glue42 Clients**](../glue42-client/index.html) section.
 
 ### Server
 

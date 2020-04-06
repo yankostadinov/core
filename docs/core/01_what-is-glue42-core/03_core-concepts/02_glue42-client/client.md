@@ -1,12 +1,12 @@
 ## Overview
 
-We call a "Glue42 Client" every application which initializes the `@glue42/web` library and thus connects to the [**Glue42 Core Environment**](../environment/index.html). On a single domain there could one or more Glue42 Clients connected to the same [**Glue42 Core Environment**](../environment/index.html), which gives them full access to the interop, window and contexts functionality offered by the platform.
+We call a "Glue42 Client" every application which initializes the `@glue42/web` library and thus connects to the [**Glue42 Core Environment**](../environment/index.html). On a single domain there could be one or more Glue42 Clients connected to the same [**Glue42 Core Environment**](../environment/index.html), which gives them full access to the interop, window and contexts functionality offered by the platform.
 
 A Glue42 Client can be any JS application written using Vanilla JS, React, Angular or any other framework.
 
 ## Initializing a Glue42 Client
 
-To "initialize" client, means to connect to the [**Glue42 Core Environment**](../environment/index.html) using the `@glue42/web` library. We have prepared a more detailed guides on how do that using:
+To "initialize" a client, means to connect to the [**Glue42 Core Environment**](../environment/index.html) using the `@glue42/web` library. We have prepared a more detailed guides on how do that using:
 - [**Vanilla JS**](../../../getting-started/setting-application/vanilla-js/index.html)
 - [**React**](../../../getting-started/setting-application/react/index.html)
 
@@ -29,7 +29,7 @@ interface Glue42Web.Config {
     };
     extends?: string | false;
 }
-``` 
+```
 
 The **extends** property can be used to disable fetching `glue.config.json` (by setting it to `false`) or to set a location of the file, different from the default (`/glue/glue.config.json`). This is advisable when you decide not to use a `glue.config.json`.
 

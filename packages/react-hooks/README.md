@@ -1,6 +1,6 @@
 ## Overview
 
-**Glue42 React Hooks** package is library providing custom react hooks for Glue42 Javascript library. You can start using Glue42 features in you `ReactJS` apps.
+**Glue42 React Hooks** package is a library providing custom react hooks for Glue42 Javascript library. You can start using Glue42 features in your `ReactJS` apps.
 
 **Glue42 React Hooks** is available as an `npm` package, which requires the Glue42 JavaScript and React libraries installed. To install the packages, navigate to the root directory of your project and run:
 
@@ -27,7 +27,7 @@ _Keep in mind that the versions of the dependencies will probably be different f
 
 ## Reference
 
-**Glue42 React Hooks** package offers a way to integrate you application with Glu42 Javascript library.
+The **Glue42 React Hooks** package offers a way to integrate you application with Glu42 Javascript library.
 This is achieved via [React Hooks](https://reactjs.org/docs/hooks-intro.html) and [React Context](https://reactjs.org/docs/context.html).
 
 - [GlueProvider](#glueccontainer)
@@ -138,7 +138,7 @@ export const Application = () => {
 
 ### useGlueInit
 
-**useGlueInit** is a React Hook which takes care for initializing Glue library. It can be to customize the initialization logic for Glue integration within you application.
+**useGlueInit** is a React Hook which takes care of initializing Glue library. It can be used to customize the initialization logic for the Glue integration within you application.
 
 | Property      | Type                          | Description                                                 | Default                            |
 | ------------- | ----------------------------- | ----------------------------------------------------------- | ---------------------------------- |
@@ -237,7 +237,7 @@ export default Application;
 
 ### Get Glue by **GlueContext**
 
-Using the built in React hook **useContext** you can get directly the global **glue** object and do whatever you want:
+Using the built in React hook **useContext** you can get direct access to the global **glue** object and do whatever you want:
 
 ```javascript
 import { useContext, useState, useEffect } from "react";
@@ -305,4 +305,4 @@ export const Application = () => {
 };
 ```
 
-_You need to take care of the way you provide glue object to your nested components(with React Context or attaching it to the window variable)_
+_You need to take care of the way you provide glue object to your nested components (with React Context or attaching it to the window variable)._

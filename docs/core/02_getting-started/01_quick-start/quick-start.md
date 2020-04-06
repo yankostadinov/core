@@ -20,7 +20,7 @@ Your directory should look like this:
 /myApp
     /index.html
     /script.js
-``` 
+```
 
 Reference the JS file with a `<script>` tag.
 
@@ -50,7 +50,7 @@ Go to `./script.js`, declare a simple `init` function like this:
 const init = async () => {
     const glue = await GlueWeb();
     console.log(`Glue initialized with version: ${glue.version}`);
-}
+};
 
 init().catch(console.error);
 
