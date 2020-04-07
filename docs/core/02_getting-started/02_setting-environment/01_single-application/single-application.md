@@ -2,11 +2,11 @@
 
 As we explained in the introduction, on a high level a Glue42 Core project consists of one or more [**Clients**](../../../what-is-glue42-core/core-concepts/glue42-client/index.html) and an [**Environment**](../../../what-is-glue42-core/core-concepts/environment/index.html). In this section we will cover how to set up your dev environment for a single client project. Setting up the environment means creating the correct configuration files and serving them together with the rest of the environment parts. For more details on what exactly are those parts, you can head over to the [**Glue42 Core environment**](../../../what-is-glue42-core/core-concepts/environment/index.html) section.
 
-There are two ways to get yourself set up. The first one is to use our [**CLI**](../../../what-is-glue42-core/core-concepts/cli/index.html) tool, which will get all the required dependencies and scaffold default configuration files for you. The second one is to do everything manually. We recommend sticking with the [**CLI**](../../../what-is-glue42-core/core-concepts/cli/index.html), because it greatly simplifies the setup procedure and let's you focus on building a great app. On the other hand, if you require really fine-grained control over your app development setup, maybe because you use some very custom tools, then you can skip over to the manual section.
+There are two ways to get yourself set up. The first one is to use our [**CLI**](../../../what-is-glue42-core/core-concepts/cli/index.html) tool, which will get all the required dependencies and scaffold default configuration files for you. The second one is to do everything manually. We recommend sticking with the [**CLI**](../../../what-is-glue42-core/core-concepts/cli/index.html), because it greatly simplifies the setup procedure and lets you focus on building a great app. On the other hand, if you require really fine-grained control over your app development setup, maybe because you use some very custom tools, then you can skip over to the manual section.
 
 ## CLI
 
-As a prerequisite you need to have the `@glue42/cli-core` globally installed on your machine. Alternatively you can include it as a dev dependency for your app, it is up to, but the following steps will assume that you have it globally:
+As a prerequisite you need to have the `@glue42/cli-core` package globally installed on your machine. Alternatively you can include it as a dev dependency for your app. It is up to you, but the following steps will assume that you have it globally installed:
 
 ```javascript
 npm install --global @glue42/cli-core
@@ -20,7 +20,7 @@ First, you need to get all the [**Glue42 Core environment**](../../../what-is-gl
 gluec init
 ```
 
-This will `npm install --save` the necessary files. If, for some reason, npm is not initialized in your directory, this command will also init it with basic `--yes` settings. 
+This will `npm install --save` the necessary files. If, for some reason, npm is not initialized in your directory, this command will also init it with basic `--yes` settings.
 
 As a result you will have a few more packages included in your `./node_modules` directory and on root level you will find three new files
 - `glue.config.dev.json` - this is the config used by the [**CLI**](../../../what-is-glue42-core/core-concepts/cli/index.html), containing default settings.

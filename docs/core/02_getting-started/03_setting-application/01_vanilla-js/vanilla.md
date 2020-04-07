@@ -4,9 +4,9 @@ We have already covered how to set up your environment for a [Single Application
 
 We will assume that the application is a simple, light app, with just an index.html and a couple of JS files.
 
-## Prerequisites 
+## Prerequisites
 
-We will assume that this is the only application in the project and that you have already did the environment setup. Next we need to reference `@glue42/web` in the `index.html` which will connect our client to the [environment](../../../what-is-glue42-core/core-concepts/environment/index.html) and give us access to the [Glue42 Web API](../../../../reference/core/latest/glue42%20web/index.html).
+We will assume that this is the only application in the project and that you already completed the environment setup. Next we need to reference `@glue42/web` in the `index.html` which will connect our client to the [environment](../../../what-is-glue42-core/core-concepts/environment/index.html) and give us access to the [Glue42 Web API](../../../../reference/core/latest/glue42%20web/index.html).
 
 ## Set up Glue42 Web
 

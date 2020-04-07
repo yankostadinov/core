@@ -9,7 +9,7 @@ The environment consists of:
 
 The Glue42 Core environment requirements are:
 - All files must be hosted on the same domain as your applications
-- All files must be served from a path easily accessible by all [**Glue42 Clients**](../glue42-client/index.html). 
+- All files must be served from a path easily accessible by all [**Glue42 Clients**](../glue42-client/index.html).
 
 ### Setting up environment
 
@@ -98,7 +98,7 @@ self.log = (logInfo) => {
 
 ## Shared Worker
 
-The shared worker is a script, which is used to create a Shared Web Worker. This is the central point to which all [**Glue42 Clients**](../glue42-client/index.html) connect when initializing the javascript glue library. It is responsible to configuring, initializing and linking [**Glue42 Clients**](../glue42-client/index.html) to the gateway.
+The shared worker is a script, which is used to create a Shared Web Worker. This is the central point to which all [**Glue42 Clients**](../glue42-client/index.html) connect when initializing the javascript glue library. It is responsible for configuring, initializing and linking [**Glue42 Clients**](../glue42-client/index.html) to the gateway.
 
 The shared worker will use the `glue.config.json` to get user-defined settings for the gateway.
 

@@ -1,6 +1,6 @@
 # Shared Worker
 
-The shared worker is a script, which is used to create a Shared Web Worker. This is the central point to which all Glue42 Clients connect when initializing the javascript glue library. It is responsible to configuring, initializing and linking Glue42 Clients to the gateway.
+The shared worker is a script, which is used to create a Shared Web Worker. This is the central point to which all Glue42 Clients connect when initializing the javascript glue library. It is responsible for configuring, initializing and linking Glue42 Clients to the gateway.
 
 The shared worker will use the `glue.config.json` to get user-defined settings for the gateway.
 

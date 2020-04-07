@@ -49,7 +49,7 @@ routes
 // Glue42Web config
 const config = {
     extends: "/my/other/assets/glue.config.json"
-}
+};
 ```
 
 Example without a `glue.config.json`:
@@ -65,7 +65,7 @@ routes
 // Glue42Web config
 const config = {
     worker: "/my/other/assets/worker.js"
-}
+};
 ```
 
 We touched on all major steps needed to manually set up your environment, but also keep in mind that you can partially use the [**CLI**](../../../what-is-glue42-core/core-concepts/cli/index.html). You can use

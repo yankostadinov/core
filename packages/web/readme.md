@@ -1,5 +1,5 @@
 # Glue42 Web
-Glue42 Web allows JavasScript applications to integrate with other applications, part of the same Glue42 Core project via a set of API. With Glue42 Web you can share data with other applications, expose functionality, manage windows and notifications.
+Glue42 Web allows JavasScript applications to integrate with other applications, part of the same Glue42 Core project via a set of APIs. With Glue42 Web you can share data with other applications, expose functionality, manage windows and notifications.
 
 ## Referencing
 
@@ -13,7 +13,7 @@ You can use Glue42 Web in a `script` tag include, e.g.:
 ...or as a module.
 
 ``` javascript
-import GlueWeb from "@glue42/web"
+import GlueWeb from "@glue42/web";
 ```
 
 When deploying your application in production, we recommend that you always reference a specific **minified** version, e.g.:
