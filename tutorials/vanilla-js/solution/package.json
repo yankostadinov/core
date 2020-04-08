@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Glue42 Core Vanilla JS Tutorial",
   "scripts": {
-    "start": "http-server . --port=4000"
+    "start": "npx http-server . --port 4000"
   },
   "keywords": [],
   "author": "",

@@ -16,8 +16,8 @@ function Stocks() {
         fetchPortfolio();
     }, []);
     const showStockDetails = stock => {
-        window.location.href = `http://${window.location.host}/details`;
         sessionStorage.setItem('stock', JSON.stringify(stock));
+        window.location.href = `http://${window.location.host}/details`;
     };
 
     return (

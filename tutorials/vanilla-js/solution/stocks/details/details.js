@@ -45,7 +45,7 @@ const updateClientStatus = (client, stock) => {
 
 const start = async () => {
 
-    window.glue = await GlueWeb();
+    window.glue = await window.GlueWeb();
 
     const stock = window.glue.windows.my().context;
 

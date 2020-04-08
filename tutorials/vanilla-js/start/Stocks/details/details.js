@@ -44,7 +44,6 @@ const updateStockPrices = (bid, ask) => {
 // };
 
 const start = async () => {
-
     const stock = JSON.parse(sessionStorage.getItem('stock')) || {};
 
     setFields(stock);
