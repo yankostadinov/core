@@ -89,7 +89,7 @@ Example:
         "route": "/shared/glue"
     },
     "server": ...,
-    "logging":....
+    "logging": ...
 }
 ```
 
@@ -118,7 +118,7 @@ Example:
             "disableCache": false
         }
     },
-    "logging":....
+    "logging": ...
 }
 ```
 
@@ -154,7 +154,7 @@ Example:
             }
         ]
     },
-    "logging":....
+    "logging": ...
 }
 ```
 
@@ -186,7 +186,7 @@ Example:
             }
         ]
     },
-    "logging":....
+    "logging": ...
 }
 ```
 

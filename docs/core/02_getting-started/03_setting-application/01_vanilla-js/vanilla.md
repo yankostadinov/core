@@ -24,7 +24,7 @@ Next we go to the `./index.js`, which in our example is just a simple JS file wi
 ```javascript
 const init = async () => {
 
-    const glue = await GlueWeb();
+    const glue = await window.GlueWeb();
 
     // here glue is initialized, the app has connected to the Glue42 Environment
     // your custom app logic here

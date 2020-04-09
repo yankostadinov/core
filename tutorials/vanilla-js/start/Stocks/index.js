@@ -132,8 +132,8 @@ const newPricesHandler = (priceUpdate) => {
 
 const stockClickedHandler = (stock) => {
     console.log(stock);
-    window.location.href = `http://${window.location.host}/stocks/details/index.html`;
     sessionStorage.setItem('stock', JSON.stringify(stock));
+    window.location.href = `http://${window.location.host}/stocks/details/index.html`;
 };
 
 const start = async () => {

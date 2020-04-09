@@ -159,7 +159,7 @@ const start = async () => {
 
     generateStockPrices(newPricesHandler);
 
-    window.glue = await GlueWeb();
+    window.glue = await window.GlueWeb();
 
     toggleGlueAvailable();
 

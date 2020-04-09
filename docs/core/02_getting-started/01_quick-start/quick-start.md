@@ -48,7 +48,7 @@ Go to `./script.js`, declare a simple `init` function like this:
 ```javascript
 
 const init = async () => {
-    const glue = await GlueWeb();
+    const glue = await window.GlueWeb();
     console.log(`Glue initialized with version: ${glue.version}`);
 };
 
