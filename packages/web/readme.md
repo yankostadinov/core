@@ -1,37 +1,8 @@
 # Glue42 Web
 Glue42 Web allows JavasScript applications to integrate with other applications, part of the same Glue42 Core project via a set of APIs. With Glue42 Web you can share data with other applications, expose functionality, manage windows and notifications.
 
-## Referencing
-
-Glue42 Web is available both as a single JavaScript file which you can include into your web applications using a `<script>` tag, and as a node.js module.
-You can use Glue42 Web in a `script` tag include, e.g.:
-
-```html
-<script type="text/javascript" src="web.umd.js"></script>
-```
-
-...or as a module.
-
-``` javascript
-import GlueWeb from "@glue42/web";
-```
-
-When deploying your application in production, we recommend that you always reference a specific **minified** version, e.g.:
-
-```html
-<script type="text/javascript" src="web.umd.min.js"></script>
-```
-
-## Initialization
-
-When Glue42 Web is executed, it will attach a factory function to the global (window) object at runtime called **GlueWeb**. This factory function should be invoked with an optional configuration object to init the library and connect to the Glue42 Core Environment. The factory function returns a Promise that resolves with the glue API object.
-
-Example:
-```javascript
-  GlueWeb()
-    .then((glue) => {
-      window.glue = glue;
-      // access APIs from glue object
-    })
-    .catch(console.log);
-```
+We have some awesome materials to get you up an running with Glue42 Web in no time:
+- [Reference API](https://docs.glue42.com/reference/core/latest/glue42%20web/index.html)
+- [Glue42 Core Client](https://docs.glue42.com/core/what-is-glue42-core/core-concepts/glue42-client/index.html) - information on what is a Glue42 Core Client and how to create one.
+- [Setting up your application](https://docs.glue42.com/core/getting-started/setting-application/vanilla-js/index.html#) - a guide on how to take advantage of Glue42 Web in your app. 
+- [Quick Start](https://docs.glue42.com/core/getting-started/quick-start/index.html) - a quick walk-through on how to create your first Glue42 Core project using Glue42 Web
