@@ -65,7 +65,7 @@ export const startGateway = (config: GatewayConfig): Gateway => {
     if (config.logging) {
         configureGwLogging(config);
     }
-    const gateway = gateway_web.core.create({});
+    const gateway = gateway_web.core.create(config.createConfig || {});
 
     gateway.start();
 

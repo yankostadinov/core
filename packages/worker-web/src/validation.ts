@@ -6,6 +6,7 @@ import { GlobalGateway } from "./gateway.d";
 const nonEmptyStringDecoder: Decoder<string> = string().where((s) => s.length > 0, "Expected a non-empty string");
 
 export const gatewayConfigDecoder: Decoder<GatewayConfig> = object({
+    createConfig: optional(anyJson()),
     location: optional(nonEmptyStringDecoder),
     logging: optional(object({
         level: optional(oneOf<"trace" | "debug" | "info" | "warn" | "error">(

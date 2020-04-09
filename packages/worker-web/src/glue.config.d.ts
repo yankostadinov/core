@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface GatewayConfig {
+    createConfig?: any;
     location?: string;
     logging?: {
         level?: "trace" | "debug" | "info" | "warn" | "error";
