@@ -17,8 +17,8 @@ describe("Server subscription", () => {
         stream = await registerGenericStream(serverGlue);
     });
 
-    afterEach(() => {
-        doneAllGlues();
+    afterEach(async () => {
+        await doneAllGlues();
     });
 
     it("when pushing to specific subscription only it receives the update", (done) => {

@@ -14,8 +14,8 @@ describe("reconnect", () => {
         ]);
     });
 
-    afterEach(() => {
-        doneAllGlues();
+    afterEach(async () => {
+        await doneAllGlues();
     });
 
     it("my interop instance is changed after reconnect", async () => {

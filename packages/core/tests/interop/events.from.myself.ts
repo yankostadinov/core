@@ -11,8 +11,8 @@ describe("events from myself", () => {
         glue = await createGlue();
     });
 
-    afterEach(() => {
-        doneAllGlues();
+    afterEach(async () => {
+        await doneAllGlues();
     });
 
     it("when I register a method I received method added event", (done) => {

@@ -12,8 +12,8 @@ describe("properties", function () {
         ]);
     });
 
-    afterEach(() => {
-        doneAllGlues();
+    afterEach(async () => {
+        await doneAllGlues();
     });
 
     this.timeout(5000);
