@@ -7,6 +7,9 @@
         }
     },
     "gateway": {
+        "createConfig": {
+            "test": 42
+        },
         "location": "./gateway.js"
     }
 }

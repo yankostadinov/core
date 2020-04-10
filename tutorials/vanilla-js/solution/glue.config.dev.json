@@ -3,7 +3,7 @@
         "gateway": {
             "location": "./node_modules/@glue42/gateway-web/web/gateway-web.js"
         },
-        "worker": "./node_modules/@glue42/worker-web/dist/worker.js",
+        "worker": "./worker.js",
         "config": "./glue.config.json",
         "route": "/glue"
     },
