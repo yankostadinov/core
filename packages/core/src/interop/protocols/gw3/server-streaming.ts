@@ -10,7 +10,6 @@ import {
     RemoveInterestMessage
 } from "./messages";
 import { Glue42Core } from "../../../../glue";
-import { Logger } from "../../../logger/logger";
 
 const SUBSCRIPTION_REQUEST = "onSubscriptionRequest";
 const SUBSCRIPTION_ADDED = "onSubscriptionAdded";
@@ -25,7 +24,7 @@ export default class ServerStreaming {
     private callbacks = CallbackRegistryFactory();
     private nextStreamId = 0;
 
-    constructor(private session: Glue42Core.Connection.GW3DomainSession, private repository: ClientRepository, private serverRepository: ServerRepository) {
+    constructor(private session: Glue42Core.Connection.GW3DomainSession, private repository: ClientRepository, private serverRepository: ServerRepository, private logger: Glue42Core.Logger.API) {
         session.on("add-interest", (msg: AddInterestMessage) => {
             this.handleAddInterest(msg);
         });
@@ -98,16 +97,15 @@ export default class ServerStreaming {
         if (typeof branches === "string") {
             branches = [branches]; // user wants to push to single branch
         } else if (!Array.isArray(branches) || branches.length <= 0) {
-            branches = [];
+            branches = null;
         }
 
         // get the StreamId's from the method's branch map
         const streamIdList = streamingMethod.protocolState.branchKeyToStreamIdMap
             .filter((br) => {
-                if (!branches || branches.length === 0) {
-                    return true;
-                }
-                return branches.indexOf(br.key) >= 0;
+                return (
+                    branches === null || (Boolean(br) && typeof br.key === "string" && branches.indexOf(br.key) >= 0)
+                );
             }).map((br) => {
                 return br.streamId;
             });
@@ -148,9 +146,7 @@ export default class ServerStreaming {
 
     public closeSingleSubscription(streamingMethod: ServerMethodInfo, subscription: ServerSubscriptionInfo) {
 
-        if (streamingMethod.protocolState.subscriptionsMap) {
-            delete streamingMethod.protocolState.subscriptionsMap[subscription.id];
-        }
+        delete streamingMethod.protocolState.subscriptionsMap[subscription.id];
 
         const dropSubscriptionMessage: DropSubscriptionMessage = {
             type: "drop-subscription",
@@ -165,18 +161,14 @@ export default class ServerStreaming {
         this.callbacks.execute(SUBSCRIPTION_REMOVED, subscription, streamingMethod);
     }
 
-    public closeMultipleSubscriptions(streamingMethod: ServerMethodInfo, branchKey?: string) {
+    public closeMultipleSubscriptions(streamingMethod: ServerMethodInfo, branchKey: string) {
         if (typeof streamingMethod !== "object" || typeof streamingMethod.protocolState.subscriptionsMap !== "object") {
             return;
         }
-        if (!streamingMethod.protocolState.subscriptionsMap) {
-            return;
-        }
 
-        const subscriptionsMap = streamingMethod.protocolState.subscriptionsMap;
-        let subscriptionsToClose = Object.keys(subscriptionsMap)
+        let subscriptionsToClose = Object.keys(streamingMethod.protocolState.subscriptionsMap)
             .map((key) => {
-                return subscriptionsMap[key];
+                return streamingMethod.protocolState.subscriptionsMap[key];
             });
 
         if (typeof branchKey === "string") {
@@ -186,7 +178,7 @@ export default class ServerStreaming {
         }
 
         subscriptionsToClose.forEach((subscription) => {
-            delete subscriptionsMap[subscription.id];
+            delete streamingMethod.protocolState.subscriptionsMap[subscription.id];
 
             const drop: DropSubscriptionMessage = {
                 type: "drop-subscription",
@@ -197,20 +189,16 @@ export default class ServerStreaming {
         });
     }
 
-    public getSubscriptionList(streamingMethod: ServerMethodInfo, branchKey?: string): ServerSubscriptionInfo[] {
+    public getSubscriptionList(streamingMethod: ServerMethodInfo, branchKey: string) {
         if (typeof streamingMethod !== "object") {
             return [];
         }
 
         let subscriptions = [];
-        if (!streamingMethod.protocolState.subscriptionsMap) {
-            return [];
-        }
-        const subscriptionsMap = streamingMethod.protocolState.subscriptionsMap;
 
-        const allSubscriptions = Object.keys(subscriptionsMap)
+        const allSubscriptions = Object.keys(streamingMethod.protocolState.subscriptionsMap)
             .map((key) => {
-                return subscriptionsMap[key];
+                return streamingMethod.protocolState.subscriptionsMap[key];
             });
 
         if (typeof branchKey !== "string") {
@@ -224,35 +212,36 @@ export default class ServerStreaming {
         return subscriptions;
     }
 
-    public getBranchList(streamingMethod: ServerMethodInfo): string[] {
+    public getBranchList(streamingMethod: ServerMethodInfo) {
         if (typeof streamingMethod !== "object") {
             return [];
         }
 
-        if (!streamingMethod.protocolState.subscriptionsMap) {
-            return [];
-        }
-        const subscriptionsMap = streamingMethod.protocolState.subscriptionsMap;
-
         const allSubscriptions =
-            Object.keys(subscriptionsMap)
+            Object.keys(streamingMethod.protocolState.subscriptionsMap)
                 .map((key) => {
-                    return subscriptionsMap[key];
+                    return streamingMethod.protocolState.subscriptionsMap[key];
                 });
 
-        const result: string[] = [];
-        allSubscriptions.forEach((sub) => {
-            let branch = "";
+        const keysWithDuplicates = allSubscriptions.map((sub) => {
+            let result = null;
             if (typeof sub === "object" && typeof sub.branchKey === "string") {
-                branch = sub.branchKey;
+                result = sub.branchKey;
             }
-
-            if (result.indexOf(branch) === -1) {
-                result.push(branch);
-            }
+            return result;
         });
 
-        return result;
+        const seen: string[] = [];
+
+        const branchArray = keysWithDuplicates.filter((bKey) => {
+            if (bKey === null || seen.indexOf(bKey) >= 0) {
+                return false;
+            }
+            seen.push(bKey);
+            return true;
+        });
+
+        return branchArray;
     }
 
     public onSubAdded(callback: (subscription: ServerSubscriptionInfo, repoMethod: ServerMethodInfo) => void) {
@@ -271,15 +260,9 @@ export default class ServerStreaming {
         const streamingMethod = this.serverRepository.getById(msg.method_id);
 
         if (typeof msg.subscription_id !== "string" ||
-            typeof streamingMethod !== "object") {
-            return;
-        }
-
-        if (!streamingMethod.protocolState.subscriptionsMap) {
-            return;
-        }
-
-        if (typeof streamingMethod.protocolState.subscriptionsMap[msg.subscription_id] !== "object") {
+            typeof streamingMethod !== "object" ||
+            typeof streamingMethod.protocolState.subscriptionsMap[msg.subscription_id] !== "object"
+        ) {
             return;
         }
 
@@ -294,6 +277,7 @@ export default class ServerStreaming {
         this.callbacks.add(eventName, handlerFunc);
     }
 
+    // TODO there are many of these incrementing integer id's -> make a helper module
     private getNextStreamId(): string {
         return this.nextStreamId++ + "";
     }
@@ -304,7 +288,7 @@ export default class ServerStreaming {
     private handleAddInterest(msg: AddInterestMessage) {
 
         const caller = this.repository.getServerById(msg.caller_id);
-        const instance = caller.instance;
+        const instance = (typeof caller.getInfoForUser === "function") ? caller.getInfoForUser() : null;
 
         // call subscriptionRequestHandler
         const requestContext: RequestContext = {
@@ -346,10 +330,6 @@ export default class ServerStreaming {
     private getStreamId(streamingMethod: ServerMethodInfo, branchKey: string) {
         if (typeof branchKey !== "string") {
             branchKey = "";
-        }
-
-        if (!streamingMethod.protocolState.branchKeyToStreamIdMap) {
-            throw new Error(`streaming ${streamingMethod.definition.name} method without protocol state`);
         }
 
         const needleBranch = streamingMethod.protocolState.branchKeyToStreamIdMap.filter((branch) => {

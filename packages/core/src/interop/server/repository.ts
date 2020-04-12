@@ -8,11 +8,22 @@ export default class ServerRepository {
     private nextId = 0;
     private methods: ServerMethodInfo[] = [];
 
-    public add(method: Partial<ServerMethodInfo>): ServerMethodInfo {
+    public add(method: ServerMethodInfo): ServerMethodInfo {
+        if (typeof method !== "object") {
+            return;
+        }
+
+        if (method.repoId !== undefined) {
+            return;
+        }
+
+        // id should be a string
         method.repoId = String(this.nextId);
         this.nextId += 1;
-        this.methods.push(method as ServerMethodInfo);
-        return method as ServerMethodInfo;
+
+        this.methods.push(method);
+
+        return method;
     }
 
     public remove(repoId: string) {
@@ -25,14 +36,14 @@ export default class ServerRepository {
         });
     }
 
-    public getById(id: string): ServerMethodInfo | undefined {
+    public getById(id: string): ServerMethodInfo {
         if (typeof id !== "string") {
             return undefined;
         }
 
-        return this.methods.find((m) => {
+        return this.methods.filter((m) => {
             return m.repoId === id;
-        });
+        })[0];
     }
 
     public getList() {

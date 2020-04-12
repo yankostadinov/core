@@ -1,13 +1,6 @@
 import { Glue42Core } from "../../glue";
-import { Identity } from "../connection/types";
-import { Logger } from "../logger/logger";
-import Connection from "../connection/connection";
 
-export interface MetricsSettings {
-    connection?: Connection;
-    logger: Logger;
-    /** If true will auto create click stream metrics in root system */
-    clickStream?: boolean;
+export interface LocalConfig extends Glue42Core.Metrics.Settings {
     settings?: object;
 }
 

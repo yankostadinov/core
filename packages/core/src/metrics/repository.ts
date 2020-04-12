@@ -1,18 +1,30 @@
 import { Glue42Core } from "../../glue";
 import system from "./system";
-import { MetricsSettings, Protocol } from "./types";
+import { LocalConfig, Protocol } from "./types";
 
-export class Repository implements Glue42Core.Metrics.Repository {
-    public root: Glue42Core.Metrics.System;
+export default function repository(options: LocalConfig, protocol: Protocol): Glue42Core.Metrics.Repository {
 
-    constructor(options: MetricsSettings, protocol: Protocol) {
-        protocol.init(this);
-        this.root = system("", this, protocol);
-
-        this.addSystemMetrics(this.root, options.clickStream || options.clickStream === undefined);
+    if (!options.identity) {
+        throw new Error("Identity missing from metrics configuration");
     }
 
-    private addSystemMetrics(rootSystem: Glue42Core.Metrics.System, useClickStream: any) {
+    if (!options.identity.service || typeof options.identity.service !== "string") {
+        throw new Error("Service missing or invalid in metrics identity configuration");
+    }
+
+    if (!options.identity.system || typeof options.identity.system !== "string") {
+        throw new Error("System missing or invalid in metrics identity configuration");
+    }
+
+    if (!options.identity.instance || typeof options.identity.instance !== "string") {
+        throw new Error("Instance missing or invalid in metrics identity configuration");
+    }
+
+    const identity: Glue42Core.Metrics.Identity = options.identity;
+
+    const instance: string = `${options.identity.system}/${options.identity.service}/${options.identity.instance}`;
+
+    function _initSystemMetrics(rootSystem: Glue42Core.Metrics.System, useClickStream: any) {
         // Create some system metrics
         if (typeof navigator !== "undefined") {
             rootSystem.stringMetric("UserAgent", navigator.userAgent);
@@ -68,4 +80,20 @@ export class Repository implements Glue42Core.Metrics.Repository {
             }
         }
     }
+    let _root: Glue42Core.Metrics.System;
+    const me: Glue42Core.Metrics.Repository = {
+        identity,
+        instance,
+
+        get root() {
+            return _root;
+        },
+    };
+
+    protocol.init(me);
+    _root = system("", me, protocol);
+
+    _initSystemMetrics(_root, options.clickStream || options.clickStream === undefined);
+
+    return me;
 }

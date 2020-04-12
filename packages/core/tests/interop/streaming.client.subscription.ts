@@ -173,7 +173,7 @@ describe("Client subscription", () => {
                     expect(typeof reason.server).to.eql("object");
                     expect(typeof reason.stream).to.eql("object");
                     expect(reason.server.application).to.eql(serverGlue.interop.instance.application);
-                    expect(reason.stream.name).to.eql(stream.name);
+                    expect(reason.stream.info.name).to.eql(stream.name);
                     done();
                 });
                 sub.close();

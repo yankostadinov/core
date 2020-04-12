@@ -1,68 +1,79 @@
 import domainSession from "./gw3Domain";
 import { Glue42Core } from "../../../glue";
 import { default as CallbackRegistryFactory, CallbackRegistry } from "callback-registry";
-import { GW3Protocol, Identity, ConnectionSettings } from "../types";
-import Connection from "../connection";
-import { Logger } from "../../logger/logger";
-import { WelcomeMessage, CreateTokenReq, CreateTokenRes } from "./messages";
-export default class GW3ProtocolImpl implements GW3Protocol {
-    public protocolVersion: number = 3;
+import { GW3Protocol } from "../types";
 
-    private datePrefix = "#T42_DATE#";
-    private datePrefixLen = this.datePrefix.length;
-    private dateMinLen = this.datePrefixLen + 1; // prefix + at least one char (1970/01/01 = 0)
-    private datePrefixFirstChar = this.datePrefix[0];
-    private registry: CallbackRegistry = CallbackRegistryFactory();
+export default function (connection: Glue42Core.Connection.GW3Connection, settings: Glue42Core.Connection.Settings, logger: Glue42Core.Logger.API): GW3Protocol {
 
-    private globalDomain: Glue42Core.Connection.GW3DomainSession | undefined;
+    interface CreateTokenReq {
+        domain?: "global";
+        type: "create-token";
+        peer_id?: string;
+        request_id?: string;
+    }
+
+    interface CreateTokenRes {
+        domain: "global";
+        type: "token";
+        request_id: string;
+        token: string;
+    }
+
+    interface WelcomeMessage {
+        peer_id: string;
+        options: { info: object, access_token: string };
+        resolved_identity: Glue42Core.Connection.Identity;
+        available_domains: object[];
+    }
+
+    const datePrefix = "#T42_DATE#";
+    const datePrefixLen = datePrefix.length;
+    const dateMinLen = datePrefixLen + 1; // prefix + at least one char (1970/01/01 = 0)
+    const datePrefixFirstChar = datePrefix[0];
+    const registry: CallbackRegistry = CallbackRegistryFactory();
+    let globalDomain: Glue42Core.Connection.GW3DomainSession;
 
     /* Flag indicating if the user is currently logged in */
-    private _isLoggedIn = false;
+    let isLoggedIn = false;
 
     /*
      * If true(default) the user wants to be connected.
      * If the user explicitly calls logout this will become false.
      * This is used to determine if it should retry trying to login.
      */
-    private shouldTryLogin = true;
+    let shouldTryLogin = true;
 
     /* True only if this is the initial login attempt. */
-    private initialLogin = true;
-    private initialLoginAttempts = 3;
-    private pingTimer: any;
-    private sessions: Glue42Core.Connection.GW3DomainSession[] = [];
-    private loginConfig: Glue42Core.Auth | undefined;
+    let initialLogin = true;
+    let initialLoginAttempts = 3;
+    const initialLoginAttemptsInterval = 500;
+    let pingTimer: any;
 
-    constructor(private connection: Connection, private settings: ConnectionSettings, private logger: Logger) {
-        connection.disconnected(() => {
-            this.handleDisconnected();
-        });
+    const sessions: Glue42Core.Connection.GW3DomainSession[] = [];
+    let loginConfig: Glue42Core.Auth;
 
-        this.ping();
-    }
+    connection.disconnected(handleDisconnected.bind(this));
 
-    public get isLoggedIn() {
-        return this._isLoggedIn;
-    }
+    ping();
 
-    public processStringMessage(message: string): { msg: object, msgType: string } {
+    function processStringMessage(message: string): { msg: object, msgType: string } {
         const msg: { type: string } = JSON.parse(message, (key, value) => {
 
             // check for date - we have custom protocol for dates
             if (typeof value !== "string") {
                 return value;
             }
-            if (value.length < this.dateMinLen) {
+            if (value.length < dateMinLen) {
                 return value;
             }
-            if (value[0] !== this.datePrefixFirstChar) {
+            if (value[0] !== datePrefixFirstChar) {
                 return value;
             }
-            if (value.substring(0, this.datePrefixLen) !== this.datePrefix) {
+            if (value.substring(0, datePrefixLen) !== datePrefix) {
                 return value;
             }
             try {
-                const milliseconds = parseInt(value.substring(this.datePrefixLen, value.length), 10);
+                const milliseconds = parseInt(value.substring(datePrefixLen, value.length), 10);
                 if (isNaN(milliseconds)) {
                     return value;
                 }
@@ -78,10 +89,9 @@ export default class GW3ProtocolImpl implements GW3Protocol {
         };
     }
 
-    public createStringMessage(message: object): string {
+    function createStringMessage(product: string, type: string, message: object, id?: string): string {
         const oldToJson = Date.prototype.toJSON;
         try {
-            const datePrefix = this.datePrefix;
             Date.prototype.toJSON = function () {
                 return datePrefix + this.getTime();
             };
@@ -92,7 +102,7 @@ export default class GW3ProtocolImpl implements GW3Protocol {
         }
     }
 
-    public processObjectMessage(message: { type: string }): { msg: object, msgType: string } {
+    function processObjectMessage(message: { type: string }): { msg: object, msgType: string } {
         if (!message.type) {
             throw new Error("Object should have type property");
         }
@@ -102,19 +112,19 @@ export default class GW3ProtocolImpl implements GW3Protocol {
         };
     }
 
-    public createObjectMessage(message: object): object {
+    function createObjectMessage(product: string, type: string, message: object, id: string): object {
         return message;
     }
 
-    public async login(config: Glue42Core.Auth, reconnect?: boolean): Promise<Identity> {
-        this.logger.debug("logging in...");
-        this.loginConfig = config;
+    async function login(config: Glue42Core.Auth, reconnect?: boolean): Promise<Glue42Core.Connection.Identity> {
+        logger.debug("logging in...");
+        loginConfig = config;
 
-        if (!this.loginConfig) {
+        if (!loginConfig) {
             // in case of no auth send empty username and password
-            this.loginConfig = { username: "", password: "" };
+            loginConfig = { username: "", password: "" };
         }
-        this.shouldTryLogin = true;
+        shouldTryLogin = true;
 
         const authentication: {
             method?: string,
@@ -124,32 +134,30 @@ export default class GW3ProtocolImpl implements GW3Protocol {
             provider?: string
         } = {};
 
-        this.connection.gatewayToken = config.gatewayToken;
+        connection.gatewayToken = config.gatewayToken;
+
         if (config.gatewayToken) {
             // in case of re-connect try to refresh the GW token
             if (reconnect) {
                 try {
                     const token = await this.getNewGWToken();
-                    config.gatewayToken = token;
+                    config.token = token;
                 } catch (e) {
                     this.logger.warn(`failed to get GW token when reconnecting ${e?.message || e}`);
                 }
             }
             authentication.method = "gateway-token";
             authentication.token = config.gatewayToken;
-            this.connection.gatewayToken = config.gatewayToken;
+            connection.gatewayToken = config.gatewayToken;
         } else if (config.flowName === "sspi") {
             authentication.provider = "win";
             authentication.method = "access-token";
 
-            if (config.flowCallback && config.sessionId) {
-                authentication.token =
-                    (await config.flowCallback(config.sessionId, null))
-                        .data
-                        .toString("base64");
-            } else {
-                throw new Error("Invalid SSPI config");
-            }
+            authentication.token =
+                (await config.flowCallback(config.sessionId, null))
+                    .data
+                    .toString("base64");
+
         } else if (config.token) {
             authentication.method = "access-token";
             authentication.token = config.token;
@@ -163,7 +171,7 @@ export default class GW3ProtocolImpl implements GW3Protocol {
 
         const helloMsg: any = {
             type: "hello",
-            identity: this.settings.identity,
+            identity: settings.identity,
             authentication
         };
 
@@ -171,10 +179,10 @@ export default class GW3ProtocolImpl implements GW3Protocol {
             helloMsg.request_id = config.sessionId;
         }
 
-        this.globalDomain = domainSession(
+        globalDomain = domainSession(
             "global",
-            this.connection,
-            this.logger.subLogger("global-domain"),
+            connection,
+            logger,
             [
                 "welcome",
                 "token",
@@ -182,25 +190,25 @@ export default class GW3ProtocolImpl implements GW3Protocol {
             ]);
 
         const sendOptions: Glue42Core.Connection.SendMessageOptions = { skipPeerId: true };
-        if (this.initialLogin) {
-            sendOptions.retryInterval = this.settings.reconnectInterval;
-            sendOptions.maxRetries = this.settings.reconnectAttempts;
+        if (initialLogin) {
+            sendOptions.retryInterval = settings.reconnectInterval;
+            sendOptions.maxRetries = settings.reconnectAttempts;
         }
 
         try {
             let welcomeMsg: WelcomeMessage;
 
             while (true) {
-                const msg: any = await this.globalDomain.send(helloMsg, undefined, sendOptions);
+                const msg: any = await globalDomain.send(helloMsg, undefined, sendOptions);
                 if (msg.type === "authentication-request") {
                     // respond to auth challenge
                     const token = Buffer.from(msg.authentication.token, "base64");
-                    if (config.flowCallback && config.sessionId) {
-                        helloMsg.authentication.token =
-                            (await config.flowCallback(config.sessionId, token))
-                                .data
-                                .toString("base64");
-                    }
+
+                    helloMsg.authentication.token =
+                        (await config.flowCallback(config.sessionId, token))
+                            .data
+                            .toString("base64");
+
                     helloMsg.request_id = config.sessionId;
                     continue;
                 } else if (msg.type === "welcome") {
@@ -214,20 +222,20 @@ export default class GW3ProtocolImpl implements GW3Protocol {
                 }
             }
             // we've logged in once - set this to false for the rest of the lifetime
-            this.initialLogin = false;
-            this.logger.info("login successful with peerId " + welcomeMsg.peer_id);
+            initialLogin = false;
+            logger.debug("login successful with PeerId " + welcomeMsg.peer_id);
 
-            this.connection.peerId = welcomeMsg.peer_id;
-            this.connection.resolvedIdentity = welcomeMsg.resolved_identity;
-            this.connection.availableDomains = welcomeMsg.available_domains;
+            connection.peerId = welcomeMsg.peer_id;
+            connection.resolvedIdentity = welcomeMsg.resolved_identity;
+            connection.availableDomains = welcomeMsg.available_domains;
             if (welcomeMsg.options) {
-                this.connection.token = welcomeMsg.options.access_token;
-                this.connection.info = welcomeMsg.options.info;
+                connection.token = welcomeMsg.options.access_token;
+                connection.info = welcomeMsg.options.info;
             }
-            this.setLoggedIn(true);
+            setLoggedIn(true);
             return welcomeMsg.resolved_identity;
         } catch (err) {
-            this.logger.error("error sending hello message - " + (err.message || err.msg || err.reason || err), err);
+            logger.error("error sending hello message - " + (err.message || err.msg || err.reason || err));
             throw err;
         } finally {
             if (config && config.flowCallback && config.sessionId) {
@@ -236,85 +244,82 @@ export default class GW3ProtocolImpl implements GW3Protocol {
         }
     }
 
-    public async logout(): Promise<void> {
-        this.logger.debug("logging out...");
-        this.shouldTryLogin = false;
+    function logout() {
+        logger.debug("logging out...");
+        shouldTryLogin = false;
 
-        if (this.pingTimer) {
-            clearTimeout(this.pingTimer);
+        if (pingTimer) {
+            clearTimeout(pingTimer);
         }
 
         // go through all sessions and leave the corresponding domain
-        const promises = this.sessions.map((session) => {
+        sessions.forEach((session) => {
             session.leave();
         });
-        await Promise.all(promises);
     }
 
-    public loggedIn(callback: (() => void)): () => void {
-        if (this._isLoggedIn) {
+    function loggedIn(callback: (() => void)): () => void {
+        if (isLoggedIn) {
             callback();
         }
-        return this.registry.add("onLoggedIn", callback);
+        return registry.add("onLoggedIn", callback);
     }
 
-    public domain(domainName: string, domainLogger: Logger, successMessages?: string[], errorMessages?: string[]): Glue42Core.Connection.GW3DomainSession {
-        let session = this.sessions.filter((s) => s.domain === domainName)[0];
+    function domain(domainName: string, domainLogger: Glue42Core.Logger.API, successMessages?: string[], errorMessages?: string[]): Glue42Core.Connection.GW3DomainSession {
+        let session = sessions.filter((s) => s.domain === domainName)[0];
         if (!session) {
-            session = domainSession(domainName, this.connection, domainLogger, successMessages, errorMessages);
-            this.sessions.push(session);
+            session = domainSession(domainName, connection, domainLogger, successMessages, errorMessages);
+            sessions.push(session);
         }
         return session;
     }
 
-    public handleDisconnected() {
-        this.setLoggedIn(false);
-        const tryToLogin = this.shouldTryLogin;
-        if (tryToLogin && this.initialLogin) {
-            if (this.initialLoginAttempts <= 0) {
+    function handleDisconnected() {
+        setLoggedIn(false);
+        const tryToLogin = shouldTryLogin;
+        if (tryToLogin && initialLogin) {
+            if (initialLoginAttempts <= 0) {
                 return;
             }
-            this.initialLoginAttempts--;
+            initialLoginAttempts--;
         }
 
-        this.logger.debug("disconnected - will try new login?" + this.shouldTryLogin);
-        if (this.shouldTryLogin) {
-            if (!this.loginConfig) {
+        logger.debug("disconnected - will try new login?" + shouldTryLogin);
+        if (shouldTryLogin) {
+            if (!loginConfig) {
                 throw new Error("no login info");
             }
 
-            this.connection.login(this.loginConfig, true)
+            connection.login(loginConfig, true)
                 .catch(() => {
-                    setTimeout(this.handleDisconnected, 1000);
+                    setTimeout(handleDisconnected, 1000);
                 });
         }
     }
 
-    public setLoggedIn(value: boolean) {
-        this._isLoggedIn = value;
-        if (this._isLoggedIn) {
-            this.registry.execute("onLoggedIn");
+    function setLoggedIn(value: boolean) {
+        isLoggedIn = value;
+        if (isLoggedIn) {
+            registry.execute("onLoggedIn");
         }
     }
 
-    public ping() {
+    function ping() {
         // if we don't want to be connected return
-        if (!this.shouldTryLogin) {
+        if (!shouldTryLogin) {
             return;
         }
 
         // if logged in ping
-        if (this._isLoggedIn) {
-            this.connection.send({ type: "ping" });
+        if (isLoggedIn) {
+            connection.send("", "", { type: "ping" });
         }
 
         // schedule next after 30 sec
-        this.pingTimer = setTimeout(() => {
-            this.ping();
-        }, 30 * 1000);
+        pingTimer = setTimeout(ping, 30 * 1000);
     }
 
-    public authToken(): Promise<string> {
+    function authToken(): Promise<string> {
         const createTokenReq: CreateTokenReq = {
             type: "create-token"
         };
@@ -323,20 +328,25 @@ export default class GW3ProtocolImpl implements GW3Protocol {
             return Promise.reject(new Error("no global domain session"));
         }
 
-        return this.globalDomain.send<CreateTokenRes>(createTokenReq)
+        return globalDomain.send(createTokenReq)
             .then((res: CreateTokenRes) => {
                 return res.token;
             });
     }
 
-    private getNewGWToken(): Promise<string | undefined> {
-        if (typeof window !== undefined) {
-            // pull up a new token from gd
-            const glue42gd = window.glue42gd;
-            if (glue42gd) {
-                return glue42gd.getGWToken();
-            }
+    return {
+        processStringMessage,
+        createStringMessage,
+        createObjectMessage,
+        processObjectMessage,
+
+        login,
+        logout,
+        loggedIn,
+        domain,
+        authToken,
+        get isLoggedIn() {
+            return isLoggedIn;
         }
-        return Promise.reject(new Error("not running in GD"));
-    }
+    };
 }

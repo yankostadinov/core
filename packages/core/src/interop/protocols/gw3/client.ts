@@ -1,3 +1,4 @@
+import { CallbackRegistry, default as CallbackRegistryFactory } from "callback-registry";
 import ClientStreaming from "./client-streaming";
 import {
     CallMessage,
@@ -6,24 +7,23 @@ import {
     MethodsRemovedMessage,
     PeerAddedMessage,
     PeerRemovedMessage,
-    ResultMessage,
-    MethodInfoMessage
+    ResultMessage
 } from "./messages";
 import { Glue42Core } from "../../../../glue";
 import ClientRepository from "../../client/repository";
 import { ClientMethodInfo, ServerInfo, ServerMethodsPair } from "../../client/types";
 import { ClientProtocolDefinition, SubscribeError, SubscriptionInner } from "../../types";
 import { InvokeResultMessage, InvokeStatus } from "../../client/client";
-import { Logger } from "../../../logger/logger";
+import { UserSubscription } from "./subscription";
 
 /**
  * Handles session lifetime and events
  */
 export default class ClientProtocol implements ClientProtocolDefinition {
-
     private streaming: ClientStreaming;
+    private callbacks: CallbackRegistry = CallbackRegistryFactory();
 
-    constructor(private session: Glue42Core.Connection.GW3DomainSession, private repository: ClientRepository, private logger: Logger) {
+    constructor(private session: Glue42Core.Connection.GW3DomainSession, private repository: ClientRepository, private logger: Glue42Core.Logger.API) {
         session.on("peer-added", (msg: PeerAddedMessage) => this.handlePeerAdded(msg));
         session.on("peer-removed", (msg: PeerRemovedMessage) => this.handlePeerRemoved(msg));
         session.on("methods-added", (msg: MethodsAddedMessage) => this.handleMethodsAddedMessage(msg));
@@ -32,14 +32,14 @@ export default class ClientProtocol implements ClientProtocolDefinition {
         this.streaming = new ClientStreaming(session, repository, logger);
     }
 
-    public subscribe(stream: Glue42Core.AGM.MethodDefinition, options: Glue42Core.AGM.SubscriptionParams, targetServers: ServerMethodsPair[], success: (sub: Glue42Core.AGM.Subscription) => void, error: (err: SubscribeError) => void,  existingSub: SubscriptionInner): void {
-        this.streaming.subscribe(stream, options, targetServers, success, error, existingSub);
+    public subscribe(stream: ClientMethodInfo, args: object, targetServers: ServerMethodsPair[], options: Glue42Core.AGM.SubscriptionParams, success: (sub: Glue42Core.AGM.Subscription) => void, error: (err: SubscribeError) => void, existingSub: SubscriptionInner): void {
+        this.streaming.subscribe(stream, args, targetServers, options, success, error, existingSub);
     }
 
     public invoke(id: string, method: ClientMethodInfo, args: object, target: ServerInfo): Promise<InvokeResultMessage> {
 
         const serverId = target.id;
-        const methodId = method.gatewayId;
+        const methodId = method.protocolState.id;
         const msg: CallMessage = {
             type: "call",
             server_id: serverId,
@@ -48,12 +48,12 @@ export default class ClientProtocol implements ClientProtocolDefinition {
         };
 
         // we transfer the invocation id as tag
-        return this.session.send<ResultMessage>(msg, { invocationId: id, serverId })
+        return this.session.send(msg, { invocationId: id, serverId })
             .then((m: ResultMessage) => this.handleResultMessage(m))
             .catch((err) => this.handleInvocationError(err));
     }
 
-    public drainSubscriptions(): SubscriptionInner[] {
+    public drainSubscriptions() {
         return this.streaming.drainSubscriptions();
     }
 
@@ -92,8 +92,19 @@ export default class ClientProtocol implements ClientProtocolDefinition {
         const serverId = msg.server_id;
         const methods = msg.methods;
 
-        methods.forEach((method: MethodInfoMessage) => {
-            this.repository.addServerMethod(serverId, method);
+        methods.forEach((method) => {
+            const methodInfo: Glue42Core.AGM.MethodDefinition = {
+                name: method.name,
+                displayName: method.display_name,
+                description: method.description,
+                version: method.version,
+                objectTypes: method.object_types || [],
+                accepts: method.input_signature,
+                returns: method.result_signature,
+                supportsStreaming: typeof method.flags !== "undefined" ? method.flags.streaming : false,
+            };
+
+            this.repository.addServerMethod(serverId, methodInfo, { id: method.id });
         });
     }
 
@@ -106,7 +117,7 @@ export default class ClientProtocol implements ClientProtocolDefinition {
 
         serverMethodKeys.forEach((methodKey) => {
             const method = server.methods[methodKey];
-            if (methodIdList.indexOf(method.gatewayId) > -1) {
+            if (methodIdList.indexOf(method.protocolState.id) > -1) {
                 this.repository.removeServerMethod(serverId, methodKey);
             }
         });
@@ -121,13 +132,14 @@ export default class ClientProtocol implements ClientProtocolDefinition {
         return {
             invocationId,
             result,
-            instance: server.instance,
+            instance: server.getInfoForUser(),
             status: InvokeStatus.Success,
             message: ""
         };
     }
 
     private handleInvocationError(msg: ErrorMessage): InvokeResultMessage {
+        // TODO check for log level
         this.logger.debug(`handle invocation error ${JSON.stringify(msg)}`);
 
         const invocationId = msg._tag.invocationId;
@@ -139,7 +151,7 @@ export default class ClientProtocol implements ClientProtocolDefinition {
         return {
             invocationId,
             result: context,
-            instance: server.instance,
+            instance: server.getInfoForUser(),
             status: InvokeStatus.Error,
             message
         };

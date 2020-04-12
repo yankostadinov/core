@@ -1,12 +1,35 @@
 import { Glue42Core } from "../glue";
-import { InternalConfig, GDObject, GDStaringContext } from "./types";
+import { InternalConfig } from "./types";
 import generate from "shortid";
 import Utils from "./utils/utils";
 import { ContextMessageReplaySpec } from "./contexts/contextMessageReplaySpec";
-import { version as pjsonVersion } from "../package.json";
-import { ConnectionSettings } from "./connection/types";
 
-export default function (configuration: Glue42Core.Config, ext: Glue42Core.Extension, glue42gd: GDObject | undefined): InternalConfig {
+import { version as pjsonVersion } from "../package.json";
+
+declare var global: any;
+
+interface GDStaringContext {
+    gwURL?: string;
+    gwToken?: string;
+    applicationConfig: {
+        name: string
+    };
+    env: string;
+    region: string;
+    instanceId: string;
+}
+
+export default function (configuration: Glue42Core.Config, ext: Glue42Core.Extension, hc: Glue42Core.HtmlContainerObject, glue42gd: Glue42Core.GDObject, gdVersion: number): InternalConfig {
+    let globalScope;
+    if (typeof window !== "undefined") {
+        globalScope = window;
+    }
+    if (typeof global !== "undefined") {
+        globalScope = global; // ... Safari WebView
+    }
+    globalScope = globalScope || {};     // ... a bit paranoid
+
+    const uid = generate();
 
     let nodeStartingContext: GDStaringContext;
     if (Utils.isNode()) {
@@ -20,167 +43,367 @@ export default function (configuration: Glue42Core.Config, ext: Glue42Core.Exten
         }
     }
 
-    function getConnection(): ConnectionSettings {
+    // when searching for a configuration value check the following chain until the value is resolved:
+    //
+    // 1. global.GLUE_CONFIG            - a way to override user preferences. Use case is GLUE Mobile
+    // 2. userConfig                    - user configuration
+    // 3. global.GLUE_DEFAULT_CONFIG    - a way to dynamically override hard coded defaults
+    // 4. hardDefaults                  - glue.js hard coded defaults
 
-        const gwConfig = configuration.gateway;
+    const masterConfig = globalScope.GLUE_CONFIG || {};
+    const dynamicDefaults = globalScope.GLUE_DEFAULT_CONFIG || {};
+    const hardDefaults = getHardDefaults();
 
-        const protocolVersion = gwConfig?.protocolVersion ?? 3;
-        const reconnectInterval = gwConfig?.reconnectInterval;
-        const reconnectAttempts = gwConfig?.reconnectAttempts;
+    const metricsIdentity = {
+        system: getConfigProp<string>("metrics", "system"),
+        service: getConfigProp<string>("metrics", "service"),
+        instance: getConfigProp<string>("metrics", "instance")
+    };
 
-        const defaultWs = "ws://localhost:8385";
-        let ws = gwConfig?.ws;
-        const sharedWorker = gwConfig?.sharedWorker;
-        const inproc = gwConfig?.inproc;
+    const disableAutoAppSystem = getConfigProp<boolean>("metrics", "disableAutoAppSystem");
 
-        // If running in GD use the injected ws URL
-        if (glue42gd) {
-            // GD3
-            ws = glue42gd.gwURL;
-        }
-        // if running in Node app, started from GD, use the ws from starting context
-        if (Utils.isNode() && nodeStartingContext && nodeStartingContext.gwURL) {
-            ws = nodeStartingContext.gwURL;
-        }
-
-        // if nothing specified use default WS
-        if (!ws && !sharedWorker && !inproc) {
-            ws = defaultWs;
-        }
-
-        let instanceId: string | undefined;
-        let windowId: string | undefined;
-        let pid: number | undefined;
-        let environment: string | undefined;
-        let region: string | undefined;
-        const appName = getApplication();
-        let uniqueAppName = appName;
-        if (typeof glue42gd !== "undefined") {
-            windowId = glue42gd.windowId;
-            pid = glue42gd.pid;
-            if (glue42gd.env) {
-                environment = glue42gd.env.env;
-                region = glue42gd.env.region;
-            }
-            // G4E-1668
-            uniqueAppName = glue42gd.application ?? "glue-app";
-            instanceId = glue42gd.appInstanceId;
-        } else if (Utils.isNode()) {
-            pid = process.pid;
-            if (nodeStartingContext) {
-                environment = nodeStartingContext.env;
-                region = nodeStartingContext.region;
-                instanceId = nodeStartingContext.instanceId;
-            }
-        } else {
-            // generate windowId, this is useful in glue0 case, when we're started
-            // from shortcut, not another window; ignored in the other cases
-            windowId = window.name || generate();
-        }
-
-        // replay specs for core connection
-        const replaySpecs = configuration.gateway?.replaySpecs ?? [];
-        // inject Context message replay
-        replaySpecs.push(ContextMessageReplaySpec);
-
+    function getMetrics() {
         return {
-            identity: {
-                application: uniqueAppName,
-                applicationName: appName,
-                windowId,
-                instance: instanceId,
-                process: pid,
-                region,
-                environment,
-                api: ext.version || pjsonVersion
-            },
-            reconnectInterval,
-            ws,
-            sharedWorker,
-            inproc,
-            protocolVersion,
-            reconnectAttempts,
-            replaySpecs,
+            identity: metricsIdentity,
+            disableAutoAppSystem
         };
+    }
+
+    function getGateway(): Glue42Core.Connection.Settings {
+        const force = getConfigProp<boolean>("gateway", "force");
+        const gw = hc === undefined || force;
+        if (gw) {
+            const gwConfig = getConfigProp<any>("gateway");
+
+            const protocolVersion = getConfigProp<number>("gateway", "protocolVersion");
+            const reconnectInterval = getConfigProp<number>("gateway", "reconnectInterval");
+            const reconnectAttempts = getConfigProp<number>("gateway", "reconnectAttempts");
+
+            let ws = gwConfig.ws;
+            let http = gwConfig.http;
+            const inproc = gwConfig.inproc;
+
+            // if not we will select endpoint for him
+            if (!ws && !http && !inproc) {
+
+                if (Utils.isNode() || ("WebSocket" in window && window.WebSocket.CLOSING === 2)) {
+                    // if in node, or we have WebSockets use ws
+                    ws = getConfigProp<string>("gateway", "ws");
+                } else {
+                    // fallback to http
+                    http = getConfigProp<string>("gateway", "http");
+                }
+            }
+            let instanceId: string;
+            let windowId: string;
+            let pid: number;
+            let environment: string;
+            let region: string;
+            const appName = getApplication();
+            let uniqueAppName = appName;
+            if (hc) {
+                windowId = hc.windowId;
+                environment = hc.env.env;
+                region = hc.env.region;
+            } else if (typeof glue42gd !== "undefined") {
+                windowId = glue42gd.windowId;
+                pid = glue42gd.pid;
+                if (glue42gd.env) {
+                    environment = glue42gd.env.env;
+                    region = glue42gd.env.region;
+                }
+                // G4E-1668
+                uniqueAppName = glue42gd.application ?? "glue-app";
+                instanceId = glue42gd.appInstanceId;
+            } else if (Utils.isNode()) {
+                pid = process.pid;
+                if (nodeStartingContext) {
+                    environment = nodeStartingContext.env;
+                    region = nodeStartingContext.region;
+                    instanceId = nodeStartingContext.instanceId;
+                }
+            }
+
+            // replay specs for core connection
+            const replaySpecs = getConfigProp<Glue42Core.Connection.MessageReplaySpec[]>("gateway", "replaySpecs") || [];
+            // inject Context message replay
+            replaySpecs.push(ContextMessageReplaySpec);
+            return {
+                identity: {
+                    application: uniqueAppName,
+                    applicationName: appName,
+                    windowId,
+                    instance: instanceId,
+                    process: pid,
+                    region,
+                    environment,
+                    api: ext.version || pjsonVersion
+                },
+                reconnectInterval,
+                ws,
+                http,
+                gw: inproc,
+                protocolVersion,
+                reconnectAttempts,
+                force: true,
+                replaySpecs,
+                gdVersion,
+            };
+        }
+
+        return { gdVersion };
+    }
+
+    function getLogger(): Glue42Core.LoggerConfig {
+        const logger = getConfigProp<Glue42Core.LoggerConfig | string>("logger");
+        if (typeof logger === "string") {
+            return {
+                console: logger,
+                metrics: "off",
+                publish: "off"
+            };
+        }
+        return logger;
+    }
+
+    function getAgm() {
+        return ifNotFalse(
+            configuration.agm,
+            {
+                instance: {
+                    application: getApplication()
+                }
+            });
+    }
+
+    function getContexts(connectionConfig: Glue42Core.Connection.Settings) {
+        // context does not work on GW1
+        if (connectionConfig.protocolVersion < 3) {
+            return false;
+        }
+
+        // if turned off in config
+        const contextConfig = getConfigProp("contexts");
+        if (typeof contextConfig === "boolean" && !contextConfig) {
+            return false;
+        }
+        return true;
+    }
+
+    function getChannels(contextsEnabled: boolean) {
+        // channels depend on contexts
+        if (!contextsEnabled) {
+            return false;
+        }
+        // if turned off in config
+        const channelsConfig = getConfigProp("channels");
+        if (typeof channelsConfig === "boolean" && !channelsConfig) {
+            return false;
+        }
+        return true;
+    }
+
+    function getBus(connectionConfig: Glue42Core.Connection.Settings) {
+        // TURNED OFF BY DEFAULT
+
+        const contextConfig = getConfigProp("bus");
+        if (typeof contextConfig === "boolean" && contextConfig) {
+            // context works only in in GD3 when connected to GW3
+            if (connectionConfig.protocolVersion && connectionConfig.protocolVersion < 3) {
+                return false;
+            }
+            if (gdVersion === 2) {
+                return false;
+            }
+
+            // if the env is ok, bus is turned off by default
+            return true;
+        }
+        return false;
     }
 
     function getApplication() {
-        if (configuration.application) {
-            return configuration.application;
-        }
+        return getConfigProp<string>("application");
+    }
 
-        if (glue42gd) {
-            return glue42gd.applicationName;
-        }
+    function getAuth() {
+        return getConfigProp<any>("auth");
+    }
 
-        const uid = generate();
-        if (Utils.isNode()) {
-            if (nodeStartingContext) {
-                return nodeStartingContext.applicationConfig.name;
+    function getHardDefaults() {
+        function getMetricsDefaults() {
+            let documentTitle = typeof document !== "undefined" ? document.title : "unknown";
+            // check for empty titles
+            documentTitle = documentTitle || "none";
+
+            if (typeof hc === "undefined") {
+                return {
+                    system: "Connect.Browser",
+                    service: configuration.application || documentTitle,
+                    instance: "~" + uid
+                };
             }
 
-            return "NodeJS" + uid;
-        }
+            if (typeof hc.metricsFacade.getIdentity !== "undefined") {
+                const identity = hc.metricsFacade.getIdentity();
+                return {
+                    system: identity.system,
+                    service: identity.service,
+                    instance: identity.instance
+                };
+            }
 
-        if (typeof window !== "undefined" && typeof document !== "undefined") {
-            return document.title + ` (${uid})`;
-        }
-
-        return uid;
-    }
-
-    function getAuth(): Glue42Core.Auth | undefined {
-        if (typeof configuration.auth === "string") {
+            // backward compatibility for HC <= 1.60
             return {
-                token: configuration.auth
+                system: "HtmlContainer." + hc.containerName,
+                service: "JS." + hc.browserWindowName,
+                instance: "~" + hc.machineName
             };
         }
 
-        if (configuration.auth) {
-            return configuration.auth;
-        }
+        function getGatewayDefaults() {
+            let defaultProtocol = 3;
+            const gatewayURL = "localhost:8385";
+            let defaultWs = "ws://" + gatewayURL;
+            const defaultHttp = "http://" + gatewayURL;
 
-        if (Utils.isNode() && nodeStartingContext && nodeStartingContext.gwToken) {
+            if (glue42gd) {
+                // GD3
+                defaultProtocol = 3;
+                defaultWs = glue42gd.gwURL;
+            }
+
+            if (Utils.isNode() && nodeStartingContext) {
+                defaultProtocol = 3;
+                defaultWs = nodeStartingContext.gwURL;
+            }
+
             return {
-                gatewayToken: nodeStartingContext.gwToken
+                ws: defaultWs,
+                http: defaultHttp,
+                protocolVersion: defaultProtocol,
+                reconnectInterval: 1000
             };
         }
 
-        if (configuration.gateway?.inproc || configuration.gateway?.sharedWorker) {
+        function getDefaultApplicationName() {
+            if (hc) {
+                return hc.containerName + "." + hc.browserWindowName;
+            }
+
+            if (glue42gd) {
+                return glue42gd.applicationName;
+            }
+
+            if (Utils.isNode()) {
+                if (nodeStartingContext) {
+                    return nodeStartingContext.applicationConfig.name;
+                }
+
+                return "NodeJS" + uid;
+            }
+
+            if (typeof window !== "undefined" && typeof document !== "undefined") {
+                return ((window as any).agm_application || document.title) + uid;
+            }
+        }
+
+        function getDefaultLogger() {
             return {
-                username: "glue42", password: "glue42"
+                publish: "off",
+                console: "error",
+                metrics: "off",
             };
         }
-    }
 
-    function getLogger(): { console: Glue42Core.LogLevel; publish: Glue42Core.LogLevel } {
-        let config = configuration.logger;
-        const defaultLevel = "error";
-        if (!config) {
-            config = defaultLevel;
-        }
-
-        if (typeof config === "string") {
-            return { console: config, publish: defaultLevel };
+        function getDefaultAuth() {
+            if (Utils.isNode() && nodeStartingContext) {
+                return {
+                    gatewayToken: nodeStartingContext.gwToken
+                };
+            }
         }
 
         return {
-            console: config.console ?? defaultLevel,
-            publish: config.publish ?? defaultLevel
+            application: getDefaultApplicationName(),
+            metrics: getMetricsDefaults(),
+            agm: {},
+            gateway: getGatewayDefaults(),
+            logger: getDefaultLogger(),
+            bus: false,
+            auth: getDefaultAuth()
         };
     }
 
-    const connection = getConnection();
+    function getConfigProp<T>(prop1: string, prop2?: string): T {
+
+        const masterConfigProp1 = masterConfig[prop1];
+        const userProp1 = (configuration as any)[prop1];
+        const dynamicDefaultsProp1 = dynamicDefaults[prop1];
+        const hardDefaultsProp1 = (hardDefaults as any)[prop1];
+
+        if (prop2) {
+            if (masterConfigProp1 && masterConfigProp1[prop2] !== undefined) {
+                return masterConfigProp1[prop2] as T;
+            }
+
+            if (userProp1 && userProp1[prop2] !== undefined) {
+                return userProp1[prop2] as T;
+            }
+
+            if (dynamicDefaultsProp1 && dynamicDefaultsProp1[prop2] !== undefined) {
+                return dynamicDefaultsProp1[prop2] as T;
+            }
+
+            if (hardDefaultsProp1 && hardDefaultsProp1[prop2] !== undefined) {
+                return hardDefaultsProp1[prop2] as T;
+            }
+
+        } else {
+
+            if (masterConfigProp1 !== undefined) {
+                return masterConfigProp1 as T;
+            }
+            if (userProp1 !== undefined) {
+                return userProp1 as T;
+            }
+            if (dynamicDefaultsProp1 !== undefined) {
+                return dynamicDefaultsProp1 as T;
+            }
+            if (hardDefaultsProp1 !== undefined) {
+                return hardDefaultsProp1 as T;
+            }
+        }
+
+        return undefined;
+
+    }
+
+    function ifNotFalse(what: any, then: any) {
+        if (typeof what === "boolean" && !what) {
+            return undefined;
+        } else {
+            return then;
+        }
+    }
+
+    const connection = getGateway();
+    const contexts = getContexts(connection);
+    const channels = getChannels(contexts);
+    const bus = getBus(connection);
 
     return {
-        bus: configuration.bus ?? false,
+        bus,
+        identity: metricsIdentity,
         auth: getAuth(),
         logger: getLogger(),
         connection,
-        metrics: configuration.metrics ?? true,
-        contexts: configuration.contexts ?? true,
+        metrics: getMetrics(),
+        agm: getAgm(),
+        contexts,
+        channels,
         version: ext.version || pjsonVersion,
-        libs: ext.libs ?? [],
+        libs: ext.libs,
         customLogger: configuration.customLogger
     };
 }

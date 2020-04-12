@@ -1,8 +1,6 @@
 import { Glue42Core } from "../../../glue";
 import { default as CallbackRegistryFactory, CallbackRegistry } from "callback-registry";
 import generate from "shortid";
-import { Logger } from "../../logger/logger";
-import Connection from "../connection";
 
 interface GW3Message {
     request_id?: string;
@@ -14,7 +12,7 @@ interface GW3Message {
 /**
  * Handles domain session lifetime and events for a given connection/domain pair
  */
-export default function (domain: string, connection: Connection, logger: Logger, successMessages?: string[], errorMessages?: string[]): Glue42Core.Connection.GW3DomainSession {
+export default function(domain: string, connection: Glue42Core.Connection.GW3Connection, logger: Glue42Core.Logger.API, successMessages?: string[], errorMessages?: string[]): Glue42Core.Connection.GW3DomainSession {
 
     if (domain == null) {
         domain = "global";
@@ -26,27 +24,27 @@ export default function (domain: string, connection: Connection, logger: Logger,
     let isJoined = false;
     let tryReconnecting = false;
     /** holds latest options passed to join - used when doing reconnects */
-    let _latestOptions: object | undefined;
+    let _latestOptions: object;
     // #deleteme TODO: verify this gets properly set to true
     let _connectionOn: boolean = false;
 
-    const callbacks: CallbackRegistry = CallbackRegistryFactory();
+    const callbacks = CallbackRegistryFactory();
 
     // attach event handlers to connection
     connection.disconnected(handleConnectionDisconnected);
     connection.loggedIn(handleConnectionLoggedIn);
-    connection.on("success", (msg: GW3Message) => handleSuccessMessage(msg));
-    connection.on("error", (msg: GW3Message) => handleErrorMessage(msg));
-    connection.on("result", (msg: GW3Message) => handleSuccessMessage(msg));
+    connection.on(domain, "success", (msg: GW3Message) => handleSuccessMessage(msg));
+    connection.on(domain, "error", (msg: GW3Message) => handleErrorMessage(msg));
+    connection.on(domain, "result", (msg: GW3Message) => handleSuccessMessage(msg));
 
     if (successMessages) {
         successMessages.forEach((sm) => {
-            connection.on(sm, (msg: GW3Message) => handleSuccessMessage(msg));
+            connection.on(domain, sm, (msg: GW3Message) => handleSuccessMessage(msg));
         });
     }
     if (errorMessages) {
         errorMessages.forEach((sm) => {
-            connection.on(sm, (msg: GW3Message) => handleErrorMessage(msg));
+            connection.on(domain, sm, (msg: GW3Message) => handleErrorMessage(msg));
         });
     }
 
@@ -71,7 +69,7 @@ export default function (domain: string, connection: Connection, logger: Logger,
             if (domain === "global") {
                 joinPromise = _connectionOn ? Promise.resolve<{}>({}) : Promise.reject<{}>("not connected to gateway");
             } else {
-                logger.debug(`joining domain ${domain}`);
+                logger.debug("joining " + domain);
 
                 const joinMsg = {
                     type: "join",
@@ -97,9 +95,9 @@ export default function (domain: string, connection: Connection, logger: Logger,
     }
 
     // terminology: join vs leave (domain), connect vs login vs disconnect (to/from GW)
-    function leave(): Promise<void> {
+    function leave() {
         if (domain === "global") {
-            return Promise.resolve();
+            return;
         }
 
         logger.debug("stopping session " + domain + "...");
@@ -108,9 +106,8 @@ export default function (domain: string, connection: Connection, logger: Logger,
             destination: domain,
             domain: "global",
         };
-        tryReconnecting = false;
         // #deleteme - handling
-        return send(leaveMsg).then(() => {
+        send(leaveMsg).then(() => {
             isJoined = false;
             callbacks.execute("onLeft");
         });
@@ -127,7 +124,7 @@ export default function (domain: string, connection: Connection, logger: Logger,
 
     function handleConnectionDisconnected() {
         _connectionOn = false;
-        logger.debug("connection is down");
+        logger.warn("connection is down");
         isJoined = false;
         tryReconnecting = true;
         callbacks.execute("onLeft", { disconnected: true });
@@ -163,9 +160,6 @@ export default function (domain: string, connection: Connection, logger: Logger,
         }
 
         const requestId = msg.request_id;
-        if (!requestId) {
-            return;
-        }
         const entry = requestsMap[requestId];
         if (!entry) {
             return;
@@ -179,9 +173,7 @@ export default function (domain: string, connection: Connection, logger: Logger,
             return;
         }
         const requestId = msg.request_id;
-        if (!requestId) {
-            return;
-        }
+
         const entry = requestsMap[requestId];
         if (!entry) {
             return;
@@ -200,7 +192,7 @@ export default function (domain: string, connection: Connection, logger: Logger,
      * @param success
      * @param error
      */
-    function send<T>(msg: GW3Message, tag?: object, options?: Glue42Core.Connection.SendMessageOptions): Promise<T> {
+    function send(msg: GW3Message, tag?: object, options?: Glue42Core.Connection.SendMessageOptions): Promise<object> {
         options = options || {};
         // Allows function caller to override request_id
         msg.request_id = msg.request_id || getNextRequestId();
@@ -214,7 +206,7 @@ export default function (domain: string, connection: Connection, logger: Logger,
 
         return new Promise((resolve, reject) => {
             requestsMap[requestId] = {
-                success: (successMsg: any) => {
+                success: (successMsg) => {
                     delete requestsMap[requestId];
                     successMsg._tag = tag;
                     resolve(successMsg);
@@ -227,7 +219,7 @@ export default function (domain: string, connection: Connection, logger: Logger,
                 },
             };
             connection
-                .send(msg, options)
+                .send(domain, domain, msg, undefined, options)
                 .catch((err: string) => {
                     requestsMap[requestId].error({ err });
                 });
@@ -241,7 +233,7 @@ export default function (domain: string, connection: Connection, logger: Logger,
         msg.domain = msg.domain || domain;
         msg.peer_id = connection.peerId;
 
-        connection.send(msg);
+        connection.send(domain, domain, msg);
     }
 
     return {
@@ -251,8 +243,8 @@ export default function (domain: string, connection: Connection, logger: Logger,
         onLeft,
         send,
         sendFireAndForget,
-        on: <T>(type: string, callback: (msg: T) => void) => {
-            connection.on(type, (msg: any) => {
+        on: (type: string, callback: (msg: object) => void) => {
+            connection.on(domain, type, (msg: {[key: string]: any}) => {
                 if (msg.domain !== domain) {
                     return;
                 }
@@ -260,7 +252,7 @@ export default function (domain: string, connection: Connection, logger: Logger,
                 try {
                     callback(msg);
                 } catch (e) {
-                    logger.error(`Callback  failed: ${e} \n ${e.stack} \n msg was: ${JSON.stringify(msg)}`, e);
+                     logger.error(`Callback  failed: ${e} \n msg was: ${JSON.stringify(msg)}`);
                 }
             });
         },

@@ -1,50 +1,34 @@
-import { Glue42Core } from "../../glue";
-import gw3 from "./protocols/gw3/gw3";
-import { Repository } from "./repository";
-import { Protocol, MetricsSettings } from "./types";
-import { NullProtocol } from "./protocols/null/null";
+import { Glue42Core  } from "../../glue";
+import gw3 from "./core/protocols/gw3/gw3";
+import gw1 from "./core/protocols/gw1/gw1";
+import repository from "./repository";
+import { LocalConfig, Protocol } from "./types";
 
-export default (options: MetricsSettings): Glue42Core.Metrics.System => {
+export default (settings: Glue42Core.Metrics.Settings): Glue42Core.Metrics.System => {
+    const options: LocalConfig = {
+        connection: settings.connection,
+        identity: settings.identity,
+        logger: settings.logger,
+        heartbeatInterval: settings.heartbeatInterval,
+        settings: {},
+        clickStream: settings.clickStream,
+    };
 
-    let protocol: Protocol;
     if (!options.connection || typeof options.connection !== "object") {
-        protocol = new NullProtocol();
-    } else {
-        protocol = gw3(options.connection, options);
+        throw new Error("Connection is required parameter");
     }
 
-    const repo = new Repository(options, protocol);
-    return repo.root;
+    let _protocol: Protocol;
+
+    if (options.connection.protocolVersion === 3) {
+        _protocol = gw3(options.connection as Glue42Core.Connection.GW3Connection, settings);
+    } else {
+        // it is necessary to work in HC
+        _protocol = gw1(options.connection, settings);
+    }
+
+    const repo = repository(options, _protocol);
+
+    const rootSystem: Glue42Core.Metrics.System = repo.root;
+    return rootSystem; // System
 };
-
-export function addFAVSupport(system: Glue42Core.Metrics.System): Glue42Core.Metrics.API {
-    // Creating subsystem for reporting and feature metric
-    const reportingSystem: Glue42Core.Metrics.System = system.subSystem("reporting");
-    const def = {
-        name: "features"
-    };
-
-    let featureMetric: Glue42Core.Metrics.ObjectMetric;
-
-    const featureMetricFunc = (name: string, action: string, payload: string) => {
-        if (typeof name === "undefined" || name === "") {
-            throw new Error("name is mandatory");
-        } else if (typeof action === "undefined" || action === "") {
-            throw new Error("action is mandatory");
-        } else if (typeof payload === "undefined" || payload === "") {
-            throw new Error("payload is mandatory");
-        }
-
-        if (!featureMetric) {
-            featureMetric = reportingSystem.objectMetric(def, { name, action, payload });
-        } else {
-            featureMetric.update({
-                name,
-                action,
-                payload
-            });
-        }
-    };
-    (system as any).featureMetric = featureMetricFunc;
-    return system as Glue42Core.Metrics.API;
-}

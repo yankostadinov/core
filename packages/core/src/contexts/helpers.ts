@@ -10,7 +10,7 @@ export function applyContextDelta(
             return context;
         }
 
-        context = deepClone(context, undefined);
+        context = deepClone(context, null);
         const added = delta.added;
         const updated = delta.updated;
         const removed = delta.removed;

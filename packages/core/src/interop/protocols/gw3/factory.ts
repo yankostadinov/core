@@ -3,21 +3,19 @@ import ClientProtocol from "./client";
 import { Glue42Core } from "../../../../glue";
 import ClientRepository from "../../client/repository";
 import ServerRepository from "../../server/repository";
-import Interop from "../../interop";
-import { Protocol, InteropSettings } from "../../types";
-import Connection from "../../../connection/connection";
+import AGMImpl from "../../agm";
+import { Protocol } from "../../types";
 
-export default function (instance: Glue42Core.AGM.Instance, connection: Connection, clientRepository: ClientRepository, serverRepository: ServerRepository, libConfig: InteropSettings, interop: Interop): Promise<Protocol> {
+export default function (instance: Glue42Core.Interop.Instance, connection: Glue42Core.Connection.GW3Connection, clientRepository: ClientRepository, serverRepository: ServerRepository, libConfig: Glue42Core.AGM.Settings, getAGM: () => AGMImpl): Promise<Protocol> {
     const logger = libConfig.logger.subLogger("gw3-protocol");
-    let resolveReadyPromise: ((p: Protocol) => void) | undefined;
+    let resolveReadyPromise: (p: Protocol) => void;
 
     const readyPromise = new Promise<Protocol>((resolve) => {
         resolveReadyPromise = resolve;
     });
 
     // start domain join handshake
-    const session = connection.domain("agm", ["subscribed"]);
-
+    const session = connection.domain("agm", logger.subLogger("domain"), ["subscribed"]);
     const server = new ServerProtocol(session, clientRepository, serverRepository, logger.subLogger("server"));
     const client = new ClientProtocol(session, clientRepository, logger.subLogger("client"));
 
@@ -25,14 +23,13 @@ export default function (instance: Glue42Core.AGM.Instance, connection: Connecti
         // we're reconnecting
         logger.info("reconnected - will replay registered methods and subscriptions");
 
+        // TODO - re-subscribe for streams
         const existingSubscriptions = client.drainSubscriptions();
-        for (const sub of existingSubscriptions) {
-            const methodInfo = sub.method;
+        existingSubscriptions.forEach((sub) => {
+            const methodInfo = sub.method.info;
             const params = Object.assign({}, sub.params);
-            // remove handlers, otherwise they will be added twice
-            logger.info(`trying to re-subscribe to method ${methodInfo.name}`);
-            interop.client.subscribe(methodInfo, params, undefined, undefined, sub);
-        }
+            getAGM().client.subscribe(methodInfo, params, undefined, undefined, sub);
+        });
 
         // server side
         const registeredMethods = serverRepository.getList();
@@ -41,31 +38,33 @@ export default function (instance: Glue42Core.AGM.Instance, connection: Connecti
         // replay server methods
         for (const method of registeredMethods) {
             const def = method.definition;
-            logger.info(`re-publishing method ${def.name}`);
             if (method.stream) {
                 // streaming method
-                interop.server.createStream(def, method.streamCallbacks, undefined, undefined, method.stream);
-            } else if (method.theFunction && method.theFunction.userCallback) {
-                interop.register(def, method.theFunction.userCallback);
-            } else if (method.theFunction && method.theFunction.userCallbackAsync) {
-                interop.registerAsync(def, method.theFunction.userCallbackAsync);
+                getAGM().server.createStream(def, method.streamCallbacks, undefined, undefined, method.stream);
+            } else if (method.theFunction.userCallback) {
+                getAGM().register(def, method.theFunction.userCallback);
+            } else if (method.theFunction.userCallbackAsync) {
+                getAGM().registerAsync(def, method.theFunction.userCallbackAsync);
             }
         }
     }
 
     function handleInitialJoin() {
-        if (resolveReadyPromise) {
-            resolveReadyPromise({
-                client,
-                server,
-            });
 
-            resolveReadyPromise = undefined;
-        }
+        resolveReadyPromise({
+            client,
+            server,
+        });
+
+        resolveReadyPromise = undefined;
     }
 
+    session.onLeft(() => {
+        clientRepository.reset();
+    });
+
     session.onJoined((reconnect) => {
-        // add our server to the client repository
+        // add our server
         clientRepository.addServer(instance, connection.peerId);
 
         if (reconnect) {
@@ -73,11 +72,6 @@ export default function (instance: Glue42Core.AGM.Instance, connection: Connecti
         } else {
             handleInitialJoin();
         }
-    });
-
-    session.onLeft(() => {
-        // reset the client repository when the connection is down
-        clientRepository.reset();
     });
 
     session.join();

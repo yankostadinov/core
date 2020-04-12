@@ -1,16 +1,20 @@
 import { Transport } from "../types";
 import { default as CallbackRegistryFactory, CallbackRegistry, UnsubscribeFunction } from "callback-registry";
 import { Glue42Core } from "../../../glue";
-import { Logger } from "../../logger/logger";
 
-export default class InProcTransport implements Transport {
-
+/**
+ * Inproc transport for GW3
+ */
+export default class Inproc implements Transport {
+    private logger: Glue42Core.Logger.API;
     private gw: Glue42Core.Connection.GW3Facade;
+    private connectToken: {};
     private registry: CallbackRegistry = CallbackRegistryFactory();
-    private client?: Glue42Core.Connection.GW3Client;
+    private client: Glue42Core.Connection.GW3Client;
 
-    constructor(settings: Glue42Core.InprocGWSettings, logger: Logger) {
-        this.gw = settings.facade;
+    constructor(gw: Glue42Core.Connection.GW3Facade, logger: Glue42Core.Logger.API) {
+        this.gw = gw;
+        this.logger = logger;
         this.gw.connect((_client, message) => {
             this.messageHandler(message);
         }).then((client) => {
@@ -31,7 +35,7 @@ export default class InProcTransport implements Transport {
         }
     }
 
-    public send(_msg: string) {
+    public send(msg: string, product: string, type: string) {
         return Promise.reject("not supported");
     }
 
@@ -45,18 +49,13 @@ export default class InProcTransport implements Transport {
 
     public close() {
         // DO NOTHING
-        return Promise.resolve();
     }
 
     public open() {
+        // do nothing
         return Promise.resolve();
     }
-
-    public name(): string {
-        return "in-memory";
-    }
-
-    public reconnect(): Promise<void> {
+    public reconnect() {
         return Promise.resolve();
     }
 

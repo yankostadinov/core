@@ -2,22 +2,7 @@ import { Glue42Core } from "../../glue";
 import { ClientMethodInfo, ServerInfo, ServerMethodsPair } from "./client/types";
 import { ServerMethodInfo, ResultContext, RequestContext, ServerSubscriptionInfo } from "./server/types";
 import { InvokeResultMessage } from "./client/client";
-import Connection from "../connection/connection";
-import { Logger } from "../logger/logger";
 import { UserSubscription } from "./protocols/gw3/subscription";
-
-export interface InteropSettings {
-    connection: Connection;
-    logger: Logger;
-    /** Default for how much to wait for method to appear when invoking. If not set 10000
-     * @default 10000
-     */
-    waitTimeoutMs?: number;
-    /** Default for how much to wait of the method to respond when invoking. If not set 10000
-     * @default 10000
-     */
-    methodResponseTimeout?: number;
-}
 
 export interface ServerProtocolDefinition {
     onInvoked(callback: (methodToExecute: ServerMethodInfo, invocationId: string, invocationArgs: ResultContext) => void): void;
@@ -42,8 +27,8 @@ export interface ServerProtocolDefinition {
 }
 
 export interface ClientProtocolDefinition {
-    invoke(invocationId: string, method: ClientMethodInfo, argumentsObj: object | undefined, target: ServerInfo, stuff: Glue42Core.AGM.InvokeOptions): Promise<InvokeResultMessage>;
-    subscribe(stream: Glue42Core.AGM.MethodDefinition, args: Glue42Core.AGM.SubscriptionParams, targetServers: ServerMethodsPair[], successProxy: (sub: Glue42Core.AGM.Subscription) => void, errorProxy: (err: SubscribeError) => void, existingSub?: SubscriptionInner): void;
+    invoke(invocationId: string, method: ClientMethodInfo, argumentsObj: object, target: ServerInfo, stuff: Glue42Core.AGM.InvokeOptions): Promise<InvokeResultMessage>;
+    subscribe(stream: ClientMethodInfo, args: Glue42Core.AGM.SubscriptionParams, targetServers: ServerMethodsPair[], options: Glue42Core.AGM.SubscriptionParams, successProxy: (sub: Glue42Core.AGM.Subscription) => void, errorProxy: (err: SubscribeError) => void, existingSub: SubscriptionInner): void;
     drainSubscriptions(): SubscriptionInner[];
 }
 
@@ -54,21 +39,21 @@ export interface Protocol {
 
 export interface SubscribeError {
     method: Glue42Core.AGM.MethodDefinition;
-    called_with: object | undefined;
+    called_with: object;
     message: string;
 }
 
 export interface SubscriptionInner {
     localKey: number;
     status: string;
-    method: Glue42Core.AGM.MethodDefinition;
+    method: ClientMethodInfo;
     params: Glue42Core.AGM.SubscriptionParams;
     subscription?: UserSubscription;
     success: (sub: Glue42Core.AGM.Subscription) => void;
     error: (err: SubscribeError) => void;
     trackedServers: Array<{
         serverId: string;
-        subscriptionId?: string
+        subscriptionId: string
     }>;
     handlers: {
         onData: Array<(data: Glue42Core.AGM.StreamData) => void>;

@@ -13,8 +13,8 @@ export default class ServerStream implements Glue42Core.AGM.Stream {
     }
 
     public branches(): Glue42Core.AGM.StreamBranch[];
-    public branches(key: string): Glue42Core.AGM.StreamBranch | undefined;
-    public branches(key?: string): Glue42Core.AGM.StreamBranch[] | Glue42Core.AGM.StreamBranch | undefined {
+    public branches(key: string): Glue42Core.AGM.StreamBranch;
+    public branches(key?: string): Glue42Core.AGM.StreamBranch[] | Glue42Core.AGM.StreamBranch {
         const bList: string[] = this._protocol.server.getBranchList(this._repoMethod);
         if (key) {
             if (bList.indexOf(key) > -1) {
@@ -27,10 +27,6 @@ export default class ServerStream implements Glue42Core.AGM.Stream {
                 return new ServerBranch(branchKey, this._protocol, this._repoMethod);
             });
         }
-    }
-
-    public branch(key: string) {
-        return this.branches(key);
     }
 
     public subscriptions(): Glue42Core.AGM.StreamSubscription[] {

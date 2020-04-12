@@ -3,14 +3,196 @@ import { UnsubscribeFunction } from "callback-registry";
 /**
  * Factory function that creates a new Glue42 instance.
  */
-export type GlueCoreFactoryFunction = (config?: Glue42Core.Config, ext?: Glue42Core.Extension) => Promise<Glue42Core.GlueCore>;
-declare const GlueCoreFactory: GlueCoreFactoryFunction;
-export default GlueCoreFactory;
+export default function GlueCoreFactory(config?: Glue42Core.Config, ext?: Glue42Core.Extension): Promise<Glue42Core.GlueCore>;
+
+declare global {
+    interface Window {
+        htmlContainer?: Glue42Core.HtmlContainerObject;
+        glueDesktop?: Glue42Core.GlueDesktopObject;
+        glue42gd?: Glue42Core.GDObject;
+        gdPreloadPromise: Promise<Glue42Core.GDObject>;
+        WebSocket: any;
+        XDomainRequest?: any;
+    }
+}
 
 // tslint:disable-next-line:no-namespace
 export namespace Glue42Core {
 
-    export type LogLevel = "off" | "trace" | "debug" | "info" | "warn" | "error";
+    /** @ignore */
+    export interface GlueDesktopObject {
+        version: string;
+    }
+
+    /** @ignore */
+    export interface HtmlContainerObject {
+        activityFacade: {
+            init: () => void;
+            init2: () => void;
+            getActivityTypes: () => void;
+            subscribeForJoinBreakEvents?: () => void;
+            unregisterActivityType: () => void;
+            registerActivityType: () => void;
+            getWindowTypes: () => void;
+            registerWindowFactory: () => void;
+            initiate: () => void;
+            getActivities: () => void;
+            setActivityContext: () => void;
+        };
+        applicationName: string;
+        env: {
+            env: string;
+            machineName: string;
+            region: string;
+            windowsUserDomain: string;
+            windowsUserId: string;
+            windowsUserName: string;
+        };
+        getFrameColors: () => string[];
+        browserWindowName: string;
+        containerName: string;
+        containerVersion: string;
+        machineName: string;
+        jsAgmFacade: {
+            protocolVersion: number;
+            jsonValueDatePrefix: string;
+            initAsync(cfg: string, success: (i: Glue42Core.AGM.Instance) => void, error: (err: string) => void): void;
+            init(cfg: string): Glue42Core.AGM.Instance;
+
+            register(method: string, handler: ((args: string, caller: Glue42Core.AGM.Instance) => string) | ((args: object, caller: Glue42Core.AGM.Instance) => void | object | Promise<object>), returnAsJson?: boolean): void;
+            registerAsync(method: object, callback: (args: any, instance: Glue42Core.AGM.Instance, tracker: any) => void | Promise<void>): void;
+
+            unregister(name: string): void;
+
+            invoke(method: string, args: string, target: string, options: string, success: (result: any) => void, error: (err: string) => void): void;
+            invoke2(method: string, args: string, target: string, options: string, success: (result: any) => void, error: (err: string) => void): void;
+
+            methodAdded(callback: (method: Glue42Core.AGM.MethodDefinition) => void): void;
+            methodRemoved(callback: (method: Glue42Core.AGM.MethodDefinition) => void): void;
+
+            serverAdded(callback: (server: Glue42Core.AGM.Instance) => void): void;
+            serverRemoved(callback: (server: Glue42Core.AGM.Instance) => void): void;
+
+            serverMethodAdded(callback: (info: { server: Glue42Core.AGM.Instance, method: Glue42Core.AGM.MethodDefinition }) => void): void;
+            serverMethodRemoved(callback: (info: { server: Glue42Core.AGM.Instance, method: Glue42Core.AGM.MethodDefinition }) => void): void;
+
+            methodsForInstance(instance: string): string;
+
+            servers(filter?: string): string;
+            methods(filter?: string): string;
+
+            subscribe2(name: string, params: string, success: (sub: Glue42Core.AGM.Subscription) => void, error: (err: string) => void): void;
+
+            createStream2(methodDefinition: string,
+                subscriptionRequestHandler: (request: Glue42Core.AGM.SubscriptionRequest) => void,
+                subscriptionAddedHandler: (request: Glue42Core.AGM.StreamSubscription) => void,
+                subscriptionRemovedHandler: (request: Glue42Core.AGM.StreamSubscription) => void,
+                success: (stream: Glue42Core.AGM.Stream) => void,
+                error: (err: string) => void): void;
+        };
+        metricsFacade: {
+            done: () => void;
+            getIdentity: () => {
+                system: string;
+                service: string;
+                instance: string;
+            };
+            send(type: string, message: string | object): void;
+        };
+        loggingFacade: {
+            send(type: string, message: string | object): void;
+        };
+        monitors: Screen[];
+        pID: string;
+        perfDataNeeded: boolean;
+        perfDataDelay?: number;
+        updatePerfData: (perf: object) => void;
+        sharedContextFacade: {
+            all: () => void;
+            set: () => void;
+            setContext: () => void;
+            subscribe: () => void;
+            unsubscribe: () => void;
+            update: () => void;
+            updateContext: () => void;
+        };
+        windowId: string;
+        windowStyleAttributes: string;
+        getContext: () => object;
+    }
+
+    /** Object describing a screen. */
+    export interface Screen {
+        /** Screen height. */
+        height: number;
+        /** Whether this is the primary screen. */
+        isPrimary: boolean;
+        /** Horizontal coordinate of the top left corner of the screen. */
+        left: number;
+        /** Name of the screen assigned by the operating system. */
+        name: string;
+        /** Screen scale factor. */
+        scale: number;
+        /** Scale factor of the horizontal axis of the screen. */
+        scaleX: number;
+        /** Scale factor of the vertical axis of the screen. */
+        scaleY: number;
+        /** Vertical coordinate of the top left corner of the screen. */
+        top: number;
+        /** Screen width. */
+        width: number;
+        /** Height of the working area. */
+        workingAreaHeight: number;
+        /** Horizontal coordinate of the top left corner of the screen working area. */
+        workingAreaLeft: number;
+        /** Vertical coordinate of the top left corner of the screen working area. */
+        workingAreaTop: number;
+        /** Width of the working area. */
+        workingAreaWidth: number;
+    }
+
+    /** @ignore */
+    export interface GlueDesktopObject {
+        version: string;
+    }
+
+    /** @ignore */
+    export interface GDObject {
+        /** Id of the window */
+        windowId: string;
+        /** Name of the application running in the window */
+        appName: string;
+        /** Name of the application running in the window */
+        applicationName: string;
+        application: string;
+        /** Instance of the application running in the window */
+        appInstanceId: string;
+        gwURL: string;
+        pid: number;
+        env: {
+            env: string;
+            machineName: string;
+            region: string;
+            windowsUserDomain: string;
+            windowsUserId: string;
+            windowsUserName: string;
+        },
+        activityInfo: {
+            activityId: string,
+            activityType: string,
+            windowType: string,
+            windowName: string,
+            gwToken: string,
+            isOwner: boolean
+        };
+        updatePerfData: (perf: object) => void;
+        getGWToken(): Promise<string>;
+        getWindowInfo(id: string): {
+            applicationName: string;
+            activityId?: string;
+            activityWindowId?: string;
+        };
+    }
 
     /** Optional configuration object when initializing the Glue42 library. */
     export interface Config {
@@ -27,26 +209,33 @@ export namespace Glue42Core {
         /** Metrics configurations. */
         metrics?: boolean | MetricsConfig;
 
-        /** Enable or disable the Contexts API. */
-        contexts?: boolean;
+        /** Enable or disable the Interop API. */
+        agm?: boolean;
 
         /** Enable or disable the Pub/Sub API. */
         bus?: boolean;
 
         /** Defines logging levels per output target. */
-        logger?: LogLevel | LoggerConfig;
+        logger?: LoggerConfig | string;
 
-        /** Pass this to override the build-in logger and handle logging on your own */
-        customLogger?: Glue42Core.CustomLogger;
+        customLogger?: CustomLogger;
 
         /**
-         * Authentication can use one of the following flows:
-         * - username/password;
-         * - `token` - access tokens can be generated after successful login from the Auth Provider (e.g., Auth0);
-         * - `gatewayToken` - Gateway tokens are time limited tokens generated by the Gateway after an explicit request. To generate one, use the `glue.connection.authToken()` method;
-         * - `sspi` - using `sessionId` and authentication challenge callback;
-         */
+          * Authentication can use one of the following flows:
+          * - username/password;
+          * - `token` - access tokens can be generated after successful login from the Auth Provider (e.g., Auth0);
+          * - `gatewayToken` - Gateway tokens are time limited tokens generated by the Gateway after an explicit request. To generate one, use the `glue.connection.authToken()` method;
+          * - `sspi` - using `sessionId` and authentication challenge callback;
+          */
         auth?: Glue42Core.Auth | string;
+    }
+
+    export interface CustomLogger {
+        debug(message?: any, ...optionalParams: any[]): void;
+        error(message?: any, ...optionalParams: any[]): void;
+        info(message?: any, ...optionalParams: any[]): void;
+        log(message?: any, ...optionalParams: any[]): void;
+        warn(message?: any, ...optionalParams: any[]): void;
     }
 
     /** Configurations for the Glue42 Gateway connection. */
@@ -54,7 +243,10 @@ export namespace Glue42Core {
         /** URL for the WebSocket connections to the Gateway. */
         ws?: string;
 
-        /** Legacy (Version of the Gateway that you are connected to)  */
+        /** URL for the HTTP connections to the Gateway. */
+        http?: string;
+
+        /** Version of the Gateway that you are connected to. Possible values are: 1, 2, 3. */
         protocolVersion?: number;
 
         /**
@@ -72,11 +264,12 @@ export namespace Glue42Core {
         /** A way to pass custom token provider for Gateway v.3 tokens. */
         gwTokenProvider?: GwTokenProvider;
 
-        /** Path to the shared worker file that contains glue0 shared worker related code  */
-        sharedWorker?: string;
-
-        /** Connect with GW in memory */
-        inproc?: InprocGWSettings;
+        /**
+         * Connect to a Gateway running in the same process
+         * (you can spin off one by using the tick42-gateway package).
+         * Works only if `protocolVersion` is 3.
+         */
+        inproc?: GwProcConfig;
 
         /**
          * @ignore
@@ -84,28 +277,71 @@ export namespace Glue42Core {
          * property. Allows out-of-band subscription and replaying of Glue42 messages.
          */
         replaySpecs?: Glue42Core.Connection.MessageReplaySpec[];
+
+        /**
+         * If `true`, will always connect to the Gateway,
+         * no matter what environment the app is running in.
+         * @default false
+         */
+        force?: boolean;
     }
 
-    export interface InprocGWSettings {
-        facade: Glue42Core.Connection.GW3Facade;
+    /** A way to pass custom token provider for Gateway v.3 tokens. */
+    export interface GwTokenProvider {
+        get: () => string;
     }
 
     /**
-     * A way to pass custom token provider for Gateway v.3 tokens.
-     * @ignore
+     * Connect to a Gateway running in the same process
+     * (you can spin off one by using the tick42-gateway package).
+     * Works only if `protocolVersion` is 3.
      */
-    export interface GwTokenProvider {
-        get: () => string;
+    export interface GwProcConfig {
+        /** Token returned when starting the Gateway from the `tick42-gateway` package. */
+        token: string;
+
+        /** Facade object. This is the default export of `tick42-gateway`. */
+        facade: Glue42Core.Connection.GW3Facade;
     }
 
     /** Metrics configurations. */
     export interface MetricsConfig {
 
         /**
+         * Metrics system, if not specified defaults to:
+         * - browser - "Browser"
+         * - HC - "HtmlContainer" + container_name
+         */
+        system?: string;
+
+        /**
+         * Metrics service, if not specified defaults to:
+         * - browser - document.title || "unknown"
+         * - HC - "JS." + browser_window_name
+         */
+        service?: string;
+
+        /**
+         * Metrics instance, if not specified defaults to:
+         * - browser - "~" + random_number
+         * - HC - "~" + machine_name
+         */
+        instance?: string;
+        /**
          *  If `false` (default), an App system will be created on top level, and all other metrics will live in it.
          *  If `true`, an App system will be created, and all metrics will live on top level.
          */
         disableAutoAppSystem?: boolean;
+    }
+
+    /** Logger configuration. */
+    export interface LoggerConfig {
+        /** Console logging level. */
+        console: string;
+        /** File logging level. */
+        publish: string;
+        /** Metrics logging level. */
+        metrics: string;
     }
 
     export interface Extension {
@@ -124,7 +360,7 @@ export namespace Glue42Core {
 
     export interface ExternalLib {
         name: string;
-        create: (core: GlueCore) => any;
+        create: (core: GlueCore) => GlueInnerLib;
     }
 
     /**
@@ -158,25 +394,15 @@ export namespace Glue42Core {
         gatewayToken?: string;
     }
 
-    /**
-     * Describes a custom logger object
-     */
-    export interface CustomLogger {
-        debug(message?: any, ...optionalParams: any[]): void;
-        error(message?: any, ...optionalParams: any[]): void;
-        info(message?: any, ...optionalParams: any[]): void;
-        log(message?: any, ...optionalParams: any[]): void;
-        warn(message?: any, ...optionalParams: any[]): void;
-    }
-
     export interface GlueCore {
         /** Connection library. */
         connection: Glue42Core.Connection.API;
 
+        /** Logger library. */
         logger: Glue42Core.Logger.API;
 
         /** Interop library. */
-        agm: Glue42Core.Interop.API;
+        agm: Glue42Core.AGM.API;
 
         /** Interop library. */
         interop: Glue42Core.Interop.API;
@@ -209,7 +435,7 @@ export namespace Glue42Core {
          * @ignore
          * Config as passed from the user
          */
-        userConfig?: Config;
+        userConfig: Config;
 
         /**
          * @ignore
@@ -231,78 +457,16 @@ export namespace Glue42Core {
         message?: string;
     }
 
-    export namespace Logger {
-        export interface API {
-
-            /** Name of the logger. */
-            name: string;
-
-            /** Version of the Logging API. */
-            version?: string;
-
-            /**
-             * Creates a new logger which is a sub-logger of the current one.
-             * @param name Name for the sub-logger.
-             */
-            subLogger(name: string): Logger.API;
-
-            /**
-             * Sets or gets the current threshold level for publishing to a file.
-             * @param level Logger level.
-             */
-            publishLevel(level?: LogLevel): LogLevel | undefined;
-
-            /**
-             * Sets or gets the current threshold level for writing to the console.
-             * @param level Logger level.
-             */
-            consoleLevel(level?: LogLevel): LogLevel | undefined;
-
-            /**
-             * Logging method.
-             * @param message Message to log.
-             * @param level Logging level for the message.
-             */
-            log(message: string, level?: LogLevel): void;
-
-            /**
-             * Method for logging messages at "trace" level.
-             * @param message Message to log.
-             */
-            trace(message: string): void;
-
-            /**
-             * Method for logging messages at "debug" level.
-             * @param message Message to log.
-             */
-            debug(message: string): void;
-
-            /**
-             * Method for logging messages at "info" level.
-             * @param message Message to log.
-             */
-            info(message: string): void;
-
-            /**
-             * Method for logging messages at "warn" level.
-             * @param message Message to log.
-             */
-            warn(message: string): void;
-
-            /**
-             * Method for logging messages at "error" level.
-             * @param message Message to log.
-             */
-            error(message: string, err?: Error): void;
-
-            /**
-             * Checks if the logger can publish a log level
-             * @param level
-             */
-            canPublish(level: LogLevel): boolean;
-        }
-
+    /** @ignore */
+    export interface GlueInnerLib {
+        version?: string;
+        ready?: () => Promise<any>;
+        initTime?: number;
+        initStartTime?: number;
+        initEndTime?: number;
     }
+
+
 
     /**
      * @docmenuorder 1
@@ -337,6 +501,26 @@ export namespace Glue42Core {
      */
     export namespace Interop {
         /**
+         * @ignore
+         */
+        export interface Settings {
+            connection: Connection.API;
+            logger: Logger.API;
+            instance: any;
+            /** Default for how much to wait for method to appear when invoking. If not set 10000
+             * @default 10000
+             */
+            waitTimeoutMs?: number;
+            /** Default for how much to wait of the method to respond when invoking. If not set 10000
+             * @default 10000
+             */
+            methodResponseTimeout?: number;
+            /** If set will use AGM through GW  */
+            forceGW?: boolean;
+            gdVersion: number;
+        }
+
+        /**
          * Which Interop server(s) to target when invoking Interop methods or subscribing to Interop streams.
          * @default "best"
          */
@@ -344,7 +528,7 @@ export namespace Glue42Core {
         /**
          * @docmenuorder 1
          */
-        export interface API {
+        export interface API extends GlueInnerLib {
 
             /** Instance of the current application. */
             instance: Instance;
@@ -367,7 +551,7 @@ export namespace Glue42Core {
              * @param name  A unique string or a [`MethodDefinition`](#!MethodDefinition) for the method to be registered.
              * @param handler The JavaScript function that will be called when the method is invoked.
              */
-            register<T = any, R = any>(name: string | MethodDefinition, handler: (args: T, caller: Instance) => R | void | Promise<R>): Promise<void>;
+            register(name: string | MethodDefinition, handler: (args: object, caller: Instance) => object | void): Promise<void>;
 
             /**
              * Registers a new async Interop method. Async methods can delay returning the result
@@ -376,7 +560,7 @@ export namespace Glue42Core {
              * @param handler The JavaScript function that will be called when the method is invoked. Accepts two extra arguments - a `success` and an `error` callbacks.
              * To return a result, you must call the `success` callback, or the `error` callback for errors.
              */
-            registerAsync<T = any>(name: string | MethodDefinition, handler: (args: T, caller: Instance, successCallback: (args?: T) => void, errorCallback: (error?: string | object) => void) => void): Promise<void>;
+            registerAsync(name: string | MethodDefinition, handler: (args: object, caller: Instance, successCallback: (args?: object) => void, errorCallback: (error?: string | object) => void) => void): Promise<void>;
 
             /**
              * Unregisters an Interop method.
@@ -405,7 +589,9 @@ export namespace Glue42Core {
              * @param success An [`InvokeSuccessHandler`](#InvokeSuccessHandler) handler to be called if the invocation succeeds.
              * @param error An [`InvokeErrorHandler`](#InvokeErrorHandler) handler to be called in case of error.
              */
-            invoke<T = any>(method: string | MethodDefinition, argumentObj?: object, target?: InstanceTarget, options?: InvokeOptions, success?: InvokeSuccessHandler<T>, error?: InvokeErrorHandler): Promise<InvocationResult<T>>;
+            invoke(method: string | MethodDefinition, argumentObj?: object, target?: InstanceTarget, options?: InvokeOptions, success?: InvokeSuccessHandler<any>, error?: InvokeErrorHandler): Promise<InvocationResult<any>>;
+
+            invoke<T>(method: string | MethodDefinition, argumentObj?: object, target?: InstanceTarget, options?: InvokeOptions, success?: InvokeSuccessHandler<T>, error?: InvokeErrorHandler): Promise<InvocationResult<T>>;
 
             /**
              * Creates a new Interop stream.
@@ -443,17 +629,17 @@ export namespace Glue42Core {
              * @example
              * ```javascript
              * glue.interop.subscribe(
-             *     "MarketData.LastTrades",
-             *     {
-             *     	   arguments: { symbol: "GOOG" },
-             *     	   target: "all"
-             *     })
-             *     .then((subscription) => {
-             *     	    // use subscription
-             *     })
-             *     .catch((error) => {
-             *     	    // subscription rejected or failed
-             *     });
+	         *     "MarketData.LastTrades",
+	         *     {
+	         *     	   arguments: { symbol: "GOOG" },
+	         *     	   target: "all"
+	         *     })
+	         *     .then((subscription) => {
+	         *     	    // use subscription
+	         *     })
+	         *     .catch((error) => {
+	         *     	    // subscription rejected or failed
+	         *     });
              * ```
              * @param methodDefinition The unique `name` or the [`MethodDefinition`](#!MethodDefinition) of the stream to subscribe to.
              * @param parameters An optional [`SubscriptionParams`](#SubscriptionParams) object with parameters.
@@ -527,12 +713,6 @@ export namespace Glue42Core {
         /** Optional object with parameters passed to [`subscribe()`](#!API-subscribe) when subscribing to a stream. */
         export interface SubscriptionParams {
 
-            /**
-             * Timeout to discover the stream, if not immediately available.
-             * @default 30000
-             */
-            waitTimeoutMs?: number;
-
             /** Specifies which servers to target. Can be one of: "best", "all", [`Instance`](#!Instance), `Instance[]`. */
             target?: InstanceTarget;
 
@@ -545,13 +725,18 @@ export namespace Glue42Core {
              */
             methodResponseTimeout?: number;
 
+            /**
+             * Timeout to discover the stream, if not immediately available.
+             * @default 30000
+             */
+            waitTimeoutMs?: number;
+
             /** Subscribe for the event which fires when new data is received. */
             onData?: (data: StreamData) => void;
 
             /** Subscribe for the event which fires when the subscription is closed. */
             onClosed?: () => void;
 
-            /** Subscribe for the event which your subscription is connected to a server */
             onConnected?: (server: Instance, reconnect: boolean) => void;
         }
 
@@ -562,7 +747,7 @@ export namespace Glue42Core {
             instance: Instance;
 
             /** Arguments passed with the subscription request. */
-            arguments: any;
+            arguments: object;
 
             /** Accepts the subscription request. */
             accept(): void;
@@ -615,18 +800,12 @@ export namespace Glue42Core {
 
             /**
              * Returns the list of available stream branches.
-             *
+             * If `key` is specified, returns the corresponding stream branch or `null`.
              * @param key Branch key.
              */
             branches(): StreamBranch[];
-            branches(key: string): StreamBranch | undefined;
-            branches(key?: string): StreamBranch | StreamBranch[] | undefined;
-
-            /**
-             * Returns a branch by key.
-             * @param key
-             */
-            branch(key: string): StreamBranch | undefined;
+            branches(key: string): StreamBranch;
+            branches(key?: string): StreamBranch[] | StreamBranch;
 
             /** Returns a list of active subscriptions to the stream. */
             subscriptions(): StreamSubscription[];
@@ -684,40 +863,48 @@ export namespace Glue42Core {
             /** Arguments used to make the subscription. */
             requestArguments: object;
 
+            /** Instances of the applications providing the stream, that we have subscribed to */
+            servers: Instance[];
+
             /**
              * @deprecated use servers
              * Instance of the application providing the stream.
              */
             serverInstance: Instance;
 
-            /** Instances of the applications providing the stream, that we have subscribed to */
-            servers: Instance[];
-
             /** Stream definition. */
             stream: MethodDefinition;
 
-            /** Subscribe for the event which fires when new data is received. */
+            /**
+             * @deprecated use {@link SubscriptionParams#onData} instead.
+             * Subscribe for the event which fires when new data is received.
+             */
             onData(callback: (data: StreamData) => void): void;
 
-            /** Subscribe for the event which fires when the subscription is closed. */
+            /**
+             * @deprecated use {@link SubscriptionParams#onClosed} instead.
+             * Subscribe for the event which fires when the subscription is closed.
+             */
             onClosed(callback: (info: OnClosedInfo) => void): void;
 
-            /** Subscribe for the event which fires if the subscription fails. */
+            /**
+             * @deprecated
+             */
             onFailed(callback: (err: any) => void): void;
 
-            /** Subscribe for the event which your subscription is connected to a server */
             onConnected(callback: (server: Instance, reconnect: boolean) => void): void;
 
             /** Closes the subscription. */
             close(): void;
         }
 
+
         /** Addition information around subscription being closed */
         export interface OnClosedInfo {
             message: string;
             requestArguments: object;
             server: Instance;
-            stream: MethodDefinition;
+            stream: {info: MethodDefinition};
         }
 
         /** Stream data received by the subscriber. */
@@ -730,10 +917,10 @@ export namespace Glue42Core {
             server: Instance;
 
             /** Arguments used when the subscription was made. */
-            requestArguments?: any;
+            requestArguments: object;
 
             /** Message from the publisher of the stream. */
-            message?: string;
+            message: string;
 
             /** If `true`, the data was sent to this application only. */
             private: boolean;
@@ -846,7 +1033,7 @@ export namespace Glue42Core {
 
             /**
              * Timeout to discover the method, if not immediately available.
-             * @default 10000
+             * @default 3000
              */
             waitTimeoutMs?: number;
 
@@ -867,7 +1054,7 @@ export namespace Glue42Core {
             method: MethodDefinition;
 
             /** Instance of the application that executed the method. */
-            executed_by?: Instance;
+            executed_by: Instance;
 
             /** Arguments of the invocation. */
             called_with: any;
@@ -876,11 +1063,11 @@ export namespace Glue42Core {
             message: string;
 
             /** Status sent by the application that executed the method. */
-            status?: number;
+            status: number;
         }
 
         /** Extends [`InvocationResultCore`](#!InvocationResultCore). Results from a method invocation. */
-        export interface InvocationResult<T = any> extends InvocationResultCore<T> {
+        export interface InvocationResult<T> extends InvocationResultCore<T> {
 
             /** An array of invocation results. */
             all_return_values?: Array<InvocationResultCore<T>>;
@@ -930,22 +1117,50 @@ export namespace Glue42Core {
          *
          * @ignore
          */
-
+        export interface Settings {
+            identity?: Identity;
+            logger?: Logger.API;
+            protocolVersion?: number;
+            ws?: string;
+            http?: string;
+            httpInterval?: number;
+            /** If connection is lost, try reconnecting on some interval */
+            reconnectInterval?: number;
+            /** If connection is lost, how many times to try */
+            reconnectAttempts?: number;
+            /**
+             * Use this to initialize with gateway object.
+             * The connection will use that object as inproc transport to GW.
+             * This will only work if protocolVersion is 3 otherwise will be ignored
+             */
+            gw?: {
+                facade: GW3Facade;
+            };
+            force?: boolean;
+            replaySpecs?: MessageReplaySpec[];
+            gdVersion?: number;
+        }
         /** @ignore */
-
+        export interface Identity {
+            /* unique application name  */
+            application?: string;
+            /* the application name */
+            applicationName?: string;
+            instance?: string;
+            region?: string;
+            environment?: string;
+            machine?: string;
+            process?: number;
+            system?: string;
+            service?: string;
+            user?: string;
+            windowId?: string;
+            api?: string;
+        }
         /**
          * Connection to the Glue42 Gateway.
          */
-        export interface API {
-            peerId: string;
-            token: string;
-            info: object;
-            resolvedIdentity: object;
-            availableDomains: object[];
-            gatewayToken?: string;
-            replayer?: MessageReplayer;
-            isConnected: boolean;
-
+        export interface API extends GlueInnerLib {
             /**
              * Protocol version of the current connection.
              */
@@ -955,13 +1170,13 @@ export namespace Glue42Core {
              *
              * @ignore
              */
-            send(message: object, options?: SendMessageOptions): Promise<void>;
+            send(product: string, type: string, message: object, id?: string, options?: SendMessageOptions): Promise<void>;
             /**
              * Subscribe for messages. Returns an object that can be used to unsubscribe
              *
              * @ignore
              */
-            on<T>(type: string, messageHandler: (msg: T) => void): {
+            on(product: string, type: string, messageHandler: (msg: object) => void): {
                 type: string;
                 id: number;
             };
@@ -974,7 +1189,8 @@ export namespace Glue42Core {
                 type: string;
                 id: number;
             }): void;
-
+            /** @ignore */
+            login(message: Glue42Core.Auth, reconnect?: boolean): Promise<Identity>;
             /** @ignore */
             logout(): void;
 
@@ -995,11 +1211,25 @@ export namespace Glue42Core {
              */
             disconnected(callback: () => void): () => void;
 
+            reconnect(): Promise<void>;
+        }
+        /**
+         * GW3 connection - adds GW3 specific info and domain session abstraction
+         *
+         * @ignore
+         */
+        export interface GW3Connection extends API {
+            peerId: string;
+            token: string;
+            info: object;
+            resolvedIdentity: object;
+            availableDomains: object[];
+            gatewayToken: string;
+            replayer: MessageReplayer;
             /**
              * Creates a domain wrapper used to handles domain session lifetime and events for a given connection/domain pair
              */
-            domain(domain: string, successMessages?: string[], errorMessages?: string[]): GW3DomainSession;
-
+            domain(domain: string, logger?: Logger.API, successMessages?: string[], errorMessages?: string[]): GW3DomainSession;
             /**
              * Generates a new token that can be passed to another application and used to authenticate as the same user.
              * The token is one off and has time restricted validity.
@@ -1014,8 +1244,6 @@ export namespace Glue42Core {
              * ```
              */
             authToken(): Promise<string>;
-
-            reconnect(): Promise<void>;
         }
         /**
          * GW3 domain session
@@ -1032,7 +1260,7 @@ export namespace Glue42Core {
             /**
              * Leaves the domain.
              */
-            leave(): Promise<void>;
+            leave(): void;
             /**
              * Subscribe for join events (for the specific domain).
              * The wasReconnect flag indicates if this is auto join after connection drop
@@ -1046,7 +1274,7 @@ export namespace Glue42Core {
              * Send a message to GW.
              * A promise that is resolved when a success result for the is received or rejected if the GW returns an error
              */
-            send<T>(msg: object, tag?: object, options?: SendMessageOptions): Promise<T>;
+            send(msg: object, tag?: object, options?: SendMessageOptions): Promise<object>;
             /**
              * Use this to send a message to GW if you don't care about the result.
              * You may pass requestId or it will be generated internally
@@ -1058,18 +1286,21 @@ export namespace Glue42Core {
             /**
              * Subscribe for messages from GW
              */
-            on<T>(type: string, callback: (msg: T) => void): void;
+            on(type: string, callback: (msg: object) => void): void;
             loggedIn(callback: (() => void)): void;
             connected(callback: (server: string) => void): void;
             disconnected(callback: () => void): void;
         }
-
-        /** @ignore */
+        /**
+         * GW3 facade that allows working with the gateway directly inproc
+         * This is exposed from tick42-gateway package
+         *
+         * @ignore
+         */
         export interface GW3Facade {
             connect(handler: (client: GW3Client, msg: object) => void): Promise<GW3Client>;
         }
 
-        /** @ignore */
         export interface GW3Client {
             send(msg: object): void;
         }
@@ -1081,9 +1312,9 @@ export namespace Glue42Core {
         }
 
         /**
-         * Allows out-of-band subscription to Gateway messages in `protocolVersion: 3`.
-         * @ignore
-         */
+        * Allows out-of-band subscription to Gateway messages in `protocolVersion: 3`.
+        * @ignore
+        */
         export interface MessageReplaySpec {
             /**
              * Used to identify a set of message types,
@@ -1109,6 +1340,115 @@ export namespace Glue42Core {
     }
 
     /**
+     * @docmenuorder 6
+     * @intro
+     * The Glue42 Logging API enables JavaScript applications to create a hierarchy of sub-loggers mapped to application components
+     * where you can control the level of logging for each component. You can also route the output of log messages (depending on the logging level) to a variety of targets:
+     * - the developer console;
+     * - an external output - usually a rolling file on the desktop, but actually any target the `log4net` library supports;
+     * - the **Glue42 Desktop** [Metrics](../../../../glue42-concepts/metrics/overview/index.html) bus;
+     * - the [Glue42 Notification Service](../../../../glue42-concepts/notifications/overview/index.html);
+     *
+     * The last three targets give you the ability to:
+     * - connect to a remote desktop and pull the application log files using the Interop Viewer;
+     * - connect to the Metrics bus and monitor the application in real time, or record log messages routed to a metrics storage in a Cassandra database for later analysis;
+     * - raise notifications which can be displayed via a customizable UI on the user's desktop;
+     */
+    export namespace Logger {
+        /** @ignore */
+        export interface Identity {
+            instance: string;
+            service: string;
+            system: string;
+        }
+
+        /**
+         * Configuration object from Logging library
+         * @ignore
+         */
+        export interface Settings {
+            identity: Identity;
+            getConnection: () => Connection.API;
+            publish: string;
+            console: string;
+            metrics: string;
+        }
+
+        export interface API {
+
+            /** Name of the logger. */
+            name: string;
+
+            /** Version of the Logging API. */
+            version?: string;
+
+            /**
+             * Creates a new logger which is a sub-logger of the current one.
+             * @param name Name for the sub-logger.
+             */
+            subLogger(name: string): Logger.API;
+
+            /**
+             * Sets or gets the current threshold level for publishing to a file.
+             * @param level Logger level.
+             */
+            publishLevel(level?: string): string;
+
+            /**
+             * Sets or gets the current threshold level for writing to the console.
+             * @param level Logger level.
+             */
+            consoleLevel(level?: string): string;
+
+            /**
+             * Sets or gets the current threshold level for publishing metrics.
+             * @param level Logger level.
+             * @param metricsSystem Metrics system for which to set the logging level.
+             */
+            metricsLevel(level?: string, metricsSystem?: Metrics.System): string;
+
+            /**
+             * Logging method.
+             * @param message Message to log.
+             * @param level Logging level for the message.
+             */
+            log(message: string, level?: string): void;
+
+            /**
+             * Method for logging messages at "trace" level.
+             * @param message Message to log.
+             */
+            trace(message: string): void;
+
+            /**
+             * Method for logging messages at "debug" level.
+             * @param message Message to log.
+             */
+            debug(message: string): void;
+
+            /**
+             * Method for logging messages at "info" level.
+             * @param message Message to log.
+             */
+            info(message: string): void;
+
+            /**
+             * Method for logging messages at "warn" level.
+             * @param message Message to log.
+             */
+            warn(message: string): void;
+
+            /**
+             * Method for logging messages at "error" level.
+             * @param message Message to log.
+             */
+            error(message: string): void;
+
+            canPublish(level: string): boolean;
+        }
+    }
+
+    /**
      * @docmenuorder 4
      * @intro
      * To improve the efficiency of your business processes, you often find the need to collect extensive data about the daily workflows and routines within your company.
@@ -1121,7 +1461,7 @@ export namespace Glue42Core {
     export namespace Metrics {
         /** @docmenuorder 1 */
 
-        export interface API extends System {
+        export interface API extends System, GlueInnerLib {
             /**
              * The feature metric is under the subsystem with name "reporting".
              * @param feature The main feature you want to gather information about.
@@ -1136,8 +1476,32 @@ export namespace Glue42Core {
             featureMetric(feature: string, action: string, value: string): void;
         }
 
+        /**
+         * Library configuration
+         * @ignore
+         */
+        export interface Settings {
+            identity: Identity;
+            connection: Connection.API;
+            logger: Logger.API;
+            heartbeatInterval?: number;
+            /** If true will auto create click stream metrics in root system */
+            clickStream?: boolean;
+        }
+
+        export interface Identity {
+            instance: string;
+            service: string;
+            system: string;
+        }
+
         /** Metrics systems repository. */
         export interface Repository {
+            /** Returns the identity of the root system. */
+            identity: Identity;
+
+            /** Returns the instance ID of the root system. */
+            instance: string;
 
             /** Returns the root metrics system. */
             root: System;
@@ -1156,13 +1520,16 @@ export namespace Glue42Core {
             repo: Repository;
 
             /** Returns the parent system of the current system. */
-            parent?: System;
+            parent: System;
 
             /** An array of parent system names, starting with the root system name. */
             path: string[];
 
             /** ID of the system in the format `RootName/ParentName/.../CurrentSystemName`. */
             id: string;
+
+            /** Returns the identity of the system. */
+            identity: Identity;
 
             /** The root system in the repository. */
             root: System;
@@ -1194,6 +1561,18 @@ export namespace Glue42Core {
             getAggregateState(): SystemStateInfo[];
 
             /**
+             * Creates a new Address Metric.
+             * @param definition Metric definition.
+             */
+            addressMetric(definition: string | MetricDefinition, value: any): AddressMetric;
+
+            /** Creates a new Count Metric.
+             * @param definition Metric definition.
+             * @param value Metric value.
+             */
+            countMetric(definition: string | MetricDefinition, value: number): CountMetric;
+
+            /**
              * Creates a new Number Metric.
              * @param definition Metric definition.
              * @param value Metric value.
@@ -1208,6 +1587,20 @@ export namespace Glue42Core {
             objectMetric(definition: string | MetricDefinition, value: any): ObjectMetric;
 
             /**
+             * Creates a new Rate Metric.
+             * @param definition Metric definition.
+             * @param value Metric value.
+             */
+            rateMetric(definition: string | MetricDefinition, value: any): RateMetric;
+
+            /**
+             * Creates a new Statistics Metric.
+             * @param definition Metric definition.
+             * @param value Metric value.
+             */
+            statisticsMetric(definition: string | MetricDefinition, value: any): StatisticsMetric;
+
+            /**
              * Creates a new String Metric.
              * @param definition Metric definition.
              * @param value Metric value.
@@ -1215,11 +1608,26 @@ export namespace Glue42Core {
             stringMetric(definition: string | MetricDefinition, value: string): StringMetric;
 
             /**
+             * Creates a new Timespan Metric.
+             * @param definition Metric definition.
+             * @param value Metric value.
+             */
+            timespanMetric(definition: string | MetricDefinition, value: any): TimespanMetric;
+
+            /**
              * Creates a new Timestamp Metric.
              * @param definition Metric definition.
              * @param value Metric value.
              */
             timestampMetric(definition: string | MetricDefinition, value: any): TimestampMetric;
+        }
+
+        /** @ignore */
+        export const enum ConflationMode {
+            /**  */
+            Sampled = 0,
+            /**  */
+            TickByTick = 1
         }
 
         /** State of the metric system. */
@@ -1233,9 +1641,15 @@ export namespace Glue42Core {
         /** Metric definition. */
         export interface MetricDefinition {
             /** Name of the metric. */
-            name: string;
+            name?: string;
             /** Description for the metric. */
             description?: string;
+            /** @ignore */
+            period?: string;
+            /** @ignore */
+            resolution?: string;
+            /** @ignore */
+            conflation?: ConflationMode;
         }
 
         /** Basic metric. */
@@ -1245,7 +1659,13 @@ export namespace Glue42Core {
             name: string;
 
             /** Returns the description of the metric. */
-            description?: string;
+            description: string;
+
+            /** @ignore */
+            period: string;
+
+            /** @ignore */
+            resolution: string;
 
             /** Returns the system of the metric. */
             system: System;
@@ -1262,11 +1682,24 @@ export namespace Glue42Core {
             /** An array of parent system names, starting with the root system name. */
             path: string[];
 
+            /** @ignore */
+            conflation: ConflationMode;
+
             /** Returns the value of the metric. */
             value: any;
 
             /** Updates the value of the metric. */
             update(value: any): void;
+
+            /** Returns the value type of the metric. */
+            getValueType(): void;
+        }
+
+        /** Address metric. */
+        export interface AddressMetric extends Metric {
+
+            /** Returns the value of the metric. */
+            value: any;
         }
 
         /** Count metric. */
@@ -1344,6 +1777,32 @@ export namespace Glue42Core {
             update(value: any): void;
         }
 
+        /** Rate metric. */
+        export interface RateMetric extends Metric {
+
+            /** Returns the value of the metric. */
+            value: number;
+
+            /**
+             * Updates the value of the metric.
+             * @param value Value with which to update the metric.
+             */
+            update(value: number): void;
+        }
+
+        /** Statistics metric. */
+        export interface StatisticsMetric extends Metric {
+
+            /** Returns the value of the metric. */
+            value: any;
+
+            /**
+             * Updates the value of the metric.
+             * @param value Value with which to update the metric.
+             */
+            update(value: number): void;
+        }
+
         /** String metric. */
         export interface StringMetric extends Metric {
 
@@ -1357,6 +1816,25 @@ export namespace Glue42Core {
             update(value: string): void;
         }
 
+        /** Timespan metric. */
+        export interface TimespanMetric extends Metric {
+
+            /** Returns the value of the metric. */
+            value: any;
+
+            /**
+             * Updates the value of the metric.
+             * @param value Value with which to update the metric.
+             */
+            update(value: string): void;
+
+            /** Starts measuring the timespan. */
+            start(): void;
+
+            /** Stops measuring the timespan. */
+            stop(): void;
+        }
+
         /** Timestamp metric. */
         export interface TimestampMetric extends Metric {
 
@@ -1367,7 +1845,7 @@ export namespace Glue42Core {
              * Updates the value of the metric.
              * @param value Value with which to update the metric.
              */
-            update(value: Date): void;
+            update(value: string): void;
 
             /** Updates the metric with the current date and time. */
             now(): void;
@@ -1403,7 +1881,7 @@ export namespace Glue42Core {
      * See also the [**Shared Contexts**](../../../../glue42-concepts/data-sharing-between-apps/shared-contexts/javascript/index.html) documentation for more details.
      */
     export namespace Contexts {
-        export interface API {
+        export interface API extends GlueInnerLib {
             /**
              * Returns all existing context names. Using the context name you can subscribe for context changes, updates or set context values.
              */
@@ -1449,6 +1927,15 @@ export namespace Glue42Core {
             get(name: string, resolveImmediately?: boolean): Promise<any>;
         }
 
+        /** @ignore */
+        export interface ContextsConfig {
+            connection: Glue42Core.Connection.API;
+
+            logger: Glue42Core.Logger.API;
+
+            gdMajorVersion: number;
+        }
+
         /** Context delta when updating or replacing a context. */
         export interface ContextDelta {
 
@@ -1462,7 +1949,7 @@ export namespace Glue42Core {
             removed: string[];
 
             /** Context properties that were reset. */
-            reset?: ContextEntries;
+            reset: ContextEntries;
         }
 
         /** Context entries. Key/value pairs holding context data. */
@@ -1470,25 +1957,26 @@ export namespace Glue42Core {
 
         export type ContextName = string;
         export type ContextSubscriptionKey = number;
+
     }
 
     /**
-     * @docName Bus
-     * @docmenuorder 3
-     * @intro
-     * The **Pub/Sub** API enables applications to:
-     *
-     * - publish messages on a specific topic;
-     * - subscribe for messages on a specific topic;
-     *
-     * When an application publishes a message on a specific topic, the **Pub/Sub** API delivers it to other applications that have subscribed to that topic.
-     *
-     * The "raw Pub/Sub" support allows Glue42 Desktop to work with applications already using a Pub/Sub technology. Before writing new Pub/Sub based code, please consider the higher level [**Interop**](../../../../glue42-concepts/data-sharing-between-apps/interop/javascript/index.html) services provided by Glue42 Desktop: **Request/Response**, **Streaming**, **Discovery** and **Shared Contexts**. Utilizing these services, instead of creating them from scratch, can save you time and also provide you with a more robust service that can interact with applications by different dev teams and vendors.
-     *
-     * See also the [**Pub/Sub**](../../../../glue42-concepts/data-sharing-between-apps/pub-sub/javascript/index.html) documentation for more details.
-     */
+    * @docName Bus
+    * @docmenuorder 3
+    * @intro
+    * The **Pub/Sub** API enables applications to:
+    *
+    * - publish messages on a specific topic;
+    * - subscribe for messages on a specific topic;
+    *
+    * When an application publishes a message on a specific topic, the **Pub/Sub** API delivers it to other applications that have subscribed to that topic.
+    *
+    * The "raw Pub/Sub" support allows Glue42 Desktop to work with applications already using a Pub/Sub technology. Before writing new Pub/Sub based code, please consider the higher level [**Interop**](../../../../glue42-concepts/data-sharing-between-apps/interop/javascript/index.html) services provided by Glue42 Desktop: **Request/Response**, **Streaming**, **Discovery** and **Shared Contexts**. Utilizing these services, instead of creating them from scratch, can save you time and also provide you with a more robust service that can interact with applications by different dev teams and vendors.
+    *
+    * See also the [**Pub/Sub**](../../../../glue42-concepts/data-sharing-between-apps/pub-sub/javascript/index.html) documentation for more details.
+    */
     export namespace Bus {
-        export interface API {
+        export interface API extends GlueInnerLib {
             /**
              * Publishes the provided data on a specific topic.
              * An optional object can be provided to publish a message to specific peers.
@@ -1505,7 +1993,7 @@ export namespace Glue42Core {
                 topic: string,
                 data: object,
                 options?: MessageOptions
-            ): void;
+            ): void
 
             /**
              * Subscribe for receiving data published on specific topic on the message bus. The provided callback will be invoked for each received message.
@@ -1527,7 +2015,7 @@ export namespace Glue42Core {
              */
             subscribe(
                 topic: string,
-                callback: (data: object, topic: string, source: Glue42Core.Interop.Instance) => void,
+                callback: (data: object, topic: string, source: Glue42Core.AGM.Instance) => void,
                 options?: MessageOptions
             ): Promise<Subscription>;
         }
@@ -1545,76 +2033,26 @@ export namespace Glue42Core {
         export interface MessageOptions {
 
             /** Routing key specified by the publisher/subscriber. */
-            routingKey?: string;
+            routingKey?: string,
 
             /** Target specified by the publisher/subscriber. */
-            target?: object;
+            target?: object
         }
 
         /**
          * Subscription object that can be used to unsubscribe from a topic and stop receiving data.
          */
         export interface Subscription {
-            unsubscribe: () => Promise<void>;
+            unsubscribe: () => Promise<void>
         }
-    }
 
-    /** @ignore */
-    export interface GlueDesktopObject {
-        version: string;
-    }
-
-    /** @ignore */
-    export interface GDObject {
-        /** Id of the window */
-        windowId: string;
-        /** Name of the application running in the window */
-        appName: string;
-        /** Name of the application running in the window */
-        applicationName: string;
-        application: string;
-        /** Instance of the application running in the window */
-        appInstanceId: string;
-        gwURL: string;
-        pid: number;
-        env: {
-            env: string;
-            machineName: string;
-            region: string;
-            windowsUserDomain: string;
-            windowsUserId: string;
-            windowsUserName: string;
-        };
-        activityInfo: {
-            activityId: string,
-            activityType: string,
-            windowType: string,
-            windowName: string,
-            gwToken: string,
-            isOwner: boolean
-        };
-        updatePerfData: (perf: object) => void;
-        getGWToken(): Promise<string>;
-        getWindowInfo(id: string): {
-            applicationName: string;
-            activityId?: string;
-            activityWindowId?: string;
-        };
-    }
-
-    export interface LoggerConfig {
-        /** Console logging level. */
-        console?: LogLevel;
-        /** File logging level. */
-        publish?: LogLevel;
-    }
-}
-
-declare global {
-    interface Window {
-        glueDesktop?: Glue42Core.GlueDesktopObject;
-        glue42gd?: Glue42Core.GDObject;
-        gdPreloadPromise: Promise<Glue42Core.GDObject>;
+        /**
+         * @ignore
+         */
+        export interface Settings {
+            connection: Connection.API;
+            logger: Logger.API;
+        }
     }
 }
 

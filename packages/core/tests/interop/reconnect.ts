@@ -55,13 +55,15 @@ describe("reconnect", () => {
     it("my interop method is re-published after reconnect", async () => {
         const name = getMethodName();
         const serverInstance = glueServer.interop.instance.instance;
+        await glueServer.interop.register(name, () => {
+            // TODO - do nothing
+        });
+
         const waitForResult = waitForArr(["ma", "mr", "sr", "ma"], true);
-        const waitForMethodAdded = waitForArr([1]);
 
         glueClient.interop.methodAdded((m) => {
             if (m.name === name) {
                 waitForResult.fn("ma");
-                waitForMethodAdded.fn(1);
             }
         });
 
@@ -76,12 +78,6 @@ describe("reconnect", () => {
                 waitForResult.fn("sr");
             }
         });
-
-        await glueServer.interop.register(name, () => {
-            // TODO - do nothing
-        });
-
-        await waitForMethodAdded.promise;
 
         await Promise.all([
             glueServer.connection.reconnect(),
@@ -208,6 +204,7 @@ describe("reconnect", () => {
 
     it("my subscription is re-established after client&server reconnect", async () => {
         const name = getMethodName();
+        const pw = new PromiseWrapper<void>();
         const wfSubscriptionAddedHandler = waitForArr([true, true]);
         const wfOnData = waitForArr([true, true]);
         let events = 0;
@@ -233,7 +230,7 @@ describe("reconnect", () => {
             wfSubscriptionAddedHandler.promise]);
     });
 
-    it.skip("ws restart - my subscription is re-established after client&server reconnect", async () => {
+    it("ws restart - my subscription is re-established after client&server reconnect", async () => {
         const name = getMethodName();
         const wfSubscriptionAddedHandler = waitForArr([true, true]);
         const wfOnData = waitForArr([true, true]);

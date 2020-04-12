@@ -1,19 +1,15 @@
-import {
-    default as CallbackRegistryFactory,
-    CallbackRegistry,
-} from "callback-registry";
-import { Transport, ConnectionSettings } from "../types";
-import { Logger } from "../../logger/logger";
 import { Glue42Core } from "../../../glue";
+import { default as CallbackRegistryFactory, CallbackRegistry } from "callback-registry";
+import { Transport } from "../types";
 import Utils from "../../utils/utils";
 import { PromiseWrapper } from "../../utils/pw";
 
 const WebSocketConstructor = Utils.isNode() ? require("ws") : window.WebSocket;
 
 export default class WS implements Transport {
-    private ws: WebSocket | undefined;
-    private logger: Logger;
-    private settings: ConnectionSettings;
+    private logger: Glue42Core.Logger.API;
+    private settings: Glue42Core.Connection.Settings;
+    private ws: WebSocket;
 
     /**
      * If the flag is true the connection should keep trying to connect.
@@ -22,14 +18,10 @@ export default class WS implements Transport {
     private _running = true;
 
     private _registry: CallbackRegistry = CallbackRegistryFactory();
-    private wsRequests: Array<{ callback: () => void, failed?: (err?: string) => void }> = [];
 
-    constructor(settings: ConnectionSettings, logger: Logger) {
+    constructor(settings: Glue42Core.Connection.Settings, logger: Glue42Core.Logger.API) {
         this.settings = settings;
         this.logger = logger;
-        if (!this.settings.ws) {
-            throw new Error("ws is missing");
-        }
     }
 
     public onMessage(callback: (msg: string) => void): () => void {
@@ -37,24 +29,22 @@ export default class WS implements Transport {
     }
 
     // Create a function for sending a message
-    public send(msg: string, options?: Glue42Core.Connection.SendMessageOptions): Promise<void> {
+    public send(msg: string, product?: string, type?: string, options?: Glue42Core.Connection.SendMessageOptions): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             options = options || {};
-            this.waitForSocketConnection(
-                () => {
-                    try {
-                        this.ws?.send(msg);
-                        resolve();
-                    } catch (e) {
-                        reject(e);
-                    }
-                },
-                reject
-            );
+            this.waitForSocketConnection(() => {
+                try {
+                    this.ws.send(msg);
+                    resolve();
+                } catch (e) {
+                    reject(e);
+                }
+            }, reject, options.maxRetries, options.retryInterval);
         });
+
     }
 
-    public open() {
+    public open(): Promise<void> {
         this.logger.info(`opening ws...`);
         this._running = true;
         return new Promise<void>((resolve, reject) => {
@@ -70,19 +60,10 @@ export default class WS implements Transport {
         if (this.ws) {
             this.ws.close();
         }
-        return Promise.resolve();
     }
 
-    public onConnectedChanged(callback: (connected: boolean, reason?: string) => void): () => void {
-        return this._registry.add("onConnectedChanged", callback);
-    }
-
-    public name(): string {
-        return `ws ${this.settings.ws}`;
-    }
-
-    public reconnect(): Promise<void> {
-        this.ws?.close();
+    public reconnect() {
+        this.ws.close();
         const pw = new PromiseWrapper<void>();
         this.waitForSocketConnection(() => {
             pw.resolve();
@@ -90,73 +71,14 @@ export default class WS implements Transport {
         return pw.promise;
     }
 
-    // Holds callback execution until socket connection is established.
-    private waitForSocketConnection(
-        callback: () => void,
-        failed?: (err?: string) => void
-    ) {
-        failed = failed ?? (() => { /** DO nothing */ });
-
-        // check if we're still running
-        if (!this._running) {
-            failed(
-                `wait for socket on ${this.settings.ws} failed - socket closed by user`
-            );
-            return;
-        }
-
-        // if socket is opened - returned immediately
-        if (this.ws?.readyState === 1) {
-            callback();
-            return;
-        }
-
-        // store the callback
-        this.wsRequests.push({ callback, failed });
-        // if someone has already initiated the socket return
-        if (this.wsRequests.length > 1) {
-            return;
-        }
-
-        this.openSocket();
+    public onConnectedChanged(callback: (connected: boolean) => void): () => void {
+        return this._registry.add("onConnectedChanged", callback);
     }
 
-    private async openSocket(retryInterval?: number, retriesLeft?: number) {
-        if (retryInterval === undefined) {
-            retryInterval = this.settings.reconnectInterval;
-        }
-
-        if (retriesLeft !== undefined) {
-            if (retriesLeft === 0) {
-                this.notifyForSocketState(
-                    `wait for socket on ${this.settings.ws} failed - no more retries left`
-                );
-                return;
-            }
-            this.logger.debug(
-                `will retry ${retriesLeft} more times (every ${retryInterval} ms)`
-            );
-        }
-
-        try {
-            await this.initiateSocket();
-            this.notifyForSocketState();
-        } catch {
-            setTimeout(() => {
-                const retries =
-                    retriesLeft === undefined ? undefined : retriesLeft - 1;
-                this.openSocket(
-                    retryInterval,
-                    retries,
-                );
-            }, retryInterval); // wait X milliseconds for the connection...
-        }
-    }
-
-    private initiateSocket(): Promise<void> {
-        const pw = new PromiseWrapper<void>();
+    private initiateSocket() {
         this.logger.debug(`initiating ws to ${this.settings.ws}...`);
-        this.ws = new WebSocketConstructor(this.settings.ws || "") as WebSocket;
+        const pw = new PromiseWrapper();
+        this.ws = new WebSocketConstructor(this.settings.ws);
         this.ws.onerror = (err: any) => {
             let reason: string = "";
             try {
@@ -176,40 +98,77 @@ export default class WS implements Transport {
                 reason = JSON.stringify(err, replacer);
             }
 
-            pw.reject("error");
             this.notifyStatusChanged(false, reason);
         };
-        this.ws.onclose = (err) => {
-            this.logger.info(`ws closed ${err}`);
-            pw.reject("closed");
+        this.ws.onclose = () => {
+            this.logger.info("ws closed");
             this.notifyStatusChanged(false);
         };
         // Log on connection
         this.ws.onopen = () => {
-            // tslint:disable-next-line:no-console
-            this.logger.info(`ws opened ${this.settings.identity?.application}`);
-            pw.resolve();
+            this.logger.debug("ws opened");
             this.notifyStatusChanged(true);
+            pw.resolve();
         };
         // Attach handler
         this.ws.onmessage = (message: { data: object }) => {
             this._registry.execute("onMessage", message.data);
         };
-
         return pw.promise;
     }
 
-    private notifyForSocketState(error?: string) {
-        this.wsRequests.forEach((wsRequest) => {
-            if (error) {
-                if (wsRequest.failed) {
-                    wsRequest.failed(error);
-                }
-            } else {
-                wsRequest.callback();
+    // Holds callback execution until socket connection is established.
+    private waitForSocketConnection(callback?: () => void, failed?: (err?: string) => void, retriesLeft?: number, retryInterval?: number) {
+        if (!callback) {
+            callback = () => { /** Do nothing */ };
+        }
+        if (!failed) {
+            failed = () => { /** DO nothing */ };
+        }
+
+        if (retryInterval === undefined) {
+            retryInterval = this.settings.reconnectInterval;
+        }
+
+        if (retriesLeft !== undefined) {
+            if (retriesLeft === 0) {
+                failed(`wait for socket on ${this.settings.ws} failed - no more retries left`);
+                return;
             }
-        });
-        this.wsRequests = [];
+            this.logger.debug(`will retry ${retriesLeft} more times (every ${retryInterval} ms)`);
+        }
+
+        // check if we're still running
+        if (!this._running) {
+            failed(`wait for socket on ${this.settings.ws} failed - socket closed by user`);
+            return;
+        }
+
+        // reduce the initial wait by racing between initiateSocket promise and retryInterval - the one that comes first will set initiated
+        // to true and cancel the other
+        let initiated = false;
+        // > 1 means closing or closed
+        if (!this.ws || this.ws.readyState > 1) {
+            this.initiateSocket()
+                .then(() => {
+                    if (initiated) {
+                        return;
+                    }
+                    initiated = true;
+                    callback();
+                });
+        } else if (this.ws.readyState === 1) {
+            return callback();
+        }
+
+        setTimeout(() => {
+            if (initiated) {
+                return;
+            }
+            initiated = true;
+            const retries = retriesLeft === undefined ? undefined : retriesLeft - 1;
+            this.waitForSocketConnection(callback, failed, retries, retryInterval);
+        }, retryInterval); // wait X milliseconds for the connection...
     }
 
     private notifyStatusChanged(status: boolean, reason?: string) {

@@ -1,10 +1,15 @@
-import { NumberMetric } from "./metrics/number";
-import { ObjectMetric } from "./metrics/object";
-import { StringMetric } from "./metrics/string";
-import { TimestampMetric } from "./metrics/timestamp";
+import { default as addressMetricFactory } from "./core/metrics/address";
+import { default as countMetricFactory } from "./core/metrics/count";
+import { default as numberMetricFactory } from "./core/metrics/number";
+import { default as objectMetricFactory } from "./core/metrics/object";
+import { default as rateMetricFactory } from "./core/metrics/rate";
+import { default as statisticsMetricFactory } from "./core/metrics/statistics";
+import { default as stringMetricFactory } from "./core/metrics/string";
+import { default as timespanMetricFactory } from "./core/metrics/timespan";
+import { default as timestampMetricFactory } from "./core/metrics/timestamp";
 
 import { Glue42Core } from "./../../glue";
-import MetricTypes from "./const/metric-types";
+import MetricTypes from "./core/const/metric-types";
 import { Protocol } from "./types";
 
 export default function system(name: string, repo: Glue42Core.Metrics.Repository, protocol: Protocol, parent?: Glue42Core.Metrics.System, description?: any): Glue42Core.Metrics.System {
@@ -24,11 +29,12 @@ export default function system(name: string, repo: Glue42Core.Metrics.Repository
     const _name: string = name;
     const _description: string = description || "";
     const _repo: Glue42Core.Metrics.Repository = repo;
-    const _parent: Glue42Core.Metrics.System | undefined = parent;
+    const _parent: Glue42Core.Metrics.System = parent;
     const _path: string[] = _buildPath(parent);
     let _state: Glue42Core.Metrics.State = {};
 
     const id: string = _arrayToString(_path, "/") + name;
+    const identity: Glue42Core.Metrics.Identity = repo.identity;
     const root: Glue42Core.Metrics.System = repo.root;
     const _subSystems: Glue42Core.Metrics.System[] = [];
     const _metrics: Glue42Core.Metrics.Metric[] = [];
@@ -54,53 +60,82 @@ export default function system(name: string, repo: Glue42Core.Metrics.Repository
     }
 
     function stringMetric(definition: Glue42Core.Metrics.MetricDefinition | string, value: string): Glue42Core.Metrics.StringMetric {
-        return _getOrCreateMetric<StringMetric>(definition, MetricTypes.STRING, value, (metricDef: Glue42Core.Metrics.MetricDefinition) => new StringMetric(metricDef, me, _transport, value));
+        return _getOrCreateMetric.call(me, definition, MetricTypes.STRING, value, (metricDef: Glue42Core.Metrics.MetricDefinition) => stringMetricFactory(metricDef, me, _transport, value));
     }
 
     function numberMetric(definition: Glue42Core.Metrics.MetricDefinition | string, value: number): Glue42Core.Metrics.NumberMetric {
-        return _getOrCreateMetric<NumberMetric>(definition, MetricTypes.NUMBER, value, (metricDef: Glue42Core.Metrics.MetricDefinition) => new NumberMetric(metricDef, me, _transport, value));
+        return _getOrCreateMetric.call(me, definition, MetricTypes.NUMBER, value, (metricDef: Glue42Core.Metrics.MetricDefinition) => numberMetricFactory(metricDef, me, _transport, value));
+    }
+
+    function countMetric(definition: Glue42Core.Metrics.MetricDefinition | string, value: any): Glue42Core.Metrics.CountMetric {
+        return _getOrCreateMetric.call(this, definition, MetricTypes.COUNT, value, (metricDef: Glue42Core.Metrics.MetricDefinition) => countMetricFactory(metricDef, me, _transport, value));
+    }
+
+    function addressMetric(definition: Glue42Core.Metrics.MetricDefinition | string, value: any): Glue42Core.Metrics.AddressMetric {
+        return _getOrCreateMetric.call(this, definition, MetricTypes.ADDRESS, value, (metricDef: Glue42Core.Metrics.MetricDefinition) => addressMetricFactory(metricDef, me, _transport, value));
     }
 
     function objectMetric(definition: Glue42Core.Metrics.MetricDefinition | string, value: any): Glue42Core.Metrics.ObjectMetric {
-        return _getOrCreateMetric<ObjectMetric>(definition, MetricTypes.OBJECT, value, (metricDef: Glue42Core.Metrics.MetricDefinition) => new ObjectMetric(metricDef, me, _transport, value));
+        return _getOrCreateMetric.call(this, definition, MetricTypes.OBJECT, value, (metricDef: Glue42Core.Metrics.MetricDefinition) => objectMetricFactory(metricDef, me, _transport, value));
+    }
+
+    function timespanMetric(definition: Glue42Core.Metrics.MetricDefinition | string, value: any): Glue42Core.Metrics.TimespanMetric {
+        return _getOrCreateMetric.call(this, definition, MetricTypes.TIMESPAN, value, (metricDef: Glue42Core.Metrics.MetricDefinition) => timespanMetricFactory(metricDef, me, _transport, value));
     }
 
     function timestampMetric(definition: Glue42Core.Metrics.MetricDefinition | string, value: any): Glue42Core.Metrics.TimestampMetric {
-        return _getOrCreateMetric<TimestampMetric>(definition, MetricTypes.TIMESTAMP, value, (metricDef: Glue42Core.Metrics.MetricDefinition) => new TimestampMetric(metricDef, me, _transport, value));
+        return _getOrCreateMetric.call(this, definition, MetricTypes.TIMESTAMP, value, (metricDef: Glue42Core.Metrics.MetricDefinition) => timestampMetricFactory(metricDef, me, _transport, value));
     }
 
-    function _getOrCreateMetric<T extends Glue42Core.Metrics.Metric>(metricObject: Glue42Core.Metrics.MetricDefinition | string,
-                                                                     expectedType: number,
-                                                                     value: any,
-                                                                     createMetric: (metricDef: Glue42Core.Metrics.MetricDefinition, me?: Glue42Core.Metrics.System, _transport?: Protocol, value?: any) => T): T {
-        let metricDef = {name: ""};
-        if (typeof metricObject === "string") {
-            metricDef = {name: metricObject};
+    function rateMetric(definition: Glue42Core.Metrics.MetricDefinition | string, value: any): Glue42Core.Metrics.RateMetric {
+        return _getOrCreateMetric.call(this, definition, MetricTypes.RATE, value, (metricDef: Glue42Core.Metrics.MetricDefinition) => rateMetricFactory(metricDef, me, _transport, value));
+    }
+
+    function statisticsMetric(definition: Glue42Core.Metrics.MetricDefinition | string, value: any): Glue42Core.Metrics.StatisticsMetric {
+        return _getOrCreateMetric.call(this, definition, MetricTypes.STATISTICS, value, (metricDef: Glue42Core.Metrics.MetricDefinition) => statisticsMetricFactory(metricDef, me, _transport, value));
+    }
+
+    function _unionToMetricDef(def: string | Glue42Core.Metrics.MetricDefinition): Glue42Core.Metrics.MetricDefinition {
+        let metricDefinition: Glue42Core.Metrics.MetricDefinition = {};
+
+        // NOTE: Handle undefined
+        if (typeof def === "string") {
+            metricDefinition.name = def;
         } else {
-            metricDef = metricObject;
+            metricDefinition = def;
         }
-        const matching: Glue42Core.Metrics.Metric[] = _metrics.filter((shadowedMetric) => shadowedMetric.name === metricDef.name);
+
+        if (metricDefinition.name === undefined) {
+            throw new Error("Metric name is required");
+        }
+
+        return metricDefinition;
+    }
+
+    function _getOrCreateMetric(definition: Glue42Core.Metrics.MetricDefinition, expectedType: number, value: any, createMetric: (metricDef: Glue42Core.Metrics.MetricDefinition, me?: Glue42Core.Metrics.System, _transport?: Protocol, value?: any) => Glue42Core.Metrics.Metric) {
+        const metricDefinition: Glue42Core.Metrics.MetricDefinition = _unionToMetricDef(definition);
+        const matching: Glue42Core.Metrics.Metric[] = _metrics.filter((shadowedMetric) => shadowedMetric.name === metricDefinition.name);
 
         if (matching.length > 0) {
             const existing: Glue42Core.Metrics.Metric = matching[0];
             if (existing.type !== expectedType) {
                 // NOTE: Extend the error with the already defined metric?
-                throw new Error(`A metric named ${metricDef.name} is already defined with different type.`);
+                throw new Error(`A metric named ${metricDefinition.name} is already defined with different type.`);
             }
 
             if (typeof value !== "undefined") {
                 existing.update(value);
             }
 
-            return existing as T;
+            return existing;
         }
 
-        const metric: T = createMetric(metricDef);
+        const metric: Glue42Core.Metrics.Metric = createMetric(metricDefinition);
         _metrics.push(metric);
         return metric;
     }
 
-    function _buildPath(shadowedSystem?: Glue42Core.Metrics.System): string[] {
+    function _buildPath(shadowedSystem: Glue42Core.Metrics.System): string[] {
         if (!shadowedSystem || !shadowedSystem.parent) {
             return [];
         }
@@ -153,6 +188,7 @@ export default function system(name: string, repo: Glue42Core.Metrics.Repository
         },
         path: _path,
         id,
+        identity,
         root,
 
         get subSystems() {
@@ -168,8 +204,13 @@ export default function system(name: string, repo: Glue42Core.Metrics.Repository
         },
         setState,
         stringMetric,
+        statisticsMetric,
+        rateMetric,
         timestampMetric,
+        timespanMetric,
         objectMetric,
+        addressMetric,
+        countMetric,
         numberMetric,
         getAggregateState,
     };

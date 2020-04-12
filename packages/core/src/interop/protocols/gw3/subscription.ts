@@ -4,13 +4,13 @@ import ClientRepository from "../../client/repository";
 
 export class UserSubscription implements Glue42Core.Interop.Subscription {
     public get requestArguments() {
-        return this.subscriptionData.params.arguments || {};
+        return this.subscriptionData.params.arguments;
     }
 
     public get servers(): Glue42Core.Interop.Instance[] {
         return this.subscriptionData.trackedServers
             .filter((pair) => pair.subscriptionId)
-            .map((pair) => this.repository.getServerById(pair.serverId).instance);
+            .map((pair) => this.repository.getServerById(pair.serverId).getInfoForUser());
     }
 
     public get serverInstance(): Glue42Core.Interop.Instance {
@@ -18,7 +18,7 @@ export class UserSubscription implements Glue42Core.Interop.Subscription {
     }
 
     public get stream(): Glue42Core.Interop.MethodDefinition {
-        return this.subscriptionData.method;
+        return this.subscriptionData.method.info;
     }
 
     constructor(private repository: ClientRepository, private subscriptionData: SubscriptionInner) {
@@ -37,7 +37,7 @@ export class UserSubscription implements Glue42Core.Interop.Subscription {
         }
     }
 
-    public onClosed(closedCallback: (info: Glue42Core.Interop.OnClosedInfo) => void): void {
+    public onClosed(closedCallback: (info: Glue42Core.AGM.OnClosedInfo) => void): void {
         if (typeof closedCallback !== "function") {
             throw new TypeError("The callback must be a function.");
         }

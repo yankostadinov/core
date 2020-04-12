@@ -1,11 +1,9 @@
 /*
  * Repository holding servers and methods visible by this peer including those created by the peer itself.
  */
-import { default as CallbackRegistryFactory, UnsubscribeFunction } from "callback-registry";
+import { default as CallbackRegistryFactory, CallbackRegistry, UnsubscribeFunction } from "callback-registry";
 import { Glue42Core } from "../../../glue";
-import { ClientMethodInfo, ServerInfo } from "./types";
-import { MethodInfoMessage } from "../protocols/gw3/messages";
-import { Logger } from "../../logger/logger";
+import { ClientMethodInfo, ServerInfo, ClientMethodInfoProtocolState } from "./types";
 import { InstanceWrapper } from "../instance";
 
 export default class ClientRepository {
@@ -14,103 +12,90 @@ export default class ClientRepository {
     // where methods has format {id:'', info:{}}
     private servers: { [id: string]: ServerInfo } = {};
 
-    // object keyed by method identifier - value is number of servers that offer that method
+    // object keyed by method id - value is number of servers that offer that method
     private methodsCount: { [id: string]: number } = {};
 
     // store for callbacks
     private callbacks = CallbackRegistryFactory();
 
-    constructor(private logger: Logger) {
-
-    }
-
     // add a new server to internal collection
     public addServer(info: Glue42Core.AGM.Instance, serverId: string): string {
-        this.logger.debug(`adding server ${serverId}`);
-
         const current = this.servers[serverId];
         if (current) {
             return current.id;
         }
 
-        const wrapper = new InstanceWrapper(info);
         const serverEntry: ServerInfo = {
             id: serverId,
+            info,
             methods: {},
-            instance: wrapper.unwrap(),
-            wrapper,
+            getInfoForUser: () => {
+                return new InstanceWrapper(serverEntry.info).unwrap();
+            },
         };
 
         this.servers[serverId] = serverEntry;
-        this.callbacks.execute("onServerAdded", serverEntry.instance);
+        this.callbacks.execute("onServerAdded", serverEntry);
         return serverId;
     }
 
     public removeServerById(id: string, reason?: string) {
         const server = this.servers[id];
-        if (!server) {
-            // tslint:disable-next-line:no-console
-            this.logger.warn(`not aware of server ${id}, my state ${JSON.stringify(Object.keys(this.servers))}`);
-            return;
-        } else {
-            // tslint:disable-next-line:no-console
-            this.logger.debug(`removing server ${id}`);
-        }
 
         Object.keys(server.methods).forEach((methodId) => {
             this.removeServerMethod(id, methodId);
         });
 
         delete this.servers[id];
-        this.callbacks.execute("onServerRemoved", server.instance, reason);
+        this.callbacks.execute("onServerRemoved", server, reason);
     }
 
-    public addServerMethod(serverId: string, method: MethodInfoMessage) {
-
+    public addServerMethod(serverId: string, method: Glue42Core.AGM.MethodDefinition, protocolState?: ClientMethodInfoProtocolState) {
+        if (!protocolState) {
+            protocolState = {};
+        }
         const server = this.servers[serverId];
         if (!server) {
             throw new Error("server does not exists");
         }
 
+        const methodId = this.createMethodId(method);
+
         // server already has that method
-        if (server.methods[method.id]) {
+        if (server.methods[methodId]) {
             return;
         }
 
-        const identifier = this.createMethodIdentifier(method);
-        const methodDefinition: ClientMethodInfo = {
-            identifier,
-            gatewayId: method.id,
-            name: method.name,
-            displayName: method.display_name,
-            description: method.description,
-            version: method.version,
-            objectTypes: method.object_types || [],
-            accepts: method.input_signature,
-            returns: method.result_signature,
-            supportsStreaming: typeof method.flags !== "undefined" ? method.flags.streaming : false,
-
-        };
-        // now add some legacy stuff
-        (methodDefinition as any).object_types = methodDefinition.objectTypes;
-        (methodDefinition as any).display_name = methodDefinition.displayName;
-        (methodDefinition as any).version = methodDefinition.version;
         const that = this;
-        methodDefinition.getServers = () => {
-            return that.getServersByMethod(method.id);
+        const methodEntity: ClientMethodInfo = {
+            id: methodId,
+            info: method,
+            getInfoForUser: () => {
+                const result = that.createUserMethodInfo(methodEntity.info);
+                result.getServers = () => {
+                    return that.getServersByMethod(methodId);
+                };
+                return result;
+            },
+            protocolState,
         };
 
-        server.methods[method.id] = methodDefinition;
+        server.methods[methodId] = methodEntity;
 
         // increase the ref and notify listeners
-        if (!this.methodsCount[identifier]) {
-            this.methodsCount[identifier] = 0;
-            this.callbacks.execute("onMethodAdded", methodDefinition);
+        if (!this.methodsCount[methodId]) {
+            this.methodsCount[methodId] = 0;
+            this.callbacks.execute("onMethodAdded", methodEntity);
         }
-        this.methodsCount[identifier] = this.methodsCount[identifier] + 1;
+        this.methodsCount[methodId] = this.methodsCount[methodId] + 1;
+        this.callbacks.execute("onServerMethodAdded", server, methodEntity);
+    }
 
-        this.callbacks.execute("onServerMethodAdded", server.instance, methodDefinition);
-        return methodDefinition;
+    public createMethodId(methodInfo: Glue42Core.AGM.MethodDefinition) {
+        // Setting properties to defaults:
+        const accepts = methodInfo.accepts !== undefined ? methodInfo.accepts : "";
+        const returns = methodInfo.returns !== undefined ? methodInfo.returns : "";
+        return (methodInfo.name + accepts + returns).toLowerCase();
     }
 
     public removeServerMethod(serverId: string, methodId: string) {
@@ -123,12 +108,12 @@ export default class ClientRepository {
         delete server.methods[methodId];
 
         // update ref counting
-        this.methodsCount[method.identifier] = this.methodsCount[method.identifier] - 1;
-        if (this.methodsCount[method.identifier] === 0) {
+        this.methodsCount[methodId] = this.methodsCount[methodId] - 1;
+        if (this.methodsCount[methodId] === 0) {
             this.callbacks.execute("onMethodRemoved", method);
         }
 
-        this.callbacks.execute("onServerMethodRemoved", server.instance, method);
+        this.callbacks.execute("onServerMethodRemoved", server, method);
     }
 
     public getMethods(): ClientMethodInfo[] {
@@ -137,7 +122,7 @@ export default class ClientRepository {
             const server = this.servers[serverId];
             Object.keys(server.methods).forEach((methodId) => {
                 const method: ClientMethodInfo = server.methods[methodId];
-                allMethods[method.identifier] = method;
+                allMethods[method.id] = method;
             });
         });
 
@@ -166,11 +151,11 @@ export default class ClientRepository {
         });
     }
 
-    public onServerAdded(callback: (server: Glue42Core.Interop.Instance) => void): UnsubscribeFunction {
+    public onServerAdded(callback: (server: ServerInfo) => void): UnsubscribeFunction {
         const unsubscribeFunc = this.callbacks.add("onServerAdded", callback);
 
         // because we need the servers shapshot before we exist this stack
-        const serversWithMethodsToReplay = this.getServers().map((s) => s.instance);
+        const serversWithMethodsToReplay = this.getServers();
 
         return this.returnUnsubWithDelayedReplay(unsubscribeFunc, serversWithMethodsToReplay, callback);
     }
@@ -184,7 +169,7 @@ export default class ClientRepository {
         return this.returnUnsubWithDelayedReplay(unsubscribeFunc, methodsToReplay, callback);
     }
 
-    public onServerMethodAdded(callback: (server: Glue42Core.AGM.Instance, method: ClientMethodInfo) => void): UnsubscribeFunction {
+    public onServerMethodAdded(callback: (server: ServerInfo, method: ClientMethodInfo) => void): UnsubscribeFunction {
         const unsubscribeFunc = this.callbacks.add("onServerMethodAdded", callback);
 
         // because we want to interrupt the loop with the existing methods
@@ -199,7 +184,7 @@ export default class ClientRepository {
                 const methods = server.methods;
                 Object.keys(methods).forEach((methodId) => {
                     if (!unsubCalled) {
-                        callback(server.instance, methods[methodId]);
+                        callback(server, methods[methodId]);
                     }
                 });
             });
@@ -217,13 +202,13 @@ export default class ClientRepository {
         return unsubscribeFunc;
     }
 
-    public onServerRemoved(callback: (server: Glue42Core.Interop.Instance, reason: string) => void): UnsubscribeFunction {
+    public onServerRemoved(callback: (server: ServerInfo, reason: string) => void): UnsubscribeFunction {
         const unsubscribeFunc = this.callbacks.add("onServerRemoved", callback);
 
         return unsubscribeFunc;
     }
 
-    public onServerMethodRemoved(callback: (server: Glue42Core.Interop.Instance, method: ClientMethodInfo) => void): UnsubscribeFunction {
+    public onServerMethodRemoved(callback: (server: ServerInfo, method: ClientMethodInfo) => void): UnsubscribeFunction {
         const unsubscribeFunc = this.callbacks.add("onServerMethodRemoved", callback);
 
         return unsubscribeFunc;
@@ -242,11 +227,46 @@ export default class ClientRepository {
         this.methodsCount = {};
     }
 
-    private createMethodIdentifier(methodInfo: MethodInfoMessage) {
-        // Setting properties to defaults:
-        const accepts = methodInfo.input_signature !== undefined ? methodInfo.input_signature : "";
-        const returns = methodInfo.result_signature !== undefined ? methodInfo.result_signature : "";
-        return (methodInfo.name + accepts + returns).toLowerCase();
+    /**
+     * Transforms internal server object to user object
+     */
+    private createUserServerInfo(serverInfo: Glue42Core.AGM.Instance): Glue42Core.AGM.Instance {
+        return {
+            machine: serverInfo.machine,
+            pid: serverInfo.pid,
+            user: serverInfo.user,
+            application: serverInfo.application,
+            applicationName: serverInfo.applicationName,
+            environment: serverInfo.environment,
+            region: serverInfo.region,
+            instance: serverInfo.instance,
+            windowId: serverInfo.windowId,
+            peerId: serverInfo.peerId,
+            isLocal: serverInfo.isLocal,
+            api: serverInfo.api
+        };
+    }
+
+    /**
+     * Transforms internal method object to user object
+     */
+    private createUserMethodInfo(methodInfo: Glue42Core.AGM.MethodDefinition): Glue42Core.AGM.MethodDefinition {
+        const result = {
+            name: methodInfo.name,
+            accepts: methodInfo.accepts,
+            returns: methodInfo.returns,
+            description: methodInfo.description,
+            displayName: methodInfo.displayName,
+            objectTypes: methodInfo.objectTypes,
+            supportsStreaming: methodInfo.supportsStreaming,
+        };
+
+        // now add some legacy stuff
+        (result as any).object_types = methodInfo.objectTypes;
+        (result as any).display_name = methodInfo.displayName;
+        (result as any).version = methodInfo.version;
+
+        return result;
     }
 
     private getServersByMethod(id: string): Glue42Core.AGM.Instance[] {
@@ -255,7 +275,7 @@ export default class ClientRepository {
             const server = this.servers[serverId];
             Object.keys(server.methods).forEach((methodId) => {
                 if (methodId === id) {
-                    allServers.push(server.instance);
+                    allServers.push(server.getInfoForUser());
                 }
             });
         });

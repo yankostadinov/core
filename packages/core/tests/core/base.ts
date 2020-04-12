@@ -1,3 +1,5 @@
+const GW = require("@glue42/ws-gateway");
+
 import { ready, gwObject } from "../initializer";
 import CreateGlue from "../../src/index";
 import { Glue42Core } from "../../glue";
@@ -12,6 +14,7 @@ export async function init(callback: cbk, custom?: Glue42Core.Config, ext?: Glue
         gateway: {
             protocolVersion: 3,
             inproc: {
+                token: gwObject,
                 facade: gwObject
             }
         },
@@ -19,7 +22,7 @@ export async function init(callback: cbk, custom?: Glue42Core.Config, ext?: Glue
             username: "t42",
             password: "test"
         },
-        logger: "error",
+        logger: "trace",
         application: "test-application"
     };
 

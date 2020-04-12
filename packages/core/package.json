@@ -1,6 +1,6 @@
 {
     "name": "@glue42/core",
-    "version": "5.0.1",
+    "version": "4.8.5",
     "description": "Glue42 core library",
     "main": "dist/core.umd.js",
     "module": "dist/core.es.js",
@@ -15,15 +15,15 @@
     "homepage": "https://glue42.com/",
     "scripts": {
         "tslint": "tslint -t codeFrame ./src/**/*.ts",
-        "validate-changelog": "node ./scripts/validate-config.js",
+        "validate-changelog": "node ./build/validate-config.js",
         "docs": "typedoc --options typedoc.json ./src",
-        "preversion": "npm run validate-changelog && npm run build && npm run test && npm run audit",
+        "auditPackage": "npm audit --registry=https://registry.npmjs.com",
+        "prepublishOnly": "npm run validate-changelog && npm run auditPackage && npm run test && npm run build",
         "test": "npm run build:tests && mocha ./tests/ --recursive --exit",
         "coverage": "nyc npm run test",
         "publish:beta": "npm publish --tag beta",
-        "build": "npm run tslint && tsc -p ./tsconfig.json && rollup -c",
-        "build:tests": "tsc -p ./tsconfig.test.json",
-        "audit": "node ../../scripts/audit/index.js"
+        "build": "npm run tslint && tsc -p ./tsconfig.json &&  rollup -c",
+        "build:tests": "tsc -p ./tsconfig.test.json"
     },
     "author": {
         "name": "Glue42",
@@ -32,7 +32,7 @@
     "license": "MIT",
     "dependencies": {
         "callback-registry": "^2.5.2",
-        "shortid": "2.2.6",
+        "shortid": "^2.2.6",
         "ws": "7.1.2"
     },
     "devDependencies": {
@@ -46,11 +46,12 @@
         "chai": "4.0.2",
         "chai-subset": "^1.6.0",
         "deep-equal": "1.0.1",
+        "husky": "3.0.5",
         "lodash.isequal": "^4.5.0",
         "lodash.ismatch": "^4.4.0",
         "mocha": "^7.1.1",
         "nyc": "^15.0.0",
-        "rollup": "^1.27.14",
+        "rollup": "^1.32.1",
         "rollup-plugin-commonjs": "^10.1.0",
         "rollup-plugin-json": "^4.0.0",
         "rollup-plugin-node-resolve": "^5.2.0",
@@ -61,5 +62,10 @@
     },
     "publishConfig": {
         "registry": "https://registry.npmjs.org"
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "npm run build"
+        }
     }
 }

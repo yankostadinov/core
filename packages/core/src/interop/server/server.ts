@@ -1,10 +1,11 @@
 import promisify from "../helpers/promisify";
 import ServerStreaming from "./streaming";
-import { Protocol, InteropSettings } from "../types";
+import { Protocol } from "../types";
 import ServerRepository from "./repository";
 import { Glue42Core } from "../../../glue";
 import { WrappedCallbackFunction, ResultContext, ServerMethodInfo } from "./types";
 import ServerStream from "./stream";
+import { removeProp } from "../helpers/removeProp";
 
 /*
  The AGM Server allows users register AGM methods.
@@ -16,6 +17,7 @@ export default class Server {
     private currentlyUnregistering: { [method: string]: Promise<void> } = {};
 
     constructor(private protocol: Protocol, private serverRepository: ServerRepository) {
+
         // An array of the server's methods
         this.streaming = new ServerStreaming(protocol, this);
 
@@ -23,7 +25,7 @@ export default class Server {
     }
 
     // Registers a new streaming agm method
-    public createStream(streamDef: string | Glue42Core.AGM.MethodDefinition, callbacks?: Glue42Core.AGM.StreamOptions, successCallback?: (args?: object) => void, errorCallback?: (error?: string | object) => void, existingStream?: ServerStream): Promise<Glue42Core.AGM.Stream> {
+    public createStream(streamDef: string | Glue42Core.AGM.MethodDefinition, callbacks: Glue42Core.AGM.StreamOptions, successCallback?: (args?: object) => void, errorCallback?: (error?: string | object) => void, existingStream?: ServerStream): Promise<Glue42Core.AGM.Stream> {
         // in callbacks we have subscriptionRequestHandler, subscriptionAddedHandler, subscriptionRemovedHandler
         const promise = new Promise((resolve, reject) => {
             if (!streamDef) {
@@ -64,12 +66,15 @@ export default class Server {
                     request.accept();
                 };
             }
-            // Add the method
-            const repoMethod = this.serverRepository.add({
+
+            const repoMethod: ServerMethodInfo = {
                 definition: streamMethodDefinition, // store un-formatted definition for checkups in un-register method
                 streamCallbacks: callbacks,
                 protocolState: {},
-            });
+            };
+
+            // Add the method
+            this.serverRepository.add(repoMethod);
 
             this.protocol.server.createStream(repoMethod)
                 .then(() => {
@@ -84,9 +89,8 @@ export default class Server {
                     resolve(streamUserObject);
                 })
                 .catch((err) => {
-                    if (repoMethod.repoId) {
-                        this.serverRepository.remove(repoMethod.repoId);
-                    }
+                    this.serverRepository.remove(repoMethod.repoId);
+
                     reject(err);
                 });
         });
@@ -109,15 +113,15 @@ export default class Server {
             return Promise.reject(`The second parameter must be a callback function. Method: ${typeof methodDefinition === "string" ? methodDefinition : methodDefinition.name}`);
         }
 
-        const wrappedCallbackFunction: WrappedCallbackFunction = async (context: ResultContext, resultCallback: (err: string | undefined, result: object) => void) => {
+        const wrappedCallbackFunction: WrappedCallbackFunction = async (context: ResultContext, resultCallback: (err: string, result: object) => void) => {
             // get the result as direct invocation of the callback and return it using resultCallback
             try {
                 const result = callback(context.args, context.instance);
                 if (result && typeof (result as any).then === "function") {
                     const resultValue = await result;
-                    resultCallback(undefined, resultValue);
+                    resultCallback(null, resultValue);
                 } else {
-                    resultCallback(undefined, result);
+                    resultCallback(null, result);
                 }
             } catch (e) {
                 if (!e) {
@@ -142,13 +146,13 @@ export default class Server {
             return Promise.reject(`The second parameter must be a callback function. Method: ${typeof methodDefinition === "string" ? methodDefinition : methodDefinition.name}`);
         }
 
-        const wrappedCallback: WrappedCallbackFunction = (context: ResultContext, resultCallback: (err: string | undefined, result: object | undefined) => void) => {
+        const wrappedCallback: WrappedCallbackFunction = (context: ResultContext, resultCallback: (err: string, result: object) => void) => {
             // invoke the callback passing success and error callbacks
             try {
                 let resultCalled = false;
-                const success = (result?: object) => {
+                const success = (result: object) => {
                     if (!resultCalled) {
-                        resultCallback(undefined, result);
+                        resultCallback(null, result);
                     }
                     resultCalled = true;
                 };
@@ -174,7 +178,7 @@ export default class Server {
                         .catch(error);
                 }
             } catch (e) {
-                resultCallback(e, undefined);
+                resultCallback(e, null);
             }
         };
         wrappedCallback.userCallbackAsync = callback;
@@ -182,6 +186,7 @@ export default class Server {
         return this.registerCore(methodDefinition, wrappedCallback);
     }
 
+    // TODO add success/fail here and at gw1+2 implementations?
     // Unregisters a previously registered AGM method
     public async unregister(methodFilter: string | Glue42Core.AGM.MethodDefinition, forStream: boolean = false): Promise<void> {
         if (methodFilter === undefined) {
@@ -206,7 +211,7 @@ export default class Server {
             return Promise.reject(`Method name is required. Cannot find a method if the method name is undefined!`);
         }
 
-        const methodToBeRemoved: ServerMethodInfo | undefined = this.serverRepository.getList().find((serverMethod) => {
+        const methodToBeRemoved: ServerMethodInfo = this.serverRepository.getList().find((serverMethod) => {
             return serverMethod.definition.name === methodDefinition.name
                 && (serverMethod.definition.supportsStreaming || false) === forStream;
             // return this.containsProps(methodFilter, method.definition);
@@ -240,9 +245,7 @@ export default class Server {
         methodsToRemove.forEach((method) => {
             const promise = this.protocol.server.unregister(method)
                 .then(() => {
-                    if (method.repoId) {
-                        this.serverRepository.remove(method.repoId);
-                    }
+                    this.serverRepository.remove(method.repoId);
                 });
 
             methodUnregPromises.push(promise);
@@ -257,7 +260,7 @@ export default class Server {
 
         // will be cleared when promise resolved
         this.currentlyUnregistering[methodName] = Promise.race([promise, timeout]).then(() => {
-            delete this.currentlyUnregistering[methodName];
+            removeProp(this.currentlyUnregistering, methodName);
         });
     }
 
@@ -302,16 +305,75 @@ export default class Server {
 
         // make it then .catch for those error/success callbacks
         return this.protocol.server.register(repoMethod)
-            .catch((err: any) => {
-                if (repoMethod?.repoId) {
-                    this.serverRepository.remove(repoMethod.repoId);
-                }
+            .catch((err) => {
+                this.serverRepository.remove(repoMethod.repoId);
+
                 throw err;
             });
     }
 
+    /**
+     * Checks if all properties of filter match properties in object
+     */
+    // Todo: rename isSameMethodDefinition
+    // Todo: fix typings
+    private containsProps(filter: any, methodDefinition: any): boolean {
+        const filterProps = Object.keys(filter)
+            .filter((prop) => {
+                return typeof filter[prop] !== "function"
+                    // this props may exist because of backward compatibility
+                    && prop !== "object_types"
+                    && prop !== "display_name";
+            });
+
+        const methodDefProps = Object.keys(methodDefinition);
+
+        const uniqProps = Array.from(new Set([
+            ...filterProps,
+            ...methodDefProps
+        ]));
+
+        return uniqProps.reduce<boolean>((isMatch, prop) => {
+            let filterValue = filter[prop];
+            let methodDefValue = methodDefinition[prop];
+
+            // because in client this props is set to false by default and we may receive undefined
+            if (prop === "supportsStreaming") {
+                methodDefValue = methodDefValue || false;
+                filterValue = filterValue || false;
+            }
+
+            if (prop === "objectTypes" && filterValue !== undefined && methodDefValue !== undefined) {
+                if (filterValue.length !== methodDefValue.length) {
+                    isMatch = false;
+                } else {
+                    const firstObjType = filterValue.sort();
+                    const secondObjTypes = methodDefValue.sort();
+
+                    const hasADifference = firstObjType.some((objType: string, index: number) => objType !== secondObjTypes[index]);
+                    if (hasADifference) {
+                        isMatch = false;
+                    }
+                }
+            } else if (filterValue !== methodDefValue) {
+                // Todo: should it be .toLowerCase() ?
+                isMatch = false;
+            }
+
+            return isMatch;
+        }, true);
+
+        // let match = true;
+        // Object.keys(filter).forEach((prop) => {
+        //     if (filter[prop] !== object[prop]) {
+        //         match = false;
+        //     }
+        // });
+        // return match;
+    }
+
     private onMethodInvoked(methodToExecute: ServerMethodInfo, invocationId: string, invocationArgs: ResultContext) {
-        if (!methodToExecute || !methodToExecute.theFunction) {
+        if (!methodToExecute) {
             return;
         }
 
@@ -330,11 +392,9 @@ export default class Server {
                 }
             }
 
-            if (!result) {
-                result = {};
-            } else if (typeof result !== "object" || Array.isArray(result)) {
-                // The AGM library only transfers objects. If the result is not an object, put it in one
-                result = { _value: result };
+            // The AGM library only transfers objects. If the result is not an object, put it in one
+            if (!result || typeof result !== "object" || result.constructor === Array) {
+                result = { _result: result };
             }
 
             this.protocol.server.methodInvocationResult(methodToExecute, invocationId, err, result);

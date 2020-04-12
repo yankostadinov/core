@@ -1,4 +1,4 @@
-export default function <T>(promise: Promise<any>, successCallback: any, errorCallback: any): Promise<T> {
+export default function(promise: Promise<any>, successCallback: any, errorCallback: any) {
 
     if (typeof successCallback !== "function" && typeof errorCallback !== "function") {
         return promise;
@@ -10,5 +10,5 @@ export default function <T>(promise: Promise<any>, successCallback: any, errorCa
         errorCallback = () => {  /* DO NOTHING */ };
     }
 
-    return promise.then(successCallback, errorCallback);
+    promise.then(successCallback, errorCallback);
 }

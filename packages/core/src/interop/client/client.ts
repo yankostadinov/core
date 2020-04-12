@@ -2,15 +2,16 @@
   The AGM Client analyses server presences, collects information about their methods and allows users to invoke these methods.
  */
 import promisify from "../helpers/promisify";
-import { Protocol, SubscribeError, InteropSettings, SubscriptionInner } from "../types";
+import { Protocol, SubscribeError, SubscriptionInner } from "../types";
 import { ClientMethodInfo, ServerInfo, ServerMethodsPair } from "./types";
 import { Glue42Core } from "../../../glue";
 import ClientRepository from "./repository";
 import { UnsubscribeFunction } from "callback-registry";
-import random from "shortid";
+import generate from "shortid";
 import { rejectAfter } from "../helpers/promiseHelpers";
 import InvocationResult = Glue42Core.AGM.InvocationResult;
 import MethodDefinition = Glue42Core.AGM.MethodDefinition;
+import { UserSubscription } from "../protocols/gw3/subscription";
 
 export enum InvokeStatus {
     Success = 0,
@@ -26,7 +27,7 @@ export interface InvokeResultMessage {
 }
 
 export default class Client {
-    constructor(private protocol: Protocol, private repo: ClientRepository, private instance: Glue42Core.AGM.Instance, private configuration: InteropSettings) {
+    constructor(private protocol: Protocol, private repo: ClientRepository, private instance: Glue42Core.AGM.Instance, private configuration: Glue42Core.AGM.Settings) {
         //
     }
 
@@ -36,14 +37,13 @@ export default class Client {
     public subscribe(method: string | Glue42Core.AGM.MethodDefinition, options: Glue42Core.AGM.SubscriptionParams, successCallback?: (subscription: Glue42Core.AGM.Subscription) => void, errorCallback?: (err: SubscribeError) => void, existingSub?: SubscriptionInner): Promise<Glue42Core.AGM.Subscription> {
         // options can have arguments:{}, target: 'best'/'all'/{server_instance}, waitTimeoutMs:10000
 
-        const callProtocolSubscribe = (targetServers: ServerMethodsPair[], stream: Glue42Core.AGM.MethodDefinition, successProxy: (sub: Glue42Core.AGM.Subscription) => void, errorProxy: (err: SubscribeError) => void) => {
-
+        const callProtocolSubscribe = (targetServers: ServerMethodsPair[], stream: ClientMethodInfo, successProxy: (sub: Glue42Core.AGM.Subscription) => void, errorProxy: (err: SubscribeError) => void) => {
             options.methodResponseTimeout = options.methodResponseTimeout ?? options.waitTimeoutMs;
-
             this.protocol.client.subscribe(
                 stream,
                 options,
                 targetServers,
+                { methodResponseTimeout: options.waitTimeoutMs },
                 successProxy,
                 errorProxy,
                 existingSub
@@ -117,9 +117,6 @@ export default class Client {
                 callProtocolSubscribe(currentServers, currentServers[0].methods[0], successProxy, errorProxy);
             } else {
                 const retry = () => {
-                    if (!target || !(options.waitTimeoutMs)) {
-                        return;
-                    }
                     delayTillNow += delayStep;
                     // get all servers that have method(s) matching the filter
                     currentServers = this.getServerMethodsByFilterAndTarget(methodDef, target);
@@ -128,7 +125,16 @@ export default class Client {
                         callProtocolSubscribe(currentServers, streamInfo, successProxy, errorProxy);
                     } else if (delayTillNow >= options.waitTimeoutMs) {
                         const def = typeof method === "string" ? { name: method } : method;
-                        callProtocolSubscribe(currentServers, def, successProxy, errorProxy);
+                        const info: ClientMethodInfo = {
+                            id: undefined,
+                            info: def,
+                            getInfoForUser: () => {
+                                return methodDef;
+                            },
+                            protocolState: undefined,
+                        };
+
+                        callProtocolSubscribe(currentServers, info, successProxy, errorProxy);
                     } else {
                         setTimeout(retry, delayStep);
                     }
@@ -151,7 +157,7 @@ export default class Client {
 
         // We want only the announced servers
         return this.getServers(filterCopy).map((serverMethodMap) => {
-            return serverMethodMap.server.instance;
+            return serverMethodMap.server.getInfoForUser();
         });
     }
 
@@ -162,21 +168,27 @@ export default class Client {
         // Must not be mutated
         const filterCopy = { ...methodFilter };
 
-        return this.getMethods(filterCopy);
+        return this.getMethods(filterCopy).map((m) => {
+            return m.getInfoForUser();
+        });
     }
 
     /**
      * Returns all agm method registered by some server
      */
     public methodsForInstance(instance: Glue42Core.AGM.Instance): Glue42Core.AGM.MethodDefinition[] {
-        return this.getMethodsForInstance(instance);
+        return this.getMethodsForInstance(instance).map((m) => {
+            return m.getInfoForUser();
+        });
     }
 
     /**
      * Called when a method is added for the first time by any application
      */
     public methodAdded(callback: (def: Glue42Core.AGM.MethodDefinition) => void): UnsubscribeFunction {
-        return this.repo.onMethodAdded(callback);
+        return this.repo.onMethodAdded((method) => {
+            callback(method.getInfoForUser());
+        });
     }
 
     /**
@@ -185,7 +197,9 @@ export default class Client {
      * @param {MethodCallback} callback
      */
     public methodRemoved(callback: (def: Glue42Core.AGM.MethodDefinition) => void): UnsubscribeFunction {
-        return this.repo.onMethodRemoved(callback);
+        return this.repo.onMethodRemoved((method) => {
+            callback(method.getInfoForUser());
+        });
     }
 
     /**
@@ -193,7 +207,9 @@ export default class Client {
      * @param {InstanceCallback} callback Callback that will be invoked with the {@link Instance} of the new sever
      */
     public serverAdded(callback: (instance: Glue42Core.AGM.Instance) => void): UnsubscribeFunction {
-        return this.repo.onServerAdded(callback);
+        return this.repo.onServerAdded((server) => {
+            callback(server.getInfoForUser());
+        });
     }
 
     /**
@@ -201,8 +217,8 @@ export default class Client {
      * @param {InstanceCallback} callback Callback that will be invoked with the {@link Instance} of the removed server
      */
     public serverRemoved(callback: (instance: Glue42Core.AGM.Instance, reason: string) => void): UnsubscribeFunction {
-        return this.repo.onServerRemoved((server: Glue42Core.AGM.Instance, reason: string) => {
-            callback(server, reason);
+        return this.repo.onServerRemoved((server: ServerInfo, reason: string) => {
+            callback(server.getInfoForUser(), reason);
         });
     }
 
@@ -213,8 +229,8 @@ export default class Client {
      * @param {ServerMethodCallback} callback
      */
     public serverMethodAdded(callback: (info: { server: Glue42Core.AGM.Instance, method: Glue42Core.AGM.MethodDefinition }) => void): UnsubscribeFunction {
-        return this.repo.onServerMethodAdded((server: Glue42Core.AGM.Instance, method: ClientMethodInfo) => {
-            callback({ server, method });
+        return this.repo.onServerMethodAdded((server: ServerInfo, method: ClientMethodInfo) => {
+            callback({ server: server.getInfoForUser(), method: method.getInfoForUser() });
         });
     }
 
@@ -223,8 +239,8 @@ export default class Client {
      * @param {ServerMethodCallback} callback
      */
     public serverMethodRemoved(callback: (info: { server: Glue42Core.AGM.Instance, method: Glue42Core.AGM.MethodDefinition }) => void): UnsubscribeFunction {
-        return this.repo.onServerMethodRemoved((server: Glue42Core.AGM.Instance, method: ClientMethodInfo) => {
-            callback({ server, method });
+        return this.repo.onServerMethodRemoved((server: ServerInfo, method: ClientMethodInfo) => {
+            callback({ server: server.getInfoForUser(), method: method.getInfoForUser() });
         });
     }
 
@@ -244,8 +260,17 @@ export default class Client {
      * Callback that will be called with {@link InvocationError} object when the invocation is not successful
      * @returns {Promise<InvocationResult>}
      * @example
-     * const result = await glue.agm.invoke("Sum", { a: 37, b: 5 }); // everything else is optional
-     * console.log('37 + 5 = ' + result.returned.answer);
+     * glue.agm.invoke(
+     *   'Sum',
+     *   { a: 37, b: 5 }) // everything else is optional
+     *   .then(
+     *      function(result) {
+     *      console.log('37 + 5 = ' + result.returned.answer)
+     *   })
+     *   .catch(
+     *      function(err) {
+     *      console.error('Failed to execute Sum' + err.message)
+     *   })
      */
 
     public async invoke(methodFilter: string | Glue42Core.AGM.MethodDefinition, argumentObj?: object, target?: Glue42Core.AGM.InstanceTarget, additionalOptions?: Glue42Core.AGM.InvokeOptions, success?: Glue42Core.AGM.InvokeSuccessHandler<any>, error?: Glue42Core.AGM.InvokeErrorHandler)
@@ -311,7 +336,7 @@ export default class Client {
                     // because of the additionalOptions
                     serversMethodMap = await this.tryToAwaitForMethods(methodDefinition, target, additionalOptions);
                 } catch (err) {
-                    const errorObj: InvocationResult = {
+                    const errorObj: InvocationResult<any> = {
                         method: methodDefinition,
                         called_with: argumentObj,
                         message: "Can not find a method matching " + JSON.stringify(methodFilter) + " with server filter " + JSON.stringify(target) + ". Is the object a valid instance ?",
@@ -325,14 +350,13 @@ export default class Client {
             }
 
             const timeout = additionalOptions.methodResponseTimeoutMs;
-            // ts be happy
-            const additionalOptionsCopy: Glue42Core.AGM.InvokeOptions = additionalOptions;
+
             const invokePromises: Array<Promise<InvokeResultMessage>> = serversMethodMap.map(
                 (serversMethodPair) => {
-                    const invId = random();
+                    const invId = generate();
 
                     return Promise.race([
-                        this.protocol.client.invoke(invId, serversMethodPair.methods[0], argumentObj, serversMethodPair.server, additionalOptionsCopy),
+                        this.protocol.client.invoke(invId, serversMethodPair.methods[0], argumentObj, serversMethodPair.server, additionalOptions),
                         rejectAfter(timeout, {
                             invocationId: invId,
                             message: `Invocation timeout (${timeout} ms) reached`,
@@ -362,7 +386,7 @@ export default class Client {
         /* tslint:disable:variable-name*/
         const all_return_values = invocationResults
             .filter((invokeMessage) => invokeMessage.status === InvokeStatus.Success)
-            .reduce<InvocationResult[]>(
+            .reduce<Array<InvocationResult<any>>>(
                 (allValues, currentValue) => {
                     allValues = [
                         ...allValues,
@@ -399,7 +423,7 @@ export default class Client {
 
         const invResult = invocationResults[0];
 
-        const result: InvocationResult = {
+        const result: InvocationResult<any> = {
             method,
             called_with: calledWith,
             returned: invResult.result,
@@ -434,7 +458,7 @@ export default class Client {
                 if (serversMethodMap.length > 0) {
                     clearInterval(interval);
                     resolve(serversMethodMap);
-                } else if (delayTillNow >= (additionalOptions.waitTimeoutMs || 10000)) {
+                } else if (delayTillNow >= additionalOptions.waitTimeoutMs) {
                     clearInterval(interval);
                     reject();
                     return;
@@ -455,7 +479,7 @@ export default class Client {
             } else if (target === "best") {
                 // Returns first app found
                 const localMachine = serverMethodMap
-                    .find((s) => s.server.instance.isLocal);
+                    .find((s) => s.server.info.isLocal);
 
                 if (localMachine) {
                     return [localMachine];
@@ -465,7 +489,7 @@ export default class Client {
                     return [serverMethodMap[0]];
                 }
             } else if (target === "skipMine") {
-                return serverMethodMap.filter(({ server }) => server.instance.peerId !== this.instance.peerId);
+                return serverMethodMap.filter(({ server }) => server.getInfoForUser().peerId !== this.instance.peerId);
             }
         } else {
             let targetArray: Glue42Core.AGM.Instance[];
@@ -479,7 +503,7 @@ export default class Client {
             const allServersMatching = targetArray.reduce((matches: ServerMethodsPair[], filter) => {
                 // Add matches for each filter
                 const myMatches = serverMethodMap.filter((serverMethodPair) => {
-                    return this.instanceMatch(filter, serverMethodPair.server.instance);
+                    return this.instanceMatch(filter, serverMethodPair.server.info);
                 });
                 return matches.concat(myMatches);
             }, []);
@@ -513,17 +537,16 @@ export default class Client {
                     && typeof filter[prop] !== "function"
                     && prop !== "object_types"
                     && prop !== "display_name"
-                    && prop !== "id"
-                    && prop !== "gatewayId"
-                    && prop !== "identifier"
                     && prop[0] !== "_";
             });
 
         return filterProps.reduce<boolean>((isMatch, prop) => {
+            // ignore undefined properties and functions
             const filterValue = filter[prop];
             const repoMethodValue = repoMethod[prop];
 
             if (prop === "objectTypes") {
+                // pure function no side effects
                 const containsAllFromFilter = (filterObjTypes: string[], repoObjectTypes: string[]) => {
                     const objTypeToContains = filterObjTypes.reduce<{ [objType: string]: boolean }>(
                         (object, objType: string) => {
@@ -557,6 +580,8 @@ export default class Client {
                 isMatch = false;
             }
 
+            // No regex implementation. If you want regex take them all and handle it on your own
+
             return isMatch;
         }, true);
     }
@@ -571,7 +596,7 @@ export default class Client {
         }
 
         const methods = this.repo.getMethods().filter((method) => {
-            return this.methodMatch(methodFilter, method);
+            return this.methodMatch(methodFilter, method.info);
         });
 
         return methods;
@@ -581,7 +606,7 @@ export default class Client {
         const allServers: ServerInfo[] = this.repo.getServers();
 
         const matchingServers = allServers.filter((server) => {
-            return this.instanceMatch(instanceFilter, server.instance);
+            return this.instanceMatch(instanceFilter, server.info);
         });
 
         if (matchingServers.length === 0) {
@@ -597,8 +622,7 @@ export default class Client {
             matchingServers.forEach((server) => {
                 Object.keys(server.methods).forEach((methodKey) => {
                     const method = server.methods[methodKey];
-                    // group by method identifier
-                    resultMethodsObject[method.identifier] = method;
+                    resultMethodsObject[method.id] = method;
                 });
             });
         }
@@ -610,13 +634,13 @@ export default class Client {
             });
     }
 
-    private getServers(methodFilter?: Glue42Core.AGM.MethodDefinition): ServerMethodsPair[] {
+    private getServers(methodFilter: Glue42Core.AGM.MethodDefinition): ServerMethodsPair[] {
         const servers = this.repo.getServers();
 
         // No method - get all getServers
         if (methodFilter === undefined) {
             return servers.map((server) => {
-                return { server, methods: [] };
+                return { server };
             });
         }
 
@@ -626,12 +650,12 @@ export default class Client {
         //     return [];
         // }
 
-        return servers.reduce<ServerMethodsPair[]>((prev, current) => {
+        return servers.reduce((prev, current) => {
 
             const methodsForServer = this.repo.getServerMethodsById(current.id);
 
             const matchingMethods = methodsForServer.filter((method) => {
-                return this.methodMatch(methodFilter, method);
+                return this.methodMatch(methodFilter, method.info);
             });
 
             if (matchingMethods.length > 0) {

@@ -3,6 +3,7 @@ import { Protocol } from "./types";
 
 export default {
     validate: (definition: Glue42Core.Metrics.MetricDefinition, parent: Glue42Core.Metrics.System, transport: Protocol) => {
+        // TODO: Add validation for parent, transport, system
         if (definition === null || typeof definition !== "object") {
             throw new Error("Missing definition");
         }

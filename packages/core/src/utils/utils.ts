@@ -1,19 +1,17 @@
 export default class Utils {
-
-    public static getGDMajorVersion(): number | undefined {
+    public static getGDMajorVersion() {
         if (typeof window === "undefined") {
-            return undefined;
+            return -1;
         }
         if (!window.glueDesktop) {
-            return undefined;
+            return -1;
         }
         if (!window.glueDesktop.version) {
-            return undefined;
+            return -1;
         }
         const ver = Number(window.glueDesktop.version.substr(0, 1));
-        return isNaN(ver) ? undefined : ver;
+        return isNaN(ver) ? -1 : ver;
     }
-
     public static isNode() {
         if (typeof Utils._isNode !== "undefined") {
             return Utils._isNode;
@@ -27,4 +25,5 @@ export default class Utils {
         return Utils._isNode;
     }
     private static _isNode?: boolean;
+
 }

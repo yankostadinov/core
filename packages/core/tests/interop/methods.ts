@@ -30,7 +30,7 @@ describe("methods", () => {
 
         await glue.agm.createStream(getMethodName());
 
-        const getMethodResult = glue.agm.instance.getMethods!();
+        const getMethodResult = glue.agm.instance.getMethods();
         const methodResult = glue.agm.methodsForInstance(glue.agm.instance);
 
         expect(getMethodResult.length).to.equal(methodResult.length);
@@ -46,7 +46,7 @@ describe("methods", () => {
         }).then(() => {
             const meth = glue.agm.methods().find((m) => m.name === name);
             try {
-                expect(meth?.objectTypes).to.eql(["woah", "rainbow", "random"]);
+                expect(meth.objectTypes).to.eql(["woah", "rainbow", "random"]);
                 done();
             } catch (err) {
                 done(err);
@@ -63,7 +63,7 @@ describe("methods", () => {
         }).then(() => {
             const meth = glue.agm.methods().find((m) => m.name === name);
             try {
-                expect(meth?.name).to.eql(name);
+                expect(meth.name).to.eql(name);
                 done();
             } catch (err) {
                 done(err);
@@ -81,7 +81,7 @@ describe("methods", () => {
         }).then(() => {
             const meth = glue.agm.methods().find((m) => m.name === name);
             try {
-                expect(meth?.displayName).to.eql("Fancy display name");
+                expect(meth.displayName).to.eql("Fancy display name");
                 done();
             } catch (err) {
                 done(err);
@@ -99,7 +99,7 @@ describe("methods", () => {
         }).then(() => {
             const meth = glue.agm.methods().find((m) => m.name === name);
             try {
-                expect(meth?.accepts).to.eql("String test");
+                expect(meth.accepts).to.eql("String test");
                 done();
             } catch (err) {
                 done(err);
@@ -116,7 +116,7 @@ describe("methods", () => {
         }).then(() => {
             const meth = glue.agm.methods().find((m) => m.name === name);
             try {
-                expect(meth?.description).to.eql("This is a description.");
+                expect(meth.description).to.eql("This is a description.");
                 done();
             } catch (err) {
                 done(err);
@@ -129,7 +129,7 @@ describe("methods", () => {
             // DO NOTHING
         });
         glue.agm.createStream(getMethodName()).then((s) => {
-            expect(glue.agm.instance.getStreams!().length).to.eql(1);
+            expect(glue.agm.instance.getStreams().length).to.eql(1);
             done();
         }).catch(done);
     });
@@ -158,13 +158,13 @@ describe("methods", () => {
             // DO NOTHING
         };
 
-        glue.agm.register(undefined as any, callbackNeverCalled).catch(() => {
+        glue.agm.register(undefined, callbackNeverCalled).catch(() => {
             done();
         });
     });
 
     it("Should throw an error when the method/methodDefinition is undefined", (done) => {
-        glue.agm.registerAsync(undefined as any, (args, caller, success) => {
+        glue.agm.registerAsync(undefined, (args, caller, success) => {
             success({});
         }).catch(() => { done(); });
     });

@@ -8,20 +8,10 @@ export default class ServerSubscription implements Glue42Core.AGM.StreamSubscrip
     constructor(private protocol: Protocol, private repoMethod: ServerMethodInfo, private subscription: ServerSubscriptionInfo) {
     }
 
-    public get stream(): Glue42Core.AGM.Stream {
-        if (!this.repoMethod.stream) {
-            throw new Error("no stream");
-        }
-        return this.repoMethod.stream;
-    }
+    public get stream(): Glue42Core.AGM.Stream { return this.repoMethod.stream; }
     public get arguments() { return this.subscription.arguments || {}; }
     public get branchKey(): string { return this.subscription.branchKey; }
-    public get instance(): Glue42Core.AGM.Instance {
-        if (!this.subscription.instance) {
-            throw new Error("no instance");
-        }
-        return this.subscription.instance;
-    }
+    public get instance(): Glue42Core.AGM.Instance { return this.subscription.instance; }
 
     public close() {
         this.protocol.server.closeSingleSubscription(this.repoMethod, this.subscription);

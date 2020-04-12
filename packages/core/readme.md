@@ -1,6 +1,6 @@
 # Intro
 
-@glue42/core is the core [Glue42](https://glue42.com/) JavaScript module, used in applications that want to share data with other glue enabled applications. It can be used by applications hosted in Glue42, browser or Node.js.
+@glue42/core is the core [Glue42](https://glue42.com/) JavaScript module, used in applications that want to share data with other glue enabled applications. It can be used by  applications hosted in Glue42, browser or Node.js.
 
 For more advanced scenarios that require usage of window or application management, activities, layouts, channels or hotkeys use [@glue42/desktop](https://www.npmjs.com/package/@glue42/desktop) package, which is a super set of @glue42/core.
 

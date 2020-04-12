@@ -16,9 +16,10 @@ export function waitForArr<T>(items: T[], keepOrder: boolean = false, tag?: any)
 
     const fn = (key: T): void => {
         const index = items.findIndex((v) => isEqual(v, key));
+
         if (index > -1) {
             if (index !== 0 && keepOrder) {
-                p.reject(new Error(`received '${key}' which is not what should comes next - left->${JSON.stringify(items)}; received->${JSON.stringify(received)}`));
+                p.reject(`received '${key}' which is not what should comes next - left->${JSON.stringify(items)}; received->${JSON.stringify(received)}`);
                 return;
             }
             received.push(key);

@@ -1,6 +1,6 @@
 import { Glue42Core} from "../../glue";
 
-import * as msg from "./bridges/gw3/messages";
+import * as msg from "./bridges/gw3/gw3Messages";
 
 export const ContextMessageReplaySpec: Glue42Core.Connection.MessageReplaySpec = {
     get name(): string {

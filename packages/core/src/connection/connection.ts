@@ -1,105 +1,56 @@
-import {
-    default as CallbackFactory,
-    CallbackRegistry,
-} from "callback-registry";
-import {
-    GW3Protocol,
-    Transport,
-    ConnectionSettings,
-    Identity,
-} from "./types";
-import { Logger } from "../logger/logger";
-
 import { Glue42Core } from "../../glue";
-import InProcTransport from "./transports/inProc";
-import SharedWorkerTransport from "./transports/worker";
-import WS from "./transports/ws";
-import GW3ProtocolImpl from "./protocols/gw3";
-import { MessageReplayerImpl } from "./replayer";
+import { default as CallbackFactory, CallbackRegistry } from "callback-registry";
+import { Protocol, Transport } from "./types";
 
 /**
  * A template for gateway connections - this is extended from specific protocols and transports.
  */
-export default class Connection implements Glue42Core.Connection.API {
-
-    public peerId!: string;
-    public token!: string;
-    public info!: object;
-    public resolvedIdentity!: any;
-    public availableDomains!: object[];
-    public gatewayToken: string | undefined;
-    public replayer?: MessageReplayerImpl;
-
-    protected protocol: GW3Protocol;
+export default class ConnectionImpl implements Glue42Core.Connection.API {
+    protected _protocol: Protocol;
+    protected _transport: Transport;
+    protected _settings: Glue42Core.Connection.Settings;
 
     // The message handlers that have to be executed for each received message
-    protected messageHandlers: {
-        [key: string]: { [key: string]: (msg: any) => void };
-    } = {};
+    protected messageHandlers: { [key: string]: { [key: string]: (msg: object) => void } } = {};
     protected ids = 1;
     protected registry: CallbackRegistry = CallbackFactory();
     protected _connected = false;
+    protected logger: Glue42Core.Logger.API;
+
     private isTrace = false;
-    private transport: Transport;
 
-    public get protocolVersion() {
-        return this.protocol?.protocolVersion;
+    constructor(settings: Glue42Core.Connection.Settings) {
+        this._settings = settings;
+        this.logger = settings.logger;
+        this.isTrace = this.logger.canPublish("trace");
     }
 
-    constructor(private settings: ConnectionSettings, private logger: Logger) {
-        settings = settings || {};
-        settings.reconnectAttempts = settings.reconnectAttempts || 10;
-        settings.reconnectInterval = settings.reconnectInterval || 1000;
+    public init(transport: Transport, protocol: Protocol) {
+        this._protocol = protocol;
 
-        if (settings.inproc) {
-            this.transport = new InProcTransport(settings.inproc, logger.subLogger("inMemory"));
-        } else if (settings.sharedWorker) {
-            this.transport = new SharedWorkerTransport(settings.sharedWorker, logger.subLogger("shared-worker"));
-        } else if (settings.ws !== undefined) {
-            this.transport = new WS(settings, logger.subLogger("ws"));
-        } else {
-            throw new Error("No connection information specified");
-        }
-
-        this.isTrace = logger.canPublish("trace");
-        logger.info(`starting with ${this.transport.name()} transport`);
-
-        this.protocol = new GW3ProtocolImpl(this, settings, logger.subLogger("protocol"));
-        this.transport.onConnectedChanged(
-            this.handleConnectionChanged.bind(this)
-        );
-        this.transport.onMessage(this.handleTransportMessage.bind(this));
-
-        if (settings.replaySpecs && settings.replaySpecs.length) {
-            this.replayer = new MessageReplayerImpl(settings.replaySpecs);
-            this.replayer.init(this);
-        }
+        this._transport = transport;
+        this._transport.onConnectedChanged(this.handleConnectionChanged.bind(this));
+        this._transport.onMessage(this.handleTransportMessage.bind(this));
     }
 
-    public send(message: object, options?: Glue42Core.Connection.SendMessageOptions): Promise<void> {
+    public send(product: string, type: string, message: object, id: string, options?: Glue42Core.Connection.SendMessageOptions): Promise<void> {
         // create a message using the protocol
-        if (
-            this.transport.sendObject &&
-            this.transport.isObjectBasedTransport
-        ) {
-            const msg = this.protocol.createObjectMessage(message);
+        if (this._transport.isObjectBasedTransport) {
+            const msg = this._protocol.createObjectMessage(product, type, message, id);
             if (this.isTrace) {
                 this.logger.trace(`>> ${JSON.stringify(msg)}`);
             }
-            return this.transport.sendObject(msg, options);
+            return this._transport.sendObject(msg, product, type, options);
         } else {
-            const strMessage = this.protocol.createStringMessage(message);
+            const strMessage = this._protocol.createStringMessage(product, type, message, id);
             if (this.isTrace) {
-                this.logger.trace(`>> ${strMessage}`);
+                this.logger.trace(`>> ${strMessage}}`);
             }
-            return this.transport.send(strMessage, options);
+            return this._transport.send(strMessage, product, type, options);
         }
     }
 
-    public on<T>(
-        type: string,
-        messageHandler: (msg: T) => void
-    ): any {
+    public on(product: string, type: string, messageHandler: (msg: object) => void): { type: string, id: number } {
         type = type.toLowerCase();
         if (this.messageHandlers[type] === undefined) {
             this.messageHandlers[type] = {};
@@ -115,59 +66,65 @@ export default class Connection implements Glue42Core.Connection.API {
     }
 
     // Remove a handler
-    public off(info: { type: string; id: number }) {
+    public off(info: { type: string, id: number }) {
         delete this.messageHandlers[info.type.toLowerCase()][info.id];
     }
 
     public get isConnected() {
-        return this.protocol.isLoggedIn;
+        return this._connected;
     }
 
     public connected(callback: (server: string) => void): () => void {
-        return this.protocol.loggedIn(() => {
-            callback(this.settings.ws || this.settings.sharedWorker || "");
-        });
+        if (this._connected) {
+            callback(this._settings.ws || this._settings.http);
+        }
+
+        return this.registry.add("connected", callback);
     }
 
     public disconnected(callback: () => void): () => void {
         return this.registry.add("disconnected", callback);
     }
 
-    public async login(authRequest: Glue42Core.Auth, reconnect?: boolean): Promise<Identity> {
+    public async login(authRequest: Glue42Core.Auth, reconnect?: boolean): Promise<Glue42Core.Connection.Identity> {
         // open the protocol in case it was closed by explicity logout
-        await this.transport.open();
-        const identity = this.protocol.login(authRequest, reconnect);
-        return identity;
+        await this._transport.open();
+        return this._protocol.login(authRequest, reconnect);
     }
 
-    public async logout() {
-        await this.protocol.logout();
-        await this.transport.close();
+    public reconnect() {
+        return this._transport.reconnect();
     }
 
-    public loggedIn(callback: () => void) {
-        return this.protocol.loggedIn(callback);
+    public logout() {
+        this._protocol.logout();
+        this._transport.close();
     }
 
-    public domain(
-        domain: string,
-        successMessages?: string[],
-        errorMessages?: string[]
-    ): Glue42Core.Connection.GW3DomainSession {
-        return this.protocol.domain(
-            domain,
-            this.logger.subLogger(`domain=${domain}`),
-            successMessages,
-            errorMessages
-        );
+    public loggedIn(callback: (() => void)) {
+        return this._protocol.loggedIn(callback);
     }
 
-    public authToken(): Promise<string> {
-        return this.protocol.authToken();
+    public get protocolVersion() {
+        return this._settings.protocolVersion || 1;
     }
 
-    public reconnect(): Promise<void> {
-        return this.transport.reconnect();
+    public toAPI(): Glue42Core.Connection.API {
+        const that = this;
+        return {
+            send: that.send.bind(that),
+            on: that.on.bind(that),
+            off: that.off.bind(that),
+            login: that.login.bind(that),
+            logout: that.logout.bind(that),
+            loggedIn: that.loggedIn.bind(that),
+            connected: that.connected.bind(that),
+            disconnected: that.disconnected.bind(that),
+            get protocolVersion() {
+                return that.protocolVersion;
+            },
+            reconnect: that.reconnect.bind(that)
+        };
     }
 
     private distributeMessage(message: object, type: string) {
@@ -181,7 +138,7 @@ export default class Connection implements Glue42Core.Connection.API {
                     try {
                         handler(message);
                     } catch (error) {
-                        this.logger.error(`Message handler failed with ${error.stack}`, error);
+                        this.logger.error(`Message handler failed with ${error.stack}`);
                     }
                 }
             });
@@ -204,15 +161,14 @@ export default class Connection implements Glue42Core.Connection.API {
     private handleTransportMessage(msg: string | object) {
         let msgObj;
         if (typeof msg === "string") {
-            msgObj = this.protocol.processStringMessage(msg);
+            msgObj = this._protocol.processStringMessage(msg);
         } else {
-            msgObj = this.protocol.processObjectMessage(msg);
+            msgObj = this._protocol.processObjectMessage(msg);
         }
 
         if (this.isTrace) {
             this.logger.trace(`<< ${JSON.stringify(msgObj)}`);
         }
-
         this.distributeMessage(msgObj.msg, msgObj.msgType);
     }
 }

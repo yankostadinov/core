@@ -1,10 +1,9 @@
 import { Glue42Core } from "../../../../glue";
 import ClientRepository from "../../client/repository";
-import { ServerMethodsPair } from "../../client/types";
+import { ClientMethodInfo, ServerMethodsPair } from "../../client/types";
 import * as GW3Messages from "./messages";
 import { SubscriptionCancelledMessage, EventMessage, SubscribedMessage, ErrorSubscribingMessage } from "./messages";
 import { SubscribeError, SubscriptionInner } from "../../types";
-import { Logger } from "../../../logger/logger";
 import { UserSubscription } from "./subscription";
 
 const STATUS_AWAITING_ACCEPT = "awaitingAccept"; // not even one server has accepted yet
@@ -18,21 +17,20 @@ const ON_CLOSE_MSG_CLIENT_INIT = "ClientInitiated";
  * Handles registering methods and sending data to clients
  */
 export default class ClientStreaming {
-
     private subscriptionsList: { [key: number]: SubscriptionInner } = {};
     private subscriptionIdToLocalKeyMap: { [key: string]: number } = {};
     private nextSubLocalKey = 0;
 
-    constructor(private session: Glue42Core.Connection.GW3DomainSession, private repository: ClientRepository, private logger: Logger) {
+    constructor(private session: Glue42Core.Connection.GW3DomainSession, private repository: ClientRepository, private logger: Glue42Core.Logger.API) {
         session.on("subscribed", this.handleSubscribed);
         session.on("event", this.handleEventData);
         session.on("subscription-cancelled", this.handleSubscriptionCancelled);
     }
 
-    public subscribe(streamingMethod: Glue42Core.AGM.MethodDefinition, params: Glue42Core.AGM.SubscriptionParams, targetServers: ServerMethodsPair[], success: (sub: Glue42Core.AGM.Subscription) => void, error: (err: SubscribeError) => void, existingSub: SubscriptionInner) {
+    public subscribe(streamingMethod: ClientMethodInfo, params: Glue42Core.AGM.SubscriptionParams, targetServers: ServerMethodsPair[], stuff: Glue42Core.AGM.SubscriptionParams, success: (sub: Glue42Core.AGM.Subscription) => void, error: (err: SubscribeError) => void, existingSub: SubscriptionInner) {
         if (targetServers.length === 0) {
             error({
-                method: streamingMethod,
+                method: streamingMethod.getInfoForUser(),
                 called_with: params.arguments,
                 message: ERR_MSG_SUB_FAILED + " No available servers matched the target params.",
             });
@@ -48,13 +46,13 @@ export default class ClientStreaming {
             params,
             success,
             error,
-            params.methodResponseTimeout || 10000,
+            stuff.methodResponseTimeout,
             existingSub
         );
 
         if (typeof pendingSub !== "object") {
             error({
-                method: streamingMethod,
+                method: streamingMethod.getInfoForUser(),
                 called_with: params.arguments,
                 message: ERR_MSG_SUB_FAILED + " Unable to register the user callbacks.",
             });
@@ -64,26 +62,21 @@ export default class ClientStreaming {
         targetServers.forEach((target) => {
 
             const serverId = target.server.id;
-            const method = target.methods.find((m) => m.name === streamingMethod.name);
-
-            if (!method) {
-                this.logger.error(`can not find method ${streamingMethod.name} for target ${target.server.id}`);
-                return;
-            }
+            const method = target.methods.find((m) => m.info.name === streamingMethod.info.name);
 
             pendingSub.trackedServers.push({
                 serverId,
-                subscriptionId: undefined,
+                subscriptionId: undefined, // is assigned by gw3
             });
 
             const msg: GW3Messages.SubscribeMessage = {
                 type: "subscribe",
                 server_id: serverId,
-                method_id: method.gatewayId,
+                method_id: method.protocolState.id,
                 arguments_kv: params.arguments,
             };
 
-            this.session.send<SubscribedMessage>(msg, { serverId, subLocalKey })
+            this.session.send(msg, { serverId, subLocalKey })
                 .then((m: SubscribedMessage) => this.handleSubscribed(m))
                 .catch((err: ErrorSubscribingMessage) => this.handleErrorSubscribing(err));
         });
@@ -102,8 +95,8 @@ export default class ClientStreaming {
         return current;
     }
 
-    // This adds subscription and after timeout (30000 default) removes it if it isn't STATUS_SUBSCRIBED
-    private registerSubscription(subLocalKey: number, method: Glue42Core.AGM.MethodDefinition, params: Glue42Core.Interop.SubscriptionParams, success: (sub: Glue42Core.AGM.Subscription) => void, error: (err: SubscribeError) => void, timeout: number, existingSub: SubscriptionInner) {
+    // This adds subscription and after timeout (10000 default) removes it if it isn't STATUS_SUBSCRIBED
+    private registerSubscription(subLocalKey: number, method: ClientMethodInfo, params: Glue42Core.AGM.SubscriptionParams, success: (sub: Glue42Core.AGM.Subscription) => void, error: (err: SubscribeError) => void, timeout: number, existingSub: SubscriptionInner) {
         const subsInfo: SubscriptionInner = {
             localKey: subLocalKey,
             status: STATUS_AWAITING_ACCEPT,
@@ -115,7 +108,7 @@ export default class ClientStreaming {
             handlers: {
                 onData: existingSub?.handlers.onData || [],
                 onClosed: existingSub?.handlers.onClosed || [],
-                onConnected: existingSub?.handlers.onConnected || [],
+                onConnected: existingSub?.handlers.onConnected || []
                 // onFailed: []
             },
             queued: {
@@ -150,7 +143,7 @@ export default class ClientStreaming {
 
             if (pendingSub.status === STATUS_AWAITING_ACCEPT) {
                 error({
-                    method,
+                    method: method.getInfoForUser(),
                     called_with: params.arguments,
                     message: ERR_MSG_SUB_FAILED + " Subscription attempt timed out after " + timeout + " ms.",
                 });
@@ -210,7 +203,7 @@ export default class ClientStreaming {
                 pendingSub.error({
                     message: ERR_MSG_SUB_REJECTED + reason + " Called with:" + callArgs,
                     called_with: pendingSub.params.arguments,
-                    method: pendingSub.method,
+                    method: pendingSub.method.getInfoForUser(),
                 });
 
             } else if (pendingSub.status === STATUS_SUBSCRIBED) {
@@ -252,27 +245,25 @@ export default class ClientStreaming {
         pendingSub.status = STATUS_SUBSCRIBED;
 
         if (isFirstResponse) {
-            let reconnect: boolean = false;
-            let sub = pendingSub.subscription;
-            if (sub) {
+            const reconnect: boolean = !!pendingSub.subscription;
+            if (reconnect) {
                 // re-connect case, we already have subscription object
-                sub.setNewSubscription(pendingSub);
-                pendingSub.success(sub);
-                reconnect = true;
+                pendingSub.subscription.setNewSubscription(pendingSub);
+                pendingSub.success(pendingSub.subscription);
             } else {
-                sub = new UserSubscription(this.repository, pendingSub);
-                pendingSub.subscription = sub;
+                const subsObject = new UserSubscription(this.repository, pendingSub);
+                pendingSub.subscription = subsObject;
                 // Pass in the subscription object
-                pendingSub.success(sub);
+                pendingSub.success(subsObject);
             }
 
-            for (const handler of pendingSub.handlers.onConnected) {
+            pendingSub.handlers.onConnected.forEach((handler) => {
                 try {
-                    handler(sub.serverInstance, reconnect);
+                    handler(pendingSub.subscription?.serverInstance, reconnect);
                 } catch (e) {
                     // DO nothing
                 }
-            }
+            });
         }
     }
 
@@ -307,9 +298,9 @@ export default class ClientStreaming {
         const receivedStreamData = (): Glue42Core.AGM.StreamData => {
             return {
                 data: msg.data,
-                server: this.repository.getServerById(sendingServerId).instance,
+                server: this.repository.getServerById(sendingServerId).getInfoForUser(),
                 requestArguments: subscription.params.arguments,
-                message: undefined,
+                message: null,
                 private: isPrivateData,
             };
         };
@@ -328,7 +319,7 @@ export default class ClientStreaming {
         }
     }
 
-    // called only on stream.close() multiple times for each subscription
+    // called only on stream.close() multiple-times for each subscription
     private handleSubscriptionCancelled = (msg: SubscriptionCancelledMessage) => {
         const subLocalKey = this.subscriptionIdToLocalKeyMap[msg.subscription_id];
 
@@ -375,9 +366,9 @@ export default class ClientStreaming {
         const closersCount = subscription.queued.closers.length;
         const closingServerId = (closersCount > 0) ? subscription.queued.closers[closersCount - 1] : null;
 
-        let closingServer: Glue42Core.AGM.Instance;
+        let closingServer: Glue42Core.AGM.Instance = null;
         if (closingServerId !== undefined && typeof closingServerId === "string") {
-            closingServer = this.repository.getServerById(closingServerId).instance;
+            closingServer = this.repository.getServerById(closingServerId).getInfoForUser();
         }
 
         subscription.handlers.onClosed.forEach((callback) => {
@@ -387,7 +378,7 @@ export default class ClientStreaming {
 
             callback({
                 message: reason || ON_CLOSE_MSG_SERVER_INIT,
-                requestArguments: subscription.params.arguments || {},
+                requestArguments: subscription.params.arguments,
                 server: closingServer,
                 stream: subscription.method,
             });

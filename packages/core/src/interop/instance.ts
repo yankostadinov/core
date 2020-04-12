@@ -9,10 +9,8 @@ export class InstanceWrapper {
         getStreams,
     };
 
-    constructor(instance?: Glue42Core.AGM.Instance, connection?: Glue42Core.Connection.API) {
-        if (instance) {
-            this.refreshWrappedObject(instance);
-        }
+    constructor(instance: Glue42Core.AGM.Instance, connection?: Glue42Core.Connection.GW3Connection) {
+        this.refreshWrappedObject(instance);
         if (connection) {
             connection.loggedIn(() => {
                 this.refresh(connection);
@@ -25,13 +23,13 @@ export class InstanceWrapper {
         return this.wrapped;
     }
 
-    private refresh(connection: Glue42Core.Connection.API) {
+    private refresh(connection: Glue42Core.Connection.GW3Connection) {
         if (!connection) {
             return;
         }
 
         // Apply resolved identity (GW3 case)
-        const resolvedIdentity = connection?.resolvedIdentity;
+        const resolvedIdentity: Glue42Core.Connection.Identity = connection?.resolvedIdentity;
         const instance = Object.assign({}, resolvedIdentity ?? {}, { peerId: connection?.peerId });
         this.refreshWrappedObject(instance);
     }
@@ -53,10 +51,10 @@ export class InstanceWrapper {
     }
 }
 
-function getMethods(this: any): Glue42Core.Interop.MethodDefinition[] {
+function getMethods(): Glue42Core.Interop.MethodDefinition[] {
     return InstanceWrapper.API?.methodsForInstance(this);
 }
 
-function getStreams(this: any): Glue42Core.Interop.MethodDefinition[] {
+function getStreams(): Glue42Core.Interop.MethodDefinition[] {
     return InstanceWrapper.API?.methodsForInstance(this).filter((m) => m.supportsStreaming);
 }

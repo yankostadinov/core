@@ -1,5 +1,4 @@
 import { Glue42Core } from "../../../../glue";
-import { Identity } from "../../../connection/types";
 
 export interface AddInterestMessage {
     caller_id: string;
@@ -30,21 +29,21 @@ export interface RegisterMethodMessage {
 export interface MethodInfoMessage {
     id: string;
     name: string;
-    display_name?: string;
-    description?: string;
-    version?: number;
+    display_name: string;
+    description: string;
+    version: number;
     flags: { [key: string]: any };
     object_types: string[];
-    input_signature?: string;
-    result_signature?: string;
-    restrictions?: string;
+    input_signature: string;
+    result_signature: string;
+    restrictions: string;
 }
 
 export interface PeerAddedMessage {
     type: "peer-added";
     new_peer_id: string;
     meta: { local: boolean };
-    identity: Identity;
+    identity: Glue42Core.Connection.Identity;
 }
 
 export interface PeerRemovedMessage {
@@ -87,7 +86,7 @@ export interface ResultMessage extends TaggedMessage {
 
 export interface ErrorMessage extends TaggedMessage {
     type: "error";
-    peer_id?: string;
+    peer_id: string;
     request_id: string;
     reason: string;
     reason_uri: string;
@@ -99,7 +98,7 @@ export interface YieldMessage {
     invocation_id: string;
     peer_id: string;
     result: object;
-    request_id?: string;
+    request_id: string;
 }
 
 export interface UnregisterMessage {
@@ -111,7 +110,7 @@ export interface SubscribeMessage {
     type: "subscribe";
     server_id: string;
     method_id: string;
-    arguments_kv?: object;
+    arguments_kv: object;
 }
 
 export interface PublishMessage {

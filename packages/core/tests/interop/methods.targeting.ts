@@ -94,13 +94,9 @@ describe("invoke targeting", function () {
         });
         glue.agm.invoke(uniqueMethodName, { t: 42 }, glue.agm.instance)
             .then((res) => {
-                if (!res.all_return_values) {
-                    done("all_return_values missing");
-                    return;
-                }
                 expect(res.all_return_values.length).to.eql(1);
 
-                const calledApplication = res.all_return_values[0].executed_by?.application;
+                const calledApplication = res.all_return_values[0].executed_by.application;
                 const expectedApplication = glue.agm.instance.application;
 
                 expect(calledApplication).to.eql(expectedApplication);
@@ -118,7 +114,7 @@ describe("invoke targeting", function () {
         });
         glue1.agm.invoke(uniqueMethodName, { t: 42 }, "best")
             .then((res) => {
-                expect(res.all_return_values?.length).to.eql(1);
+                expect(res.all_return_values.length).to.eql(1);
                 expect(res.returned).to.eql({
                     t: 42
                 });

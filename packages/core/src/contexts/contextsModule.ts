@@ -1,24 +1,33 @@
 import { Glue42Core } from "../../glue";
-import { GW3Bridge } from "./bridges/gw3/bridge";
+import { GW3Bridge } from "./bridges/gw3/gw3Bridge";
+import { HCBridge } from "./bridges/hcBridge";
 import { ContextBridge } from "./contextBridge";
-import Connection from "../connection/connection";
-import { Logger } from "../logger/logger";
-
-/** @ignore */
-export interface ContextsConfig {
-    connection: Connection;
-    logger: Logger;
-}
 
 export class ContextsModule implements Glue42Core.Contexts.API {
 
-    public initTime: number | undefined;
-    public initStartTime: number | undefined;
+    public initTime: number;
+    public initStartTime: number;
     public initEndTime?: number;
     private _bridge: ContextBridge;
 
-    public constructor(config: ContextsConfig) {
-        this._bridge = new GW3Bridge(config);
+    public constructor(private config: Glue42Core.Contexts.ContextsConfig) {
+        try {
+            if (config.gdMajorVersion === 2) {
+                const hc = window.htmlContainer;
+                if (!hc.sharedContextFacade) {
+                    throw new Error("Your version of HtmlContainer does not support contexts."
+                        + " Get version 1.46.0.0 or later to have that feature.");
+                }
+                this._bridge = new HCBridge(config);
+            } else if (config.connection.protocolVersion === 3) {
+                this._bridge = new GW3Bridge(config);
+            } else {
+                throw new Error("To use the Contexts library you must run in the"
+                    + " HTML Container or using a connection to Gateway v3.");
+            }
+        } catch (err) {
+            throw err;
+        }
     }
 
     public all(): string[] {
@@ -94,7 +103,7 @@ export class ContextsModule implements Glue42Core.Contexts.API {
     public get(
         name: Glue42Core.Contexts.ContextName,
         resolveImmediately?: boolean): Promise<any> {
-        if (resolveImmediately === undefined) {
+        if (resolveImmediately === false) {
             resolveImmediately = true;
         }
         return this._bridge.get(name, resolveImmediately);

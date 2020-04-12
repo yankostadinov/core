@@ -7,20 +7,19 @@ import {
     YieldMessage,
     UnregisterMessage,
     TaggedMessage
-} from "./messages";
+} from "../../protocols/gw3/messages";
 import ServerRepository from "../../server/repository";
 import { Glue42Core } from "../../../../glue";
 import { ServerMethodInfo, ResultContext, ServerSubscriptionInfo, RequestContext } from "../../server/types";
 import ClientRepository from "../../client/repository";
 import { ServerProtocolDefinition } from "../../types";
-import { Logger } from "../../../logger/logger";
 
 export default class ServerProtocol implements ServerProtocolDefinition {
     private callbacks: CallbackRegistry = CallbackRegistryFactory();
     private streaming: ServerStreaming;
 
-    constructor(private session: Glue42Core.Connection.GW3DomainSession, private clientRepository: ClientRepository, private serverRepository: ServerRepository, private logger: Logger) {
-        this.streaming = new ServerStreaming(session, clientRepository, serverRepository);
+    constructor(private session: Glue42Core.Connection.GW3DomainSession, private clientRepository: ClientRepository, private serverRepository: ServerRepository, private logger: Glue42Core.Logger.API) {
+        this.streaming = new ServerStreaming(session, clientRepository, serverRepository, logger);
         this.session.on("invoke", (msg: InvokeMessage) => this.handleInvokeMessage(msg));
     }
 
@@ -33,7 +32,17 @@ export default class ServerProtocol implements ServerProtocolDefinition {
     }
 
     public register(repoMethod: ServerMethodInfo, isStreaming?: boolean): Promise<void> {
+        // Is repoMethod mutated anywhere ?
+
         const methodDef = repoMethod.definition;
+
+        // TODO review, why is this type of closure necessary
+        // Refactor --> this is not necessary (userd for streams)
+        // repoMethod.protocolState.registrationCallbacks = {
+        //     success,
+        //     fail: error,
+        // };
+
         const flags = { streaming: isStreaming || false };
 
         const registerMsg: RegisterMethodMessage = {
@@ -58,8 +67,12 @@ export default class ServerProtocol implements ServerProtocolDefinition {
             })
             .catch((msg: ErrorMessage) => {
                 this.logger.warn(`failed to register method ${repoMethod.definition.name} with id ${repoMethod.repoId} - ${JSON.stringify(msg)}`);
+
                 throw msg;
             });
+
+        // .then((msg) => this.handleRegisteredMessage(msg))
+        // .catch((err) => this.handleErrorRegister(err));
     }
 
     public onInvoked(callback: (methodToExecute: ServerMethodInfo, invocationId: string, invocationArgs: ResultContext) => void) {
@@ -158,8 +171,8 @@ export default class ServerProtocol implements ServerProtocolDefinition {
             return;
         }
 
-        const client = this.clientRepository.getServerById(callerId).instance;
-        const invocationArgs = { args, instance: client };
+        const client = this.clientRepository.getServerById(callerId);
+        const invocationArgs = { args, instance: client.getInfoForUser() };
 
         this.callbacks.execute("onInvoked", method, invocationId, invocationArgs);
     }

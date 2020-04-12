@@ -1,7 +1,10 @@
 import { Logger } from "../../src/logger/logger";
-import { waitForArr } from "../helpers";
-import { GlueMock } from "../mock/glueMock";
+import { waitForArr, WaitForResult } from "../helpers";
 import { Glue42Core } from "../../glue";
+import { waitFor } from "../../src/interop/helpers/promiseHelpers";
+import { promises } from "dns";
+import { expect } from "chai";
+import { GlueMock } from "../mock/glueMock";
 
 describe("logger", () => {
 
@@ -26,7 +29,7 @@ describe("logger", () => {
             },
         };
 
-        const l = new Logger("main", undefined, customLogger);
+        const l = new Logger("main", null, null, customLogger);
         const sub = l.subLogger("p");
         const sub2 = sub.subLogger("p2");
         sub.debug("info");
