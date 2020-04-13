@@ -53,6 +53,7 @@ const checkout = async (branchName) => {
 
 const checkoutRelease = async () => {
     await checkout(releaseBranch);
+    await git.pull();
 };
 
 const checkoutMaster = async () => {
