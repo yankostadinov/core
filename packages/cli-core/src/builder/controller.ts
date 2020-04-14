@@ -21,7 +21,7 @@ export class BuildController {
         const copyDefinitions = [
             { from: config.glueAssets.gateway.location, to: join(targetDir, "gateway.js") },
             { from: config.glueAssets.worker, to: join(targetDir, "worker.js") },
-            { from: config.glueAssets.config, to: join(targetDir, "glue.config.js") },
+            { from: config.glueAssets.config, to: join(targetDir, "glue.config.json") },
         ];
 
         if (config.glueAssets.gateway.gwLogAppender) {
