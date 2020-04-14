@@ -13,3 +13,5 @@ export const SET_PRICES_STREAM = {
     displayName: 'Publishes last trades',
     returns: 'Composite:Symbol{String symbol, Double bid, Double ask}[]'
 };
+
+export const SHARED_CONTEXT_NAME = 'T42.Demo.Client';
