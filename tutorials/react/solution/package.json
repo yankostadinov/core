@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@glue42/gateway-web": "^3.0.8-beta.8",
+    "@glue42/gateway-web": "^3.0.8",
     "@glue42/worker-web": "^1.0.0"
   }
 }

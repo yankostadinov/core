@@ -57,8 +57,9 @@ Okay, enough with the introduction, let's get started with the fun part.
 
 First you need to get the tutorial code and get your self familiar with it. Clone our GitHub repo at `https://github.com/Glue42/core` and navigate to `/tutorials/rest-server`. This server is going to serve the data for our applications. All you need to do is:
 
-```javascript
+```cmd
 npm i
+
 npm start
 ```
 
@@ -77,12 +78,13 @@ Let's go through the resources we have there:
 
 Now, let's launch the apps and see what we have. To do that:
 
-```javascript
+```cmd
 npm i
+
 npm start
 ```
 
-This will launch a simple http-serve which will host the entire `/start` directory at port **:4000**.
+This will launch a simple http-server which will host the entire `/start` directory at port **:4000**.
 
 Open the browser at `localhost:4000/clients` and check out the app. It is pretty straight forward - just a list of clients, fetched from the **rest server** we started before. Clicking on a client does nothing right now. But more importantly, if you look at the right side of the address bar, you will see an `install` icon, allowing you to install the app. Once installed you can launch it by going to `chrome://apps` (if you use Google Chrome) and clicking on the icon.
 
@@ -94,8 +96,9 @@ Great! So far we have gotten ourselves acquainted with the start files, we launc
 
 Now we are going to use the [**Glue42 Core CLI**](../../glue42-core/what-is-glue42-core/core-concepts/cli/index.html) to initiate our environment. For that you will need to install the Glue42 Core CLI first and then call the `init` command, which will set up your dev environment.
 
-```javascript
+```cmd
 npm install --global @glue42/cli-core
+
 gluec init
 ```
 
@@ -147,7 +150,7 @@ To do all of that open the `glue.config.dev.json` file. Then add the shared reso
 
 Next we open a terminal and:
 
-```javascript
+```cmd
 gluec serve
 ```
 
@@ -163,8 +166,9 @@ Before we start coding, let's take a moment to talk about running the **solution
 
 First, launch the `/rest-server` (if you have stopped it), then go to the `/vanilla-js/solution` directory, open a terminal, install the node dependencies and launch your project with the CLI:
 
-```javascript
+```cmd
 npm i
+
 gluec serve
 ```
 
@@ -207,7 +211,6 @@ Whenever a user clicks on a client, we would like the **stocks** app to show onl
 Head over to `/stocks/index.js`.  Right below where you invoked `toggleGlueAvailable`, we will register a method called `SelectClient`. This method will expect as an argument an object with property `client` that has a `portfolio` property. Next we need to filter all the stocks and pass only the correct ones to the function `setupStocks`, which will re-build our stocks table. After that we will create a stream called `LivePrices`, which once created we will assign to the global `window` object for easy access. Finally we will go over to the `newPricesHandler` function which is invoked every time new prices are generated and push the `priceUpdate` object to the stream. When you are done, your code should look something like this:
 
 ```javascript
-
 const newPricesHandler = (priceUpdate) => {
     priceUpdate.stocks.forEach((stock) => {
         const row = document.querySelectorAll(`[data-ric='${stock.RIC}']`)[0];

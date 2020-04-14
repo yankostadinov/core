@@ -17,7 +17,7 @@ Head over to the [**Interop**](../../../glue42-concepts/data-sharing-between-app
 
 ## Window Management
 
-Using the [Windows API](../../../reference/core/latest/windows/index.html) your application can easily open and manipulate browser windows. This allows you to transform your traditional single-window web app into a multi-window native-like PWA application. The [Windows API](../../../reference/core/latest/windows/index.html) enables applications to:
+Using the [Windows API](../../../reference/core/latest/windows/index.html) your application can easily open and manipulate browser windows. This allows you to transform your traditional single-window web app into a multi-window native-like PWA. The [Windows API](../../../reference/core/latest/windows/index.html) enables applications to:
 - **open multiple windows**
 - **manipulate the position and size** of opened windows
 - **pass data upon opening new windows**
