@@ -24,7 +24,7 @@ const writePackageJson = (packageSource, contents) => {
         let data = JSON.stringify(contents, null, 4);
 
         // normalizing EOL
-        data = data.replace(/\r\n/gm, '\n').replace(/\n/gm, '\r\n');
+        data = data.replace(/\r\n/gm, '\n');
 
         writeFile(location, data, (err) => {
             if (err) {
