@@ -20,8 +20,8 @@ describe("Server stream", function () {
         stream = await registerGenericStream(serverGlue);
     });
 
-    afterEach(() => {
-        doneAllGlues();
+    afterEach(async () => {
+        await doneAllGlues();
     });
 
     it("keeps correct list of branches and subscriptions", (done) => {

@@ -15,8 +15,8 @@ describe("methods", () => {
         ]);
     });
 
-    afterEach(() => {
-        doneAllGlues();
+    afterEach(async () => {
+        await doneAllGlues();
     });
 
     it("getMethods() should return the same count of method like .methodsForInstance.", async () => {

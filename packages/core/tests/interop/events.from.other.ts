@@ -15,8 +15,8 @@ describe("events from other", () => {
         glue = await createGlue();
     });
 
-    afterEach(() => {
-        doneAllGlues();
+    afterEach(async () => {
+        await doneAllGlues();
     });
 
     it("when a server registers a method methodAdded and serverMethodAdded events are received", (done) => {

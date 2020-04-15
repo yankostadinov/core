@@ -20,9 +20,9 @@ describe("Branching", () => {
             });
     });
 
-    afterEach(() => {
+    afterEach(async () => {
         unregisterGenericStream();
-        doneAllGlues();
+        await doneAllGlues();
     });
 
     it("subscriber on a branch should receive data pushed on that branch", (done) => {

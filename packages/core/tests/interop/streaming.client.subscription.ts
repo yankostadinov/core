@@ -18,8 +18,8 @@ describe("Client subscription", () => {
         stream = await registerGenericStream(serverGlue);
     });
 
-    afterEach(() => {
-        doneAllGlues();
+    afterEach(async () => {
+        await doneAllGlues();
     });
 
     it("should fail if request is rejected by the server", (done) => {

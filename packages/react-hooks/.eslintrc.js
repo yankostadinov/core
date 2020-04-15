@@ -2,15 +2,10 @@ module.exports = {
     extends: [
         '../../.eslintrc.json',
         'plugin:react/recommended',
-        'prettier/@typescript-eslint',
-        'plugin:prettier/recommended',
         'plugin:jest/recommended',
     ],
     parser: "@typescript-eslint/parser",
     rules: {
-        'prettier/prettier': ["error", {
-            "endOfLine":"auto"
-        }],
         'react/prop-types': 'off',
         'react/display-name': 'off',
         'react/jsx-curly-brace-presence': 'error',
@@ -22,7 +17,6 @@ module.exports = {
         '@typescript-eslint/no-use-before-define': 'off',
         '@typescript-eslint/no-object-literal-type-assertion': 'off',
         '@typescript-eslint/no-empty-interface': ['error', { allowSingleExtends: true }],
-        '@typescript-eslint/array-type': ['error', 'array-simple'],
         '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
         '@typescript-eslint/explicit-member-accessibility': ['error',
             {

@@ -13,8 +13,8 @@ describe("contexts.core", () => {
         glue = await createGlue();
     });
 
-    afterEach(() => {
-        doneAllGlues();
+    afterEach(async () => {
+        await doneAllGlues();
     });
 
     it("check if set works correctly", (done) => {

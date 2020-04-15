@@ -11,6 +11,12 @@ export const initiate = async (process: NodeJS.Process): Promise<void> => {
 
     logger.trace(`CLI started with parsed configuration: ${JSON.stringify(cliConfig, null, 2)}`);
 
+    // Handle a case where the node process hangs on MacOS.
+    const isMacOS = process.platform === "darwin";
+    if (isMacOS) {
+        process.on("SIGHUP", () => process.exit(0));
+    }
+
     return commands
         .find((command) => command.name === cliConfig.command)
         .action(cliConfig, logger);
