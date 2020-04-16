@@ -2,7 +2,7 @@ import { expect } from "chai";
 import mockery from "mockery";
 import "mocha";
 
-describe.only("test structure", function () {
+describe("test structure", function () {
     this.timeout(10000);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let sut: any;
