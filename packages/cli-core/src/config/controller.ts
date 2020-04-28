@@ -22,7 +22,7 @@ export class ConfigController {
         if (command.requiredConfig) {
             await this.validateExistence(cliConfig);
         }
-        
+
         return cliConfig;
     }
 
