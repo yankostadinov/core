@@ -1,3 +1,5 @@
+4.8.6
+- fix: log throws G4E-2712
 4.8.5
 - fix: last metric value is duplicated G4E-2491
 - fix: better error logging G4E-2702
