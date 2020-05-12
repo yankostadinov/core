@@ -9,6 +9,7 @@ export interface MetricsSettings {
     /** If true will auto create click stream metrics in root system */
     clickStream?: boolean;
     settings?: object;
+    canUpdateMetric: () => boolean;
 }
 
 export interface Protocol {
