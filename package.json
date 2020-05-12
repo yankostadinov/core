@@ -11,7 +11,8 @@
     "test": "npm run test:scripts && lerna run test",
     "release": "gulp release",
     "test:scripts": "mocha ./scripts/test/**/*spec.js",
-    "lint:fix": "./node_modules/.bin/eslint --ignore-path .gitignore . --fix"
+    "lint:fix": "./node_modules/.bin/eslint --ignore-path .gitignore . --fix",
+    "release:live-examples": "node ./scripts/live-examples/reload-code-sandboxes.js"
   },
   "devDependencies": {
     "@lerna/changed": "^3.20.0",
