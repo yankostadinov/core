@@ -168,10 +168,14 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
         if (internalConfig.metrics) {
             const initTimer = timer();
 
+            const metricsPublishingEnabledFunc = glue42gd?.getMetricsPublishingEnabled;
+            const canUpdateMetric = metricsPublishingEnabledFunc ? metricsPublishingEnabledFunc : () => true;
+
             _rootMetrics = metrics({
                 identity: internalConfig.metrics.identity,
                 connection: internalConfig.metrics ? _connection : nullConnection,
-                logger: _logger.subLogger("metrics")
+                logger: _logger.subLogger("metrics"),
+                canUpdateMetric
             });
 
             if (internalConfig.metrics.disableAutoAppSystem) {

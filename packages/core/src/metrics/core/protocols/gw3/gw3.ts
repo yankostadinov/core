@@ -8,7 +8,6 @@ export default function (connection: Glue42Core.Connection.GW3Connection, config
     }
 
     let joinPromise: Promise<any>;
-
     let session: Glue42Core.Connection.GW3DomainSession;
 
     const init = (repo: Glue42Core.Metrics.Repository): void => {
@@ -171,16 +170,18 @@ export default function (connection: Glue42Core.Connection.GW3Connection, config
     };
 
     const updateMetricCore = (metric: Glue42Core.Metrics.Metric): void => {
-        const value = getMetricValueByType(metric);
-        const publishMetricsMsg = {
-            type: "publish",
-            values: [{
-                name: normalizeMetricName(metric.path.join("/") + "/" + metric.name),
-                value,
-                timestamp: Date.now(),
-            }],
-        };
-        session.send(publishMetricsMsg);
+        if (canUpdate()) {
+            const value = getMetricValueByType(metric);
+            const publishMetricsMsg = {
+                type: "publish",
+                values: [{
+                    name: normalizeMetricName(metric.path.join("/") + "/" + metric.name),
+                    value,
+                    timestamp: Date.now(),
+                }],
+            };
+            session.send(publishMetricsMsg);
+        }
     };
 
     const cloneMetric = (metric: Glue42Core.Metrics.Metric): Glue42Core.Metrics.Metric => {
@@ -189,6 +190,15 @@ export default function (connection: Glue42Core.Connection.GW3Connection, config
             metricClone.value = { ...metric.value };
         }
         return metricClone;
+    };
+
+    const canUpdate = (): boolean => {
+        try {
+            const func = config.canUpdateMetric ?? (() => true);
+            return func();
+        } catch {
+            return true;
+        }
     };
 
     return {

@@ -192,6 +192,7 @@ export namespace Glue42Core {
             activityId?: string;
             activityWindowId?: string;
         };
+        getMetricsPublishingEnabled: () => boolean;
     }
 
     /** Optional configuration object when initializing the Glue42 library. */
@@ -1487,6 +1488,7 @@ export namespace Glue42Core {
             heartbeatInterval?: number;
             /** If true will auto create click stream metrics in root system */
             clickStream?: boolean;
+            canUpdateMetric?: () => boolean;
         }
 
         export interface Identity {
