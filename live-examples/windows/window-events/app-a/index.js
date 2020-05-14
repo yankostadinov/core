@@ -5,8 +5,8 @@ const APP_NAME = 'App A';
 window.startApp({ appName: APP_NAME })
   .then(subscribeToWindowEvents)
   .then(() => {
-    const form = document.getElementById('openWindowForm');
-    form.addEventListener('submit', windowOpenHandler, false);
+    const form = getFormElement();
+    form.addEventListener('submit', openWindowHandler, false);
   })
   .then(clearLogsHandler)
   .catch(console.error);
@@ -24,7 +24,7 @@ function subscribeToWindowEvents() {
   glue.windows.onWindowRemoved((webWindow) => {
     // When it is my window - do not log. Keep the logs list clean.
     if (isMyWindow(webWindow.id) === false) {
-      logger.info(`Window with name "${webWindow.id}" opened.`);
+      logger.info(`Window with name "${webWindow.id}" closed.`);
     }
   });
 }
@@ -33,11 +33,11 @@ function openWindow({ name, ...createOptions }) {
   return glue.windows.open(name, `${window.location.origin}/new-window/index.html`, createOptions);
 }
 
-function windowOpenHandler(event) {
+function openWindowHandler(event) {
   event.preventDefault();
   event.stopPropagation();
 
-  const form = document.getElementById('openWindowForm');
+  const form = getFormElement();
   if (form.checkValidity() === false) {
     // Form is invalid. Mark fields.
     form.classList.add('was-validated');
@@ -46,22 +46,56 @@ function windowOpenHandler(event) {
 
   form.classList.remove('was-validated');
 
-  const windowNameValue = getElementValue('windowNameInput');
-  const contextValue = getElementValue('contextInput');
-  const widthValue = Number(getElementValue('widthInput'));
-  const heightValue = Number(getElementValue('heightInput'));
+  const { windowName, context, width, height } = getFormData();
 
   const createWindowOptions = {
-    name: windowNameValue,
-    context: { value: contextValue },
-    width: (isNaN(widthValue) || widthValue <= 0) ? 400 : widthValue,
-    height: (isNaN(heightValue) || heightValue <= 0) ? 400 : heightValue,
+    name: windowName,
+    context: { value: context },
+    width: (isNaN(width) || width <= 0) ? 350 : width,
+    height: (isNaN(height) || height <= 0) ? 350 : height,
   };
 
   openWindow(createWindowOptions);
+  resetForm();
 }
 
-function getElementValue(id) {
-  const el = document.getElementById(id) || {};
-  return el.value;
+function getFormData() {
+  function getElementValue(id) {
+    const el = document.getElementById(id) || {};
+    return el.value;
+  }
+
+  const windowName = getElementValue('windowNameInput');
+  const context = getElementValue('contextInput');
+  const width = Number(getElementValue('widthInput'));
+  const height = Number(getElementValue('heightInput'));
+
+  return { windowName, context, width, height };
+}
+
+function setFormData({ windowName, context, width, height }) {
+  function setElementValue(id, value) {
+    const el = document.getElementById(id) || {};
+    el.value = value;
+  }
+
+  setElementValue('windowNameInput', windowName || '');
+  setElementValue('contextInput', context || '');
+  setElementValue('widthInput', width || '');
+  setElementValue('heightInput', height || '');
+}
+
+function resetForm() {
+  getFormElement().classList.remove('was-validated');
+
+  setFormData({
+    windowName: '',
+    context: '',
+    height: '',
+    width: ''
+  });
+}
+
+function getFormElement() {
+  return document.getElementById('openWindowForm');
 }
