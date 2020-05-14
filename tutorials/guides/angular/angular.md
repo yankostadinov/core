@@ -1,10 +1,10 @@
 ## Introduction
 
-This tutorial is going to show your how to use Glue42 Core in an Angular application using the `@glue42/ng` package. If you haven't checked out the [Vanilla JS]("../vanilla-js/index.html") tutorial, we recommend going through that one first, as there you will get a better understanding of Glue42 Core without the added complexity level of a web framework. 
+This tutorial will to show you how to use Glue42 Core in an Angular application using the `@glue42/ng` package. If you haven't checked out the [Vanilla JS](../vanilla-js/index.html) tutorial, we recommend going through that one first, as there you will get a better understanding of Glue42 Core without the added complexity level of a web framework. 
 
 The goal now is to show how you can integrate and extend a couple of existing Angular applications into an awesome Glue42 Core project. We will cover all major aspects of Glue42 Core, including **interop**, **windows** and **contexts**.
 
-The business scenario and requirements are identical to the the [Vanilla JS]("../vanilla-js/index.html") tutorial. We are part of the IT department of a big multi-national back and our task is to create an application which will be used by the bank's asset management team. This will be a multi-app project consisting of two applications:
+The business scenario and requirements are identical to the the [Vanilla JS](../vanilla-js/index.html) tutorial. We are part of the IT department of a big multi-national bank and our task is to create an application which will be used by the bank's asset management team. This will be a multi-app project consisting of two applications:
 - **clients** - displays a full list of clients and their details
 - **stocks** - displays a full list of stocks with prices; whenever a stock is clicked the user should see that stock's details
 
@@ -21,8 +21,7 @@ Before we get into the interesting part, there are few things you need to be com
 - JS array methods.
 - Asynchronous programming with Promises.
 
-It is also a good idea to keep our [**Glue42 Core CLI**](../../glue42-core/what-is-glue42-core/core-concepts/cli/index.html), [**Glue42 Client**](../../glue42-core/what-is-glue42-core/core-concepts/glue42-client/index.html), [**Glue42 Web Reference API**](../../reference/core/latest/glue42%20web/index.html) and [**Glue42 NG**](../../reference/core/latest/glue42%20web/index.html) sections close by for reference.
-
+It is also a good idea to keep our [**Glue42 Core CLI**](../../core/what-is-glue42-core/core-concepts/cli/index.html), [**Glue42 Client**](../../core/what-is-glue42-core/core-concepts/glue42-client/index.html) and [**Glue42 Web Reference API**](../../reference/core/latest/glue42%20web/index.html) sections close by for reference.
 
 ## Tutorial Structure
 
@@ -94,7 +93,7 @@ Great! So far we have gotten ourselves acquainted with the start files, we launc
 
 ### 1.2. Getting Started with the Glue42 Core CLI
 
-The first step in building our project is to set up our development environment for a Glue42 Core. As a prerequisite for Glue42 Core, our apps should be located at the same origin (protocol, host and port) in order for them to communicate with each other. This means that we should access the clients app from **/clients** and the stocks app from **/stocks**. Furthermore we need to set up the [**Glue42 Core Environment**](../../glue42-core/what-is-glue42-core/core-concepts/environment/index.html). All of this is very straight-forward with the [**Glue42 Core CLI**](../../glue42-core/what-is-glue42-core/core-concepts/cli/index.html).
+The first step in building our project is to set up our development environment for a Glue42 Core project. As a prerequisite for Glue42 Core, our apps should be located at the same origin (protocol, host and port) in order for them to communicate with each other. This means that we should access the clients app from **/clients** and the stocks app from **/stocks**. Furthermore we need to set up the [**Glue42 Core Environment**](../../core/what-is-glue42-core/core-concepts/environment/index.html). All of this is very straight-forward with the [**Glue42 Core CLI**](../../core/what-is-glue42-core/core-concepts/cli/index.html).
 
 First, we need to install the Glue42 Core CLI. You can do that globally:
 
@@ -164,6 +163,7 @@ Finally, we need to tell our Angular apps that they are no longer served from `r
 ```
 
 **NOTE!** You need to have a slash both at the end and at the start of the base href, otherwise it will not be registered.
+
 **NOTE!** The value you give to the `baseHref` must be identical to the value used in as `route` in `glue.config.dev.json`. Otherwise, the client-side routing will not work correctly.
 
 Let's serve our apps. To do that go to each app's root and start the default Angular servers
@@ -184,11 +184,11 @@ Now all the necessary Glue42 Core Environment assets are served at the default l
 
 Even better, because the default Angular servers are used to build, watch and refresh the apps, we have file-watching, auto-refresh and any other setting we like from the Angular dev arsenal.
 
-Not it is a good momenta ot remove the PWAs you installed in the previous section, because they point to the default `:4100` and `:4200` apps and install the new ones.
+Now it is a good moment ot remove the PWAs you installed in the previous section, because they point to the default `:4100` and `:4200` apps and install the new ones.
 
 ### 1.3. Getting Started with the Solution files
 
-Before we continue with the fun part, we will take a look at how to run the solution. You have a full solution at your disposal as a reference point incase you what to see the end result beforehand, or if you get lost somewhere along the way.
+Before we continue with the fun part, we will take a look at how to run the solution. You have a full solution at your disposal as a reference point in case you what to see the end result beforehand, or if you get lost somewhere along the way.
 
 First install all dependencies - run `npm i` at `/solution`, `/solution/clients` and `/solution/stocks`. Next start both apps by running `npm start` inside `/solution/clients` and `/solution/stocks`. Finally, (assuming that you have the Glue42 Core CLI globally installed) go to `/solution` and run `gluec serve`.
 
@@ -295,7 +295,7 @@ Okay, let's start with the interop method. Naturally the logic for the method re
     }
 ```
 
-**Note!** We are wrapping the `next` invocation in `NgZone.run`, because our custom even is executed outsize the Angular Zone and therefore will not trigger change detection unless explicitly ran inside the zone.
+**Note!** We are wrapping the `next` invocation in `NgZone.run`, because our custom event is executed outsize the Angular Zone and therefore will not trigger change detection unless explicitly ran inside the zone.
 
 Next we need to create a stream called `"LivePrices"`, inject the `DataService` and subscribe to new prices update and push to the stream. The result should look like this:
 
@@ -417,7 +417,7 @@ Now, let's call that from the `handleStockClick` method of `stocks.component.ts`
 
 Once again, we just dump errors to the console for simplicity.
 
-Okay, we open a new window, but it has some default size and shows no data. This is to be expected, because the new stock details window have a different instance of the `DataService` and therefore the `selectedStock` is not set there. We will address all of this step by step.
+Okay, we open a new window, but it has some default size and shows no data. This is to be expected, because the new stock details window has a different instance of the `DataService` and therefore the `selectedStock` is not set there. We will address all of this step by step.
 
 ### 4.3. Window Settings
 
@@ -453,7 +453,7 @@ As we can see, this new stock details window is a new instance of the **Stocks**
     }
 ```
 
-Next, the stock details window needs to get this context. Since this is actually a window of the **Stocks** Angular app, we will simple extend that `GlueService` with a `getMyContext` method, which will return the window's own context:
+Next, the stock details window needs to get this context. Since this is actually a window of the **Stocks** Angular app, we will simply extend that `GlueService` with a `getMyContext` method, which will return the window's own context:
 
 ```javascript
     public async getMyContext() {
@@ -514,7 +514,7 @@ If you have done all of that, your `subscribeToLivePrices` method should look li
     }
 ```
 
-Now, let go back to the `stock-details.component.ts`. We need to check if glue is ready and only then subscribe to the `"LivePrices"` stream, also subscribe to the `onPriceUpdate` observable provided by the `GlueService` and handle the new prices. We should also define a `ngOnDestroy` where we close the subscription if it exists:
+Now, let's go back to the `stock-details.component.ts`. We need to check if glue is ready and only then subscribe to the `"LivePrices"` stream, also subscribe to the `onPriceUpdate` observable provided by the `GlueService` and handle the new prices. We should also define a `ngOnDestroy` where we close the subscription if it exists:
 
 ```javascript
     public async ngOnInit(): Promise<void> {
@@ -541,9 +541,7 @@ Now, let go back to the `stock-details.component.ts`. We need to check if glue i
 
 ## 5. Shared Contexts
 
-Our clients love the project so far. They are going wild taking full advantage of their multiple monitors thanks to our work with the [**Interop API**](../../reference/core/latest/interop/index.html) and the [**Window Management API**](../../reference/core/latest/windows/index.html). The users' final request is to be able to see in the `stock details` window if the selected client has the stock in their portfolio. So far `clients` and `stock details` had no interaction between each other, so let's change that.
-
-So far we have meet all the requirements by our users using the [**Interop API**](../../reference/core/latest/interop/index.html) and the [**Window Management API**](../../reference/core/latest/windows/index.html). Our clients' final request is to be able to see in the `stock details` window if the selected client has the stock in their portfolio. So far `clients` and `stock details` had no interaction between each other, so let's change that.
+So far we have meet all the requirements by our users using the [**Interop API**](../../reference/core/latest/interop/index.html) and the [**Window Management API**](../../reference/core/latest/windows/index.html). Our clients' final request is to be able to see in the `stock details` window if the selected client has the stock in their portfolio. So far `clients` and `stock details` have no interaction between each other, so let's change that.
 
 We could use the same technique using an interop method, but we have a feeling that once the users start interacting with our app on a day-to-day basis, they will start requesting more and more integrations with other apps. So, let's solve the problem using the [**Shared Contexts API**](../../reference/core/latest/shared%20contexts/index.html), which will give us more future-proofing. 
 
