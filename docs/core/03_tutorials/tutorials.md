@@ -18,6 +18,6 @@ You cаn check it out [here](../../tutorials/react/index.html).
 
 ## Angular
 
-Using Glue42 Core in an Angular application is easy and painless thanks to the `@glue42/ng` library. This is a thin wrapper that makes initialing Glue JS and accessing the JS API a breeze. Just like Vanilla JS and React, we have prepared a tutorial which has the same business requirements, but everything is implemented using Angular.
+Using Glue42 Core in an Angular application is easy and painless thanks to the `@glue42/ng` library. This is a thin wrapper that makes initializing Glue JS and accessing the JS API a breeze. Just like Vanilla JS and React, we have prepared a tutorial which has the same business requirements, but everything is implemented using Angular.
 
 You cаn check it out [here](../../tutorials/angular/index.html).
