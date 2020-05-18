@@ -56,7 +56,12 @@ export default function (connection: Connection, config: MetricsSettings): Proto
             }
 
         });
-        session.join();
+
+        session.join({
+            system: config.system,
+            service: config.service,
+            instance: config.instance
+        });
     };
 
     const replayRepo = (repo: Glue42Core.Metrics.Repository) => {

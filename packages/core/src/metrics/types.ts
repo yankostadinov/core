@@ -9,6 +9,9 @@ export interface MetricsSettings {
     /** If true will auto create click stream metrics in root system */
     clickStream?: boolean;
     settings?: object;
+    system: string;
+    service: string;
+    instance: string;
 }
 
 export interface Protocol {
