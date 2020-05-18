@@ -10,6 +10,9 @@ export interface MetricsSettings {
     clickStream?: boolean;
     settings?: object;
     canUpdateMetric: () => boolean;
+    system: string;
+    service: string;
+    instance: string;
 }
 
 export interface Protocol {
