@@ -9,6 +9,7 @@ export default function (connection: Connection, config: MetricsSettings): Proto
     }
 
     let joinPromise: Promise<any>;
+
     let session: Glue42Core.Connection.GW3DomainSession;
 
     const init = (repo: Glue42Core.Metrics.Repository): void => {
@@ -55,12 +56,7 @@ export default function (connection: Connection, config: MetricsSettings): Proto
             }
 
         });
-
-        session.join({
-            system: config.system,
-            service: config.service,
-            instance: config.instance
-        });
+        session.join();
     };
 
     const replayRepo = (repo: Glue42Core.Metrics.Repository) => {
@@ -176,18 +172,16 @@ export default function (connection: Connection, config: MetricsSettings): Proto
     };
 
     const updateMetricCore = (metric: Glue42Core.Metrics.Metric): void => {
-        if (canUpdate()) {
-            const value = getMetricValueByType(metric);
-            const publishMetricsMsg = {
-                type: "publish",
-                values: [{
-                    name: normalizeMetricName(metric.path.join("/") + "/" + metric.name),
-                    value,
-                    timestamp: Date.now(),
-                }],
-            };
-            session.send(publishMetricsMsg);
-        }
+        const value = getMetricValueByType(metric);
+        const publishMetricsMsg = {
+            type: "publish",
+            values: [{
+                name: normalizeMetricName(metric.path.join("/") + "/" + metric.name),
+                value,
+                timestamp: Date.now(),
+            }],
+        };
+        session.send(publishMetricsMsg);
     };
 
     const cloneMetric = (metric: Glue42Core.Metrics.Metric): Glue42Core.Metrics.Metric => {
@@ -196,15 +190,6 @@ export default function (connection: Connection, config: MetricsSettings): Proto
             metricClone.value = { ...metric.value };
         }
         return metricClone;
-    };
-
-    const canUpdate = (): boolean => {
-        try {
-            const func = config.canUpdateMetric ?? (() => true);
-            return func();
-        } catch {
-            return true;
-        }
     };
 
     return {

@@ -40,6 +40,7 @@ const setupClients = (clients) => {
 // };
 
 const clientClickedHandler = (client) => {
+    console.log(client);
 };
 
 const start = async () => {

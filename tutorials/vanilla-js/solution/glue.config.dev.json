@@ -14,12 +14,6 @@
         },
         "apps": [
             {
-                "route": "/",
-                "file": {
-                    "path": "./"
-                }
-            },
-            {
                 "route": "/clients",
                 "file": {
                     "path": "./clients/"
