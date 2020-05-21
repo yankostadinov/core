@@ -138,9 +138,13 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
         const initTimer = timer();
         const config = internalConfig.metrics;
 
+        const metricsPublishingEnabledFunc = glue42gd?.getMetricsPublishingEnabled;
+        const canUpdateMetric = metricsPublishingEnabledFunc ? metricsPublishingEnabledFunc : () => true;
+
         const rootMetrics = metrics({
             connection: config ? _connection : undefined,
-            logger: _logger.subLogger("metrics")
+            logger: _logger.subLogger("metrics"),
+            canUpdateMetric
         });
 
         let rootSystem = rootMetrics;

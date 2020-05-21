@@ -1,3 +1,6 @@
+5.0.3
+fix: methodDefinition's getServers() listed as property, not method [link](https://github.com/Glue42/core/issues/62)
+fix: MethodDefinition.getServers() doesn't return expected array [link](https://github.com/Glue42/core/issues/60)
 5.0.2
 feat: added in lerna release pipeline
 5.0.1
