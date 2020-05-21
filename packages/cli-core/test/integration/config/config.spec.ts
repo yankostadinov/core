@@ -1,12 +1,15 @@
 import { expect } from "chai";
 import "mocha";
 import { ConfigController } from "../../../src/config/controller";
-import { join } from "path";
+import { join, isAbsolute } from "path";
 import { checkIsObjValidCliConfig, generateDefaultConfig } from "../helper/config";
-import { CliCommand } from "../../../src/config/cli.config";
+import { CliCommand, FullDevConfig } from "../../../src/config/cli.config";
 import { TestEnvironment } from "../helper/environment";
 import { after } from "mocha";
 import { invalidUserConfigs } from "../helper/invalid";
+import { validUserConfigs, validComplexMixes } from "../helper/valid";
+import deepmerge from "deepmerge";
+import { CLI_CONFIG_DEFAULTS } from "../helper/constants";
 
 describe.only("ConfigController ", () => {
 
@@ -34,7 +37,8 @@ describe.only("ConfigController ", () => {
     describe("composeCliConfig ", () => {
 
         afterEach(() => {
-            return testEnvironment.deleteDevUserConfig();
+            setCommand(undefined);
+            return testEnvironment.deleteGlueDevConfig();
         });
 
         it("should resolve when the command does not require config and there is no config", async () => {
@@ -70,7 +74,7 @@ describe.only("ConfigController ", () => {
         it("should resolve when the command requires config and a config was found and is valid", async () => {
             setCommand("build");
 
-            await testEnvironment.createDevUserConfig();
+            await testEnvironment.createGlueDevConfig();
 
             await controller.composeCliConfig(processMock);
         });
@@ -78,8 +82,8 @@ describe.only("ConfigController ", () => {
         invalidUserConfigs.forEach((invalidConfig, idx) => {
             it(`should throw when the command requires config, it was found, but it was not valid, check: ${idx + 1}`, (done) => {
                 setCommand("build");
-    
-                testEnvironment.createDevUserConfig(invalidConfig)
+
+                testEnvironment.createGlueDevConfig(invalidConfig)
                     .then(() => {
                         return controller.composeCliConfig(processMock);
                     })
@@ -92,15 +96,144 @@ describe.only("ConfigController ", () => {
             });
         });
 
-        // should throw when no command is provided
-        // should throw when an unrecognized command is provided
-        // should pick up the correct config (multiple jsons and files with the expected name)
-        // should resolve when no config and the command does not require config
-        // should throw when the command requires config, but it was not found
-        // should return a valid config, which is a correct merge between user config and defaults (diff configs)
-        // all the sources defined in the returned config should be absolute paths (diff configs)
-        // should not throw when all resources are present
-        // should throw when one or more of the resources are not found
+        it("should throw when no command is provided", (done) => {
+            setCommand(undefined);
+
+            controller.composeCliConfig(processMock)
+                .then(() => {
+                    done("Should not have resolved, because no command was provided");
+                })
+                .catch(() => {
+                    done();
+                });
+        });
+
+        it("should throw when an unrecognized command is provided", (done) => {
+            setCommand("notValid" as CliCommand);
+
+            controller.composeCliConfig(processMock)
+                .then(() => {
+                    done("Should not have resolved, because the provided command is not recognized");
+                })
+                .catch(() => {
+                    done();
+                });
+        });
+
+        it("should resolve when no config and the command does not require config", async () => {
+            setCommand("init");
+
+            await controller.composeCliConfig(processMock);
+        });
+
+        it("should throw when the command requires config, but it was not found", (done) => {
+            setCommand("serve");
+
+            controller.composeCliConfig(processMock)
+                .then(() => {
+                    done("Should not have resolved, because the command requires config, but no config was found");
+                })
+                .catch(() => {
+                    done();
+                });
+        });
+
+        validUserConfigs.forEach((validConfig, idx) => {
+            it(`should return a valid config, which is a correct merge between user config and defaults, check: ${idx + 1}`, async () => {
+                setCommand("init");
+
+                const expectedMerge = deepmerge(CLI_CONFIG_DEFAULTS(), validConfig) as FullDevConfig;
+                expectedMerge.glueAssets.config = join(processMock.cwd(), expectedMerge.glueAssets.config);
+                expectedMerge.glueAssets.worker = join(processMock.cwd(), expectedMerge.glueAssets.worker);
+                expectedMerge.glueAssets.gateway.location = join(processMock.cwd(), expectedMerge.glueAssets.gateway.location);
+
+                expectedMerge.server.apps.forEach((app) => {
+                    if (app.file) {
+                        app.file.path = join(processMock.cwd(), app.file.path);
+                    }
+                });
+
+                expectedMerge.server.sharedAssets.forEach((asset) => {
+                    asset.path = join(processMock.cwd(), asset.path);
+                });
+
+                await testEnvironment.createGlueDevConfig(validConfig);
+                const cliConfig = await controller.composeCliConfig(processMock);
+
+                expect(cliConfig.glueAssets).to.eql(expectedMerge.glueAssets);
+                expect(cliConfig.command).to.eql("init");
+                expect(cliConfig.logging).to.eql(expectedMerge.logging);
+                expect(cliConfig.rootDirectory).to.eql(processMock.cwd());
+
+                cliConfig?.server.apps.forEach((app, idx) => {
+                    const expectedApp = expectedMerge.server.apps[idx];
+
+                    expect(app.file).to.eql(expectedApp.file);
+                    expect(app.localhost).to.eql(expectedApp.localhost);
+                    expect(app.route).to.eql(expectedApp.route);
+                });
+
+            });
+        });
+
+        validComplexMixes.forEach((validConfig) => {
+            it("all the sources defined in the returned config should be absolute paths", async () => {
+                setCommand("init");
+
+                await testEnvironment.createGlueDevConfig(validConfig);
+
+                const cliConfig = await controller.composeCliConfig(processMock);
+
+                expect(isAbsolute(cliConfig.glueAssets.config)).to.be.true;
+                expect(isAbsolute(cliConfig.glueAssets.worker)).to.be.true;
+                expect(isAbsolute(cliConfig.glueAssets.gateway.location)).to.be.true;
+
+                cliConfig?.server.apps.forEach((app) => {
+                    if (app.file) {
+                        expect(isAbsolute(app.file.path)).to.be.true;
+                    }
+                });
+
+                cliConfig?.server?.sharedAssets.forEach((asset) => {
+                    expect(isAbsolute(asset.path)).to.be.true;
+                });
+            });
+        });
+
+
+        it("should not throw when all resources are present", async () => {
+            setCommand("build");
+
+            await testEnvironment.createGlueDevConfig({
+                glueAssets: {
+                    gateway: { location: "./gateway.js" },
+                    worker: "./worker.js",
+                    config: "./glue.config.json"
+                }
+            });
+
+            await controller.composeCliConfig(processMock);
+        });
+
+        it("should throw when one or more of the resources are not found", (done) => {
+            setCommand("build");
+
+            testEnvironment.createGlueDevConfig({
+                glueAssets: {
+                    gateway: { location: "./not.real.js" },
+                    worker: "./notRealWorker.js",
+                    config: "./not.real.glue.config.json"
+                }
+            }).then(() => {
+                return controller.composeCliConfig(processMock);
+            }).then(() => {
+                done("Should not have resolved, because the provided resources are not present.");
+            }).catch(() => {
+                done();
+            });
+
+            
+        });
 
         // init
         // should return correct rootDirectory and commandName when no config is found

@@ -113,7 +113,7 @@ export const invalidBaseConfigs: unknown[] = [
     "yes"
 ];
 
-export const complexMixes = Array.from({ length: 10 }, () => {
+export const complexMixes = Array.from({ length: 20 }, () => {
 
     const getRandomEntry = <T>(arr: T[]): T => {
         const idx = Math.floor(Math.random() * (arr.length - 0)) + 0;
@@ -121,9 +121,9 @@ export const complexMixes = Array.from({ length: 10 }, () => {
     };
 
     const gen = {
-        glueAssets: getRandomEntry(invalidGlueAssetsConfigs),
-        server: getRandomEntry(invalidServerConfig),
-        logging: getRandomEntry(invalidLoggingConfigs)
+        glueAssets: getRandomEntry(invalidGlueAssetsConfigs).glueAssets,
+        server: getRandomEntry(invalidServerConfig).server,
+        logging: getRandomEntry(invalidLoggingConfigs).logging
     };
     return gen;
 });

@@ -49,14 +49,14 @@ export class TestEnvironment {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public async createDevUserConfig (data: any = USER_CONFIG_MOCK_DEFAULTS()): Promise<void> {
+    public async createGlueDevConfig (data: any = USER_CONFIG_MOCK_DEFAULTS()): Promise<void> {
         const location = join(this.location, USER_CONFIG_NAME());
         const contents = JSON.stringify(data);
 
         await this.makeFile(location, contents);
     }
 
-    public async deleteDevUserConfig(): Promise<void> {
+    public async deleteGlueDevConfig(): Promise<void> {
 
         const location = join(this.location, USER_CONFIG_NAME());
 
