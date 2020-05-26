@@ -18,6 +18,7 @@
         "validate-changelog": "node ./scripts/validate-config.js",
         "docs": "typedoc --options typedoc.json ./src",
         "preversion": "npm run validate-changelog && npm run build && npm run test && npm run audit",
+        "version": "npm run build",
         "test": "npm run build:tests && mocha ./tests/ --recursive --exit",
         "coverage": "nyc npm run test",
         "publish:beta": "npm publish --tag beta",

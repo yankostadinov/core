@@ -28,6 +28,7 @@
         "lint": "ng lint",
         "audit": "node ../../scripts/audit/index.js",
         "preversion": "npm run build && npm run test && npm run audit",
+        "version": "npm run build",
         "e2e": "ng e2e"
     },
     "files": [

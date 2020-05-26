@@ -9,7 +9,8 @@
         "test": "cross-env TS_NODE_PROJECT=./tsconfig.test.json mocha -r ts-node/register test/**/*.spec.ts",
         "build": "rollup -c",
         "audit": "node ../../scripts/audit/index.js",
-        "preversion": "npm run build && npm run test && npm run audit"
+        "preversion": "npm run build && npm run test && npm run audit",
+        "version": "npm run build"
     },
     "files": [
         "dist",
