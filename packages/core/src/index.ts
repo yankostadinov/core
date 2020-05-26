@@ -147,7 +147,7 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
             connection: config ? _connection : undefined,
             logger: _logger.subLogger("metrics"),
             canUpdateMetric,
-            system: identity?.application ?? "metrics-system",
+            system: "Glue42",
             service: identity?.service ?? "metrics-service",
             instance: identity?.instance ?? identity?.windowId ?? shortid(),
         });

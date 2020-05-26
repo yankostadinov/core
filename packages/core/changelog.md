@@ -1,3 +1,5 @@
+5.0.5
+fix: change metrics service to Glue42
 5.0.4
 fix: metrics identity was missing service, system, instance
 5.0.3
