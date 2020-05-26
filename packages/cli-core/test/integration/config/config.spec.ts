@@ -200,7 +200,6 @@ describe.only("ConfigController ", () => {
             });
         });
 
-
         it("should not throw when all resources are present", async () => {
             setCommand("build");
 
@@ -231,14 +230,27 @@ describe.only("ConfigController ", () => {
             }).catch(() => {
                 done();
             });
-
-            
         });
 
-        // init
-        // should return correct rootDirectory and commandName when no config is found
-        // should return correct rootDirectory, commandName and defaults when a config is found
-        // should not throw when the resources does not exist
+        describe("init", () => {
+
+            beforeEach(() => setCommand("init"));
+
+            afterEach(() => setCommand(undefined));
+
+            it("should return correct rootDirectory and commandName when no config is found", () => {
+
+            });
+
+            it("should return correct rootDirectory, commandName and defaults when a config is found", () => {
+
+            });
+
+            it("should not throw when the resources does not exist", () => {
+
+            });
+
+        });
 
         // version
         // should return correct rootDirectory and commandName when no config is found
