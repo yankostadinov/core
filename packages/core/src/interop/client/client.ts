@@ -24,6 +24,7 @@ export interface InvokeResultMessage {
     instance?: Glue42Core.AGM.Instance;
     status: InvokeStatus;
     message: string;
+    error?: Error;
 }
 
 export default class Client {
@@ -341,9 +342,10 @@ export default class Client {
             const invokePromises: Array<Promise<InvokeResultMessage>> = serversMethodMap.map(
                 (serversMethodPair) => {
                     const invId = random();
+                    const invokePromise = this.protocol.client.invoke(invId, serversMethodPair.methods[0], argumentObj, serversMethodPair.server, additionalOptionsCopy);
 
                     return Promise.race([
-                        this.protocol.client.invoke(invId, serversMethodPair.methods[0], argumentObj, serversMethodPair.server, additionalOptionsCopy),
+                        invokePromise,
                         rejectAfter(timeout, {
                             invocationId: invId,
                             message: `Invocation timeout (${timeout} ms) reached`,

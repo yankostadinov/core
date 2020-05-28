@@ -25,6 +25,15 @@ describe("Branching", () => {
         await doneAllGlues();
     });
 
+    it("should return a stream that has 0 branches", (done) => {
+        try {
+            expect(stream.branches().length).to.eql(0);
+            done();
+        } catch (e) {
+            done(e);
+        }
+    });
+
     it("subscriber on a branch should receive data pushed on that branch", (done) => {
         const myBranchData = { a: 1 };
         const branchData = { mybranch: myBranchData };

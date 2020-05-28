@@ -180,4 +180,24 @@ describe("Server stream", function () {
         });
     });
 
+    it("interop invoke with stream object", (done) => {
+        const streamName = getMethodName();
+        const methodName = getMethodName();
+        const methodDefinition = {
+            name: streamName
+        };
+
+        serverGlue.agm.register(methodName, () => {
+            // DO NOTHING
+        });
+
+        serverGlue.agm.createStream(methodDefinition).then((s) => {
+            clientGlue.agm.invoke(methodName, s)
+                // tslint:disable-next-line:no-console
+                .catch((e) => {
+                    done();
+                });
+        });
+    });
+
 });
