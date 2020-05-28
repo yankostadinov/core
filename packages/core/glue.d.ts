@@ -1630,7 +1630,3 @@ declare global {
         gdPreloadPromise: Promise<Glue42Core.GDObject>;
     }
 }
-
-declare module "glue42core" {
-    export = Glue42Core;
-}

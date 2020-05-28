@@ -1,3 +1,6 @@
+5.0.6
+fix: removed module invalid glue42core module export from d.ts
+fix: proper error when trying to invoke with circular objects
 5.0.5
 fix: change metrics service to Glue42
 5.0.4

@@ -32,7 +32,7 @@ export default class ClientProtocol implements ClientProtocolDefinition {
         this.streaming = new ClientStreaming(session, repository, logger);
     }
 
-    public subscribe(stream: Glue42Core.AGM.MethodDefinition, options: Glue42Core.AGM.SubscriptionParams, targetServers: ServerMethodsPair[], success: (sub: Glue42Core.AGM.Subscription) => void, error: (err: SubscribeError) => void,  existingSub: SubscriptionInner): void {
+    public subscribe(stream: Glue42Core.AGM.MethodDefinition, options: Glue42Core.AGM.SubscriptionParams, targetServers: ServerMethodsPair[], success: (sub: Glue42Core.AGM.Subscription) => void, error: (err: SubscribeError) => void, existingSub: SubscriptionInner): void {
         this.streaming.subscribe(stream, options, targetServers, success, error, existingSub);
     }
 
@@ -127,22 +127,30 @@ export default class ClientProtocol implements ClientProtocolDefinition {
         };
     }
 
-    private handleInvocationError(msg: ErrorMessage): InvokeResultMessage {
+    private handleInvocationError(msg: ErrorMessage | Error): InvokeResultMessage {
         this.logger.debug(`handle invocation error ${JSON.stringify(msg)}`);
 
-        const invocationId = msg._tag.invocationId;
-        const serverId = msg._tag.serverId;
-        const server = this.repository.getServerById(serverId);
-        const message = msg.reason;
-        const context = msg.context;
+        if ("_tag" in msg) {
+            const invocationId = msg._tag.invocationId;
+            const serverId = msg._tag.serverId;
+            const server = this.repository.getServerById(serverId);
+            const message = msg.reason;
+            const context = msg.context;
 
-        return {
-            invocationId,
-            result: context,
-            instance: server.instance,
-            status: InvokeStatus.Error,
-            message
-        };
-        // this.callbacks.execute("onResult", invocationId, server.getInfoForUser(), 1, context, message);
+            return {
+                invocationId,
+                result: context,
+                instance: server.instance,
+                status: InvokeStatus.Error,
+                message
+            };
+        } else {
+            return {
+                invocationId: "",
+                message: (msg as Error).message,
+                status: InvokeStatus.Error,
+                error: msg as Error
+            };
+        }
     }
 }
