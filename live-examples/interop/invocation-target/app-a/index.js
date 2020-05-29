@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-const APP_NAME = 'App A';
+const APP_NAME = 'Application A';
 const methodDefinition = { name: 'G42Core.Basic' };
 
 // Entry point. Initializes Glue42 Web. А Glue42 Web instance will be attached to the global window.
@@ -12,10 +12,10 @@ window.startApp({ appName: APP_NAME })
       .addEventListener('click', invokeGlueMethodWithTargetAll);
 
     document.getElementById("appBInvokeBtn")
-      .addEventListener('click', () => invokeGlueMethodWithTargetInstance('App B'));
+      .addEventListener('click', () => invokeGlueMethodWithTargetInstance('Application B'));
 
     document.getElementById("appCInvokeBtn")
-      .addEventListener('click', () => invokeGlueMethodWithTargetInstance('App C'));
+      .addEventListener('click', () => invokeGlueMethodWithTargetInstance('Application C'));
   })
   .then(clearLogsHandler)
   .catch(console.error);

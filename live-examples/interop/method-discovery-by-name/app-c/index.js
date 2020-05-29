@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-const APP_NAME = 'App C';
+const APP_NAME = 'Application C';
 
 // Entry point. Initializes Glue42 Web. А Glue42 Web instance will be attached to the global window.
 window.startApp({ appName: APP_NAME })
@@ -17,7 +17,7 @@ async function registerGlueMethod(methodName) {
     logger.info(`${methodDefinition.name} invoked`);
 
     return {
-      result: `Hello from "${methodDefinition.name}" in application "${APP_NAME}"!`
+      result: `Hello from "${methodDefinition.name}" in "${APP_NAME}"!`
     };
   };
 
