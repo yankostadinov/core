@@ -56,6 +56,7 @@ export namespace Glue42Web {
     export import Interop = Glue42Core.Interop;
     export import Contexts = Glue42Core.Contexts;
     export import Logger = Glue42Core.Logger;
+    export import ChannelContext = Glue42.Channels.ChannelContext;
 
     /**
      * @docmenuorder 2
@@ -85,6 +86,13 @@ export namespace Glue42Web {
          * @default "/glue/glue.config.json"
          */
         extends?: string | false;
+
+        /**
+         * Connect with GW in memory.
+         * Used for testing in node environment, where the GW isn't started by @glue42/worker-web and an inproc GW is used instead.
+         * @ignore
+         */
+        inproc?: Glue42Core.InprocGWSettings;
     }
 
     /**
@@ -97,6 +105,7 @@ export namespace Glue42Web {
          */
         layouts: Glue42Web.Layouts.API;
         notifications: Glue42Web.Notifications.API;
+        channels: Glue42Web.Channels.API;
     }
 
     /**
@@ -479,4 +488,10 @@ export namespace Glue42Web {
             target?: "all" | "best";
         }
     }
+
+    /**
+     * @docmenuorder 7
+     * @intro
+     */
+    export import Channels = Glue42.Channels;
 }
