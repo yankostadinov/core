@@ -9,7 +9,8 @@
         "test": "cross-env TS_NODE_PROJECT=./tsconfig.test.json mocha -r ts-node/register test/**/*.spec.ts",
         "build": "rollup -c",
         "audit": "node ../../scripts/audit/index.js",
-        "preversion": "npm run build && npm run test && npm run audit"
+        "preversion": "npm run build && npm run test && npm run audit",
+        "version": "npm run build"
     },
     "files": [
         "dist",
@@ -26,7 +27,7 @@
         "concat-stream": "^2.0.0",
         "deepmerge": "^4.2.2",
         "express": "^4.17.1",
-        "http-proxy": "^1.18.0",
+        "http-proxy": "^1.18.1",
         "log4js": "^6.1.2",
         "request": "^2.88.2",
         "rimraf": "^3.0.2",

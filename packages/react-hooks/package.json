@@ -25,7 +25,8 @@
         "lint": "eslint . --ext .js,.ts,.tsx --max-warnings 0",
         "lint:fix": "eslint --fix . --ext .js,.ts,.tsx",
         "audit": "node ../../scripts/audit/index.js",
-        "preversion": "npm run build && npm run test && npm run audit"
+        "preversion": "npm run build && npm run test && npm run audit",
+        "version": "npm run build"
     },
     "author": {
         "name": "Glue42",
@@ -40,7 +41,7 @@
         "react-dom": "^16.13.1"
     },
     "devDependencies": {
-        "@glue42/web": "^1.0.1",
+        "@glue42/web": "^1.0.0",
         "@testing-library/react-hooks": "^3.2.1",
         "@types/enzyme": "^3.10.5",
         "@types/enzyme-adapter-react-16": "^1.0.6",

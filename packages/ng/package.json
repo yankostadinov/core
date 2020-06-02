@@ -28,17 +28,18 @@
         "lint": "ng lint",
         "audit": "node ../../scripts/audit/index.js",
         "preversion": "npm run build && npm run test && npm run audit",
+        "version": "npm run build",
         "e2e": "ng e2e"
     },
     "files": [
         "dist/"
     ],
     "dependencies": {
-        "@glue42/desktop": "^5.0.1",
+        "@glue42/desktop": "^5.1.0",
         "@glue42/web": "^1.0.1"
     },
     "devDependencies": {
-        "@angular-devkit/build-angular": "~0.901.3",
+        "@angular-devkit/build-angular": "^0.901.7",
         "@angular-devkit/build-ng-packagr": "~0.901.3",
         "@angular/cli": "~9.1.0",
         "@angular/common": "^9.1.3",
