@@ -99,3 +99,14 @@ The example below uses [react-select](https://www.npmjs.com/package/react-select
 <div class="d-flex">
     <iframe src="TODO@GG"></iframe>
 </div>
+
+### Angular
+
+The example below uses [@angular/material](https://www.npmjs.com/package/@angular/material).
+
+<a href="https://codesandbox.io/s/github/Glue42/core/tree/master/live-examples/channels/channels-angular-ui" target="_blank" class="btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 296" preserveAspectRatio="xMidYMid meet" width="24" height="24" version="1.1" style="pointer-events: auto;">
+        <path fill="#000000" d="M 115.498 261.088 L 115.498 154.479 L 23.814 101.729 L 23.814 162.502 L 65.8105 186.849 L 65.8105 232.549 L 115.498 261.088 Z M 139.312 261.715 L 189.917 232.564 L 189.917 185.78 L 232.186 161.285 L 232.186 101.274 L 139.312 154.895 L 139.312 261.715 Z M 219.972 80.8277 L 171.155 52.5391 L 128.292 77.4107 L 85.104 52.5141 L 35.8521 81.1812 L 127.766 134.063 L 219.972 80.8277 Z M 0 222.212 L 0 74.4949 L 127.987 0 L 256 74.182 L 256 221.979 L 127.984 295.723 L 0 222.212 Z" style="pointer-events: auto;"></path>
+</svg> Open in CodeSandbox</a>
+<div class="d-flex">
+    <iframe src="TODO@GG"></iframe>
+</div>
