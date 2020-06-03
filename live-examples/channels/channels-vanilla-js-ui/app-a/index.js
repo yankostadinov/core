@@ -28,15 +28,15 @@ window
           glue.channels
             .leave()
             .then(() => {
-              logger.info(`Left channel "${myChannel}".`);
+              logger.info(`Left channel: ${myChannel}.`);
             })
             .catch(error => {
               console.error(
-                `Failed to leave channel "${myChannel}". Error: `,
+                `Failed to leave channel: ${myChannel}. Error: `,
                 error
               );
               logger.error(
-                error.message || `Failed to leave channel "${myChannel}".`
+                error.message || `Failed to leave channel: ${myChannel}.`
               );
             });
         }

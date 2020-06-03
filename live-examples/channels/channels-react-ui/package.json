@@ -1,0 +1,14 @@
+{
+  "name": "glue42-core-channels-react-ui",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "bash ./start.sh"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@glue42/gateway-web": "^3.0.8",
+    "@glue42/worker-web": "^1.0.0"
+  }
+}

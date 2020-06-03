@@ -416,7 +416,7 @@ window.glue.contexts.subscribe('SelectedClient', (client) => {
 });
 ```
 
-## 6. Shared Contexts
+## 6. Channels
 
 ### 6.1. Overview
 
