@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { UnsubscribeFunction } from "callback-registry";
 import { Glue42Core } from "@glue42/core";
@@ -22,6 +23,7 @@ export default GlueWebFactory;
  * Glue42 Web is available both as a single JavaScript file which you can include into your web applications using a `<script>` tag, and as a node.js module.
  * You can use Glue42 Web in a `script` tag include, e.g.:
  *
+ * @example
  * ```html
  * <script type="text/javascript" src="web.umd.js"></script>
  * ```
@@ -498,6 +500,123 @@ export namespace Glue42Web {
     /**
      * @docmenuorder 7
      * @intro
+     * The **Channels** are globally accessed named contexts that allow users to dynamically group applications, instructing them to work over the same shared data object.
+     * 
+     * When two applications are on the same channel, they share a context data object, which they can monitor and/or update.
+     *
+     * The **Channels** API can be accessed through the `glue.channels` object.
+     *
+     * See also the [**Channels**](../../../../core/capabilities/channels/index.html) documentation for more details.
      */
-    export import Channels = Glue42.Channels;
+    namespace Channels {
+
+        /**
+         * Channels API.
+         */
+        export interface API {
+            /**
+             * Tracks the data in the current channel. Persisted after a channel change.
+             * The callback isn't called when you publish the data.
+             * @param callback Callback function to handle the received data.
+             * @returns Unsubscribe function.
+             */
+            subscribe(callback: (data: any, context: ChannelContext, updaterId: string) => void): () => void;
+
+            /**
+             * Tracks the data in a given channel.
+             * @param name The channel to track.
+             * @param callback Callback function to handle the received data.
+             * @returns Promise that resolves with an unsubscribe function.
+             */
+            subscribeFor(name: string, callback: (data: any, context: ChannelContext, updaterId: string) => void): Promise<() => void>;
+
+            /**
+             * Updates the context of the current or a given channel.
+             * @param data Data object with which to update the channel context.
+             * @param name The name of the channel to be updated. If not provided will update the current channel.
+             * @returns Promise that resolves when the data has been published.
+             */
+            publish(data: any, name?: string): Promise<void>;
+
+            /**
+             * Returns a list of all channel names.
+             * @returns Promise that resolves with the list of all channel names.
+             */
+            all(): Promise<string[]>;
+
+            /**
+             * Returns a list of all channel contexts.
+             * @returns Promise that resolves with the list of all channel contexts.
+             */
+            list(): Promise<ChannelContext[]>;
+
+            /**
+             * Returns the context of a given channel.
+             * @param name The name of the channel whose context to return.
+             * @returns Promise that resolves with the context of the given channel.
+             */
+            get(name: string): Promise<ChannelContext>;
+
+            /**
+             * Joins a new channel by name. Leaves the current channel.
+             * @param name The name of the channel to join.
+             * @returns Promise that resolves when the channel has been joined.
+             */
+            join(name: string): Promise<void>;
+
+            /**
+             * Leaves the current channel.
+             * @returns Promise that resolves when the channel has been left.
+             */
+            leave(): Promise<void>;
+
+            /**
+             * Returns the name of the current channel.
+             * @ignore
+             * @returns The name of the current channel.
+             */
+            current(): string;
+
+            /**
+             * Returns the name of the current channel.
+             * @returns The name of the current channel.
+             */
+            my(): string;
+
+            /**
+             * Subscribes for the event which fires when a channel is changed.
+             * @ignore
+             * @param callback Callback function to handle channel changes.
+             * @returns Unsubscribe function.
+             */
+            changed(callback: (channel: string) => void): () => void;
+
+            /**
+             * Subscribes for the event which fires when a channel is changed.
+             * @param callback Callback function to handle channel changes.
+             * @returns Unsubscribe function.
+             */
+            onChanged(callback: (channel: string) => void): () => void;
+
+            /**
+             * Adds a new channel.
+             * @ignore
+             * @param info The initial channel context.
+             * @returns Promise that resolves with the initial channel context.
+             */
+            add(info: ChannelContext): Promise<ChannelContext>;
+        }
+
+        /**
+         * Channel context object.
+         */
+        export interface ChannelContext {
+            /** Unique name of the context. */
+            name: string;
+            /** Channel meta data (display name, color, image, etc.) */
+            meta: any;
+            /** Channel data. */
+            data: any;
+        }
+    }
 }
