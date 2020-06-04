@@ -92,6 +92,7 @@
     channelNamesAndColors,
     onChannelSelected
   ) => {
+
     // Create a custom channel selector widget.
     $.widget("custom.channelSelectorWidget", $.ui.selectmenu, {
       // Create a button that will have the background of the current channel.
@@ -100,9 +101,12 @@
           class: "ui-selectmenu-text",
           html: "🔗"
         }).css({
-          backgroundColor: item.element.attr("color"),
           textAlign: "center"
         });
+
+        const color = item.element.attr("color");
+        const channelSelectorWidgetButtonElement = $("#channel-selector-widget-button");
+        channelSelectorWidgetButtonElement.css('background-color', color);
 
         return buttonItem;
       },

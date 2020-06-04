@@ -54,14 +54,18 @@ window
       subscribed = !subscribed;
       if (subscribed) {
         try {
-          const subscribeCallback = (data, context, updaterId) => {
-            logger.info(
-              `Received data:
-              ${JSON.stringify(data)}
-              , context:
-              ${JSON.stringify(context)}
-              , that was published by ${updaterId} on the current channel (${myChannel}).`
-            );
+          const subscribeCallback = (data, context) => {
+            const currentTimeInMS = data.currentTimeInMS;
+            let message;
+
+            if (currentTimeInMS) {
+              message = `Received new time: ${currentTimeInMS}`;
+            } else {
+              const channelName = context.name;
+              message = `No time currently on channel ${channelName}.`;
+            }
+
+            logger.info(message);
           };
           unsubscribeFunc = await glue.channels.subscribe(subscribeCallback);
         } catch (error) {
@@ -71,7 +75,7 @@ window
           );
           logger.error(
             error.message ||
-              `Failed to subscribe for current channel "${myChannel}".`
+            `Failed to subscribe for current channel "${myChannel}".`
           );
         }
         subscribeUnsubscribeButtonElement.textContent = "Unsubscribe";

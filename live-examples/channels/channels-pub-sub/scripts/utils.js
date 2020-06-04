@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-(function(window) {
+(function (window) {
   const toggleGlueAvailable = () => {
     document.getElementById("glueImg").src = "/assets/connected.svg";
     document.getElementById("glueSpan").textContent = "Connected";
@@ -105,7 +105,7 @@
         );
         logger.error(
           error.message ||
-            `Failed to get the context of my channel "${myChannel}".`
+          `Failed to get the context of my channel "${myChannel}".`
         );
       }
     } else {
@@ -120,7 +120,7 @@
       rowElement.classList = "row mt-2";
 
       const channelNameElement = document.createElement("div");
-      channelNameElement.classList = "align-self-center pl-sm-2 w-25";
+      channelNameElement.classList = "align-self-center pl-3 w-25";
       channelNameElement.textContent = channelName;
 
       const joinLeaveButtonWrapperElement = document.createElement("div");
@@ -129,13 +129,13 @@
       if (channelName === myChannel) {
         const leaveButtonElement = document.createElement("button");
         leaveButtonElement.classList =
-          "btn btn-primary btn-sm text-nowrap w-40";
+          "btn btn-primary btn-sm border border-dark text-nowrap w-40";
         leaveButtonElement.textContent = "Leave";
         leaveButtonElement.onclick = onLeaveClicked;
         joinLeaveButtonWrapperElement.appendChild(leaveButtonElement);
       } else {
         const joinButtonElement = document.createElement("button");
-        joinButtonElement.classList = "btn btn-primary btn-sm text-nowrap w-40";
+        joinButtonElement.classList = "btn btn-primary btn-sm border border-dark text-nowrap w-40";
         joinButtonElement.textContent = "Join";
         joinButtonElement.onclick = () => onJoinClicked(channelName);
         joinLeaveButtonWrapperElement.appendChild(joinButtonElement);
