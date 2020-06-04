@@ -70,9 +70,9 @@ The `gateway` top-level key has the following properties:
 
 For more information on defining a custom log appender, see the [Advanced Setup](../setup/index.html#advanced) section.
 
-- `channels` - An *optional* configuration object that defines the [color channels](../../capabilities/channels/index.html) with their names, colors and initial contexts. The channels configuration is shared between all applications.
+- `channels` - An *optional* configuration object that defines the [color channels](../../../capabilities/channels/index.html) with their names, colors and initial contexts. The channels configuration is shared between all applications.
 
-The shape of the property is the same as the [**Glue42 Enterprise: Channels Configuration**](../../../developers/configuration/channels/index.html#channels_configuration).
+The shape of the property is the same as the [**Glue42 Enterprise: Channels Configuration**](../../../../developers/configuration/channels/index.html#channels_configuration).
 
 ## Glue42 Gateway
 

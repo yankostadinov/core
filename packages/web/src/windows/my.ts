@@ -1,7 +1,6 @@
 import { Control } from "../control/control";
 import { default as CallbackFactory, UnsubscribeFunction } from "callback-registry";
 import { Glue42Web } from "../../web";
-import { Glue42 } from "@glue42/desktop";
 
 /**
  * Our local window
@@ -67,6 +66,7 @@ export class LocalWebWindow implements Glue42Web.Windows.WebWindow {
         return this.getBoundsSync();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public async getContext(): Promise<any> {
         return this.getContextSync();
     }
@@ -79,10 +79,12 @@ export class LocalWebWindow implements Glue42Web.Windows.WebWindow {
         return this.window.document.title;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public onContextUpdated(callback: (context: any, oldContext: any) => void): UnsubscribeFunction {
         return this.registry.add("context-updated", callback);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public updateContext(context: any): Promise<Glue42Web.Windows.WebWindow> {
         const oldContext = this.context;
         this.context = Object.assign({}, context, oldContext);
@@ -90,6 +92,7 @@ export class LocalWebWindow implements Glue42Web.Windows.WebWindow {
         return Promise.resolve(this);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public async setContext(context: any): Promise<Glue42Web.Windows.WebWindow> {
         const oldContext = this.context;
         this.context = Object.assign({}, context);

@@ -11,9 +11,12 @@ window.createChannelSelectorWidget = (
                 class: "ui-selectmenu-text",
                 html: "🔗"
             }).css({
-                backgroundColor: item.element.attr("color"),
                 textAlign: "center"
             });
+
+            const color = item.element.attr("color");
+            const channelSelectorWidgetButtonElement = $("#channel-selector-widget-button");
+            channelSelectorWidgetButtonElement.css('background-color', color);
 
             return buttonItem;
         },
