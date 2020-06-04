@@ -45,13 +45,13 @@ To channel enable your application you need to:
 
 1. Pass `{ channels: true }` on initialization:
 
-    - Vanilla JS (*@glue42/web*):
+- Vanilla JS (*@glue42/web*) example:
 
 ```javascript
 await window.GlueWeb({ channels: true });
 ```
 
-    - React (*@glue42/react-hooks*):
+- React (*@glue42/react-hooks*) example:
 
 ```javascript
 <GlueProvider config={{ channels: true }}>
@@ -59,7 +59,7 @@ await window.GlueWeb({ channels: true });
 </GlueProvider>
 ```
 
-    - Angular (*@glue42/ng*)
+- Angular (*@glue42/ng*) example: 
 
 ```javascript
 Glue42Ng.forRoot({ factory: GlueWeb, config: { channels: true } })
