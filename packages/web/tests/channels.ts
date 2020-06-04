@@ -89,7 +89,7 @@ describe("channels", function () {
             await Promise.all([myGlue.channels.join(channelName), otherGlue.channels.join(channelName)]);
 
             // Subscribe for channel context update.
-            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.ChannelContext; updaterId: string }> = new Promise((resolve) => {
+            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.Channels.ChannelContext; updaterId: string }> = new Promise((resolve) => {
                 const unsubscribeFunc = myGlue.channels.subscribe((data, context, updaterId) => {
                     unsubscribeFunc();
                     return resolve({
@@ -131,7 +131,7 @@ describe("channels", function () {
             await myGlue.channels.join(channelName);
 
             // Subscribe for channel context update.
-            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.ChannelContext; updaterId: string }> = new Promise((resolve) => {
+            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.Channels.ChannelContext; updaterId: string }> = new Promise((resolve) => {
                 const unsubscribeFunc = myGlue.channels.subscribe((data, context, updaterId) => {
                     unsubscribeFunc();
                     return resolve({
@@ -181,7 +181,7 @@ describe("channels", function () {
             let secondChannelInitialContextReceived = false;
 
             // Subscribe for channel context update.
-            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.ChannelContext; updaterId: string }> = new Promise((resolve) => {
+            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.Channels.ChannelContext; updaterId: string }> = new Promise((resolve) => {
                 const unsubscribeFunc = myGlue.channels.subscribe((data, context, updaterId) => {
                     if (secondChannelInitialContextReceived) {
                         unsubscribeFunc();
@@ -235,7 +235,7 @@ describe("channels", function () {
             let secondChannelInitialContextReceived = false;
 
             // Subscribe for channel context update.
-            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.ChannelContext; updaterId: string }> = new Promise((resolve) => {
+            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.Channels.ChannelContext; updaterId: string }> = new Promise((resolve) => {
                 const unsubscribeFunc = myGlue.channels.subscribe((data, context, updaterId) => {
                     if (secondChannelInitialContextReceived) {
                         unsubscribeFunc();
@@ -435,7 +435,7 @@ describe("channels", function () {
             const info = await addNewChannel(myGlue, channelName, firstChannelInitialData);
 
             // Subscribe for channel context update.
-            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.ChannelContext; updaterId: string; unsubscribeFuncPromise: Promise<() => void> }> = new Promise((resolve) => {
+            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.Channels.ChannelContext; updaterId: string; unsubscribeFuncPromise: Promise<() => void> }> = new Promise((resolve) => {
                 const unsubscribeFuncPromise = myGlue.channels.subscribeFor(channelName, (data, context, updaterId) => {
                     return resolve({
                         data,
@@ -473,7 +473,7 @@ describe("channels", function () {
             let initialContextReceived = false;
 
             // Subscribe for channel context update.
-            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.ChannelContext; updaterId: string; unsubscribeFuncPromise: Promise<() => void> }> = new Promise((resolve) => {
+            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.Channels.ChannelContext; updaterId: string; unsubscribeFuncPromise: Promise<() => void> }> = new Promise((resolve) => {
                 const unsubscribeFuncPromise = myGlue.channels.subscribeFor(channelName, (data, context, updaterId) => {
                     if (initialContextReceived) {
                         return resolve({
@@ -526,7 +526,7 @@ describe("channels", function () {
             let initialContextReceived = false;
 
             // Subscribe for channel context update.
-            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.ChannelContext; updaterId: string; unsubscribeFuncPromise: Promise<() => void> }> = new Promise((resolve) => {
+            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.Channels.ChannelContext; updaterId: string; unsubscribeFuncPromise: Promise<() => void> }> = new Promise((resolve) => {
                 const unsubscribeFuncPromise = myGlue.channels.subscribeFor(channelName, (data, context, updaterId) => {
                     if (initialContextReceived) {
                         return resolve({
@@ -587,7 +587,7 @@ describe("channels", function () {
             let secondChannelInitialContextReceived = false;
 
             // Subscribe for channel context update.
-            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.ChannelContext; updaterId: string; unsubscribeFuncPromise: Promise<() => void> }> = new Promise((resolve) => {
+            const subscriptionPromise: Promise<{ data: object; context: Glue42Web.Channels.ChannelContext; updaterId: string; unsubscribeFuncPromise: Promise<() => void> }> = new Promise((resolve) => {
                 const unsubscribeFuncPromise = myGlue.channels.subscribeFor(secondChannelName, (data, context, updaterId) => {
                     if (secondChannelInitialContextReceived) {
                         return resolve({

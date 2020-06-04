@@ -58,7 +58,6 @@ export namespace Glue42Web {
     export import Interop = Glue42Core.Interop;
     export import Contexts = Glue42Core.Contexts;
     export import Logger = Glue42Core.Logger;
-    export import ChannelContext = Glue42.Channels.ChannelContext;
 
     /**
      * @docmenuorder 2
