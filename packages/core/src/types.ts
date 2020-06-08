@@ -56,11 +56,19 @@ export interface GlueDesktopObject {
     version: string;
 }
 
+export interface Mark {
+    name: string;
+    time: number;
+    diff: number;
+}
+
 export interface Timer {
     startTime: number;
     endTime: number;
     period: number;
+    marks: Mark[];
     stop: () => number;
+    mark(name: string): void;
 }
 
 export interface InternalConfig {

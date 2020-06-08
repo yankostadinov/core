@@ -28,7 +28,7 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
         }
     }
 
-    const glueInitTimer = timer();
+    const glueInitTimer = timer("glue");
 
     userConfig = userConfig || {};
     ext = ext || {};
@@ -55,6 +55,7 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
         const done = () => {
             inner.initTime = t.stop();
             inner.initEndTime = t.endTime;
+            inner.marks = t.marks;
             _logger.trace(`${name} is ready`);
         };
 
@@ -78,7 +79,7 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
     }
 
     function setupConnection(): Promise<object> {
-        const initTimer = timer();
+        const initTimer = timer("connection");
         _connection = new Connection(internalConfig.connection, _logger.subLogger("connection"));
 
         let authPromise: Promise<any> = Promise.resolve(internalConfig.auth);
@@ -86,13 +87,13 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
         // no auth - what we do in different protocol versions
         if (internalConfig.connection && !internalConfig.auth) {
             if (glue42gd) {
-                _logger.trace(`trying to get gw token...`);
-                authPromise = glue42gd.getGWToken().then((token) => {
-                    _logger.trace(`got GW token ${token?.substring(token.length - 10)}`);
-                    return {
-                        gatewayToken: token
-                    };
-                });
+                authPromise = glue42gd.getGWToken()
+                    .then((token) => {
+                        // initTimer.mark("got-gw-token");
+                        return {
+                            gatewayToken: token
+                        };
+                    });
             } else {
                 // assign to auth promise so we ca cleanup the connection
                 authPromise = Promise.reject("You need to provide auth information");
@@ -101,6 +102,7 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
 
         return authPromise
             .then((authConfig) => {
+                initTimer.mark("auth-promise-resolved");
                 // convert the authConfig to AuthRequest object
                 let authRequest: Glue42Core.Auth;
                 if (Object.prototype.toString.call(authConfig) === "[object Object]") {
@@ -125,7 +127,7 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
 
     function setupLogger(): Promise<void> {
         // Logger
-        const initTimer = timer();
+        const initTimer = timer("logger");
         _logger = new Logger(`${internalConfig.connection.identity?.application}`, undefined, internalConfig.customLogger);
         _logger.consoleLevel(internalConfig.logger.console);
         _logger.publishLevel(internalConfig.logger.publish);
@@ -136,7 +138,7 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
     }
 
     function setupMetrics(): Promise<void> {
-        const initTimer = timer();
+        const initTimer = timer("metrics");
         const config = internalConfig.metrics;
 
         const metricsPublishingEnabledFunc = glue42gd?.getMetricsPublishingEnabled;
@@ -166,7 +168,7 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
     }
 
     function setupInterop(): Promise<void> {
-        const initTimer = timer();
+        const initTimer = timer("interop");
 
         const agmConfig: InteropSettings = {
             connection: _connection,
@@ -183,7 +185,7 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
         const hasActivities = ((internalConfig as any).activities && _connection.protocolVersion === 3);
         const needsContexts = internalConfig.contexts || hasActivities;
         if (needsContexts) {
-            const initTimer = timer();
+            const initTimer = timer("contexts");
 
             _contexts = new ContextsModule({
                 connection: _connection,
@@ -213,7 +215,7 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
             return Promise.resolve();
         }
 
-        const initTimer = timer();
+        const initTimer = timer("bus");
         _bus = new MessageBus(_connection, _logger.subLogger("bus"));
         registerLib("bus", _bus, initTimer);
         return Promise.resolve();
@@ -232,7 +234,7 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
     }
 
     function setupExternalLib(name: string, createCallback: (core: any) => any) {
-        const initTimer = timer();
+        const initTimer = timer(name);
         const lib = createCallback(libs);
         if (lib) {
             registerLib(name, lib, initTimer);
@@ -311,7 +313,8 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
                             name: key,
                             time: glue[key].initTime,
                             startTime: glue[key].initStartTime,
-                            endTime: glue[key].initEndTime
+                            endTime: glue[key].initEndTime,
+                            marks: glue[key].marks
                         };
                     });
                 // add glue
@@ -319,7 +322,8 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
                     name: "glue",
                     startTime: glueInitTimer.startTime,
                     endTime: glueInitTimer.endTime,
-                    time: glueInitTimer.period
+                    time: glueInitTimer.period,
+                    marks: []
                 });
 
                 return result;

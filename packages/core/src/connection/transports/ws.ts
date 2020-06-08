@@ -7,6 +7,7 @@ import { Logger } from "../../logger/logger";
 import { Glue42Core } from "../../../glue";
 import Utils from "../../utils/utils";
 import { PromiseWrapper } from "../../utils/pw";
+import timer from "../../utils/timer";
 
 const WebSocketConstructor = Utils.isNode() ? require("ws") : window.WebSocket;
 
@@ -14,6 +15,7 @@ export default class WS implements Transport {
     private ws: WebSocket | undefined;
     private logger: Logger;
     private settings: ConnectionSettings;
+    private startupTimer = timer("connection");
 
     /**
      * If the flag is true the connection should keep trying to connect.
@@ -122,6 +124,7 @@ export default class WS implements Transport {
     }
 
     private async openSocket(retryInterval?: number, retriesLeft?: number) {
+        this.startupTimer.mark("opening-socket");
         if (retryInterval === undefined) {
             retryInterval = this.settings.reconnectInterval;
         }
@@ -140,6 +143,7 @@ export default class WS implements Transport {
 
         try {
             await this.initiateSocket();
+            this.startupTimer.mark("socket-initiated");
             this.notifyForSocketState();
         } catch {
             setTimeout(() => {
@@ -187,6 +191,7 @@ export default class WS implements Transport {
         // Log on connection
         this.ws.onopen = () => {
             // tslint:disable-next-line:no-console
+            this.startupTimer.mark("ws-opened");
             this.logger.info(`ws opened ${this.settings.identity?.application}`);
             pw.resolve();
             this.notifyStatusChanged(true);
