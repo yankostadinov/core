@@ -1,3 +1,5 @@
+5.0.7
+fix: extra check for running in browser or node
 5.0.6
 fix: removed module invalid glue42core module export from d.ts
 fix: proper error when trying to invoke with circular objects

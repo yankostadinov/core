@@ -18,6 +18,12 @@ export default class Utils {
         if (typeof Utils._isNode !== "undefined") {
             return Utils._isNode;
         }
+
+        if (typeof window !== "undefined") {
+            Utils._isNode = false;
+            return false;
+        }
+
         // Only Node.JS has a process variable that is of [[Class]] process
         try {
             Utils._isNode = Object.prototype.toString.call(global.process) === "[object process]";
