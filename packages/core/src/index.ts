@@ -3,7 +3,7 @@ import Connection from "./connection/connection";
 import { Logger } from "./logger/logger";
 import { Glue42Core } from "../glue";
 import prepareConfig from "./config";
-import timer from "./utils/timer";
+import timer, { timers, getAllTimers } from "./utils/timer";
 import Utils from "./utils/utils";
 import { Timer, GDObject } from "./types";
 import { ContextsModule } from "./contexts/contextsModule";
@@ -56,7 +56,9 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
             inner.initTime = t.stop();
             inner.initEndTime = t.endTime;
             inner.marks = t.marks;
-            _logger.trace(`${name} is ready`);
+            if (_allowTrace) {
+                _logger.trace(`${name} is ready - ${t.endTime - t.startTime}`);
+            }
         };
 
         inner.initStartTime = t.startTime;
@@ -301,32 +303,7 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
                 return (window as any).performance.memory;
             },
             get initTimes() {
-                const result = Object.keys(glue)
-                    .filter((key) => {
-                        if (key === "initTimes" || key === "agm") {
-                            return false;
-                        }
-                        return glue[key]?.initTime;
-                    })
-                    .map((key) => {
-                        return {
-                            name: key,
-                            time: glue[key].initTime,
-                            startTime: glue[key].initStartTime,
-                            endTime: glue[key].initEndTime,
-                            marks: glue[key].marks
-                        };
-                    });
-                // add glue
-                result.push({
-                    name: "glue",
-                    startTime: glueInitTimer.startTime,
-                    endTime: glueInitTimer.endTime,
-                    time: glueInitTimer.period,
-                    marks: []
-                });
-
-                return result;
+                return getAllTimers();
             }
         };
 

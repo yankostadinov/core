@@ -1,5 +1,10 @@
 import { Timer, Mark } from "../types";
+
 const timers: { [index: string]: Timer } = {};
+
+export function getAllTimers() {
+    return timers;
+}
 
 export default function (timerName: string): Timer {
     const existing = timers[timerName];
@@ -20,7 +25,7 @@ export default function (timerName: string): Timer {
     function stop(): number {
         endTime = now();
         mark("end", endTime);
-        period = now() - startTime;
+        period = endTime - startTime;
         return period;
     }
 
