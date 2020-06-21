@@ -1605,14 +1605,20 @@ export namespace Glue42Core {
             gwToken: string,
             isOwner: boolean
         };
+        metrics?: {
+            performance: {
+                initialPublishTimeout: number;
+                publishInterval: number;
+            }
+        };
         updatePerfData: (perf: object) => void;
-        getGWToken(): Promise<string>;
-        getWindowInfo(id: string): {
+        getMetricsPublishingEnabled: () => boolean;
+        getGWToken: () => Promise<string>;
+        getWindowInfo: (id: string) => {
             applicationName: string;
             activityId?: string;
             activityWindowId?: string;
         };
-        getMetricsPublishingEnabled: () => boolean;
     }
 
     export interface LoggerConfig {

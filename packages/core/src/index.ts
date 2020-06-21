@@ -5,7 +5,7 @@ import { Glue42Core } from "../glue";
 import prepareConfig from "./config";
 import timer from "./utils/timer";
 import Utils from "./utils/utils";
-import { Timer, GDObject } from "./types";
+import { Timer } from "./types";
 import { ContextsModule } from "./contexts/contextsModule";
 import { ContextMessageReplaySpec } from "./contexts/contextMessageReplaySpec";
 import { InteropSettings } from "./interop/types";
@@ -16,7 +16,7 @@ import shortid from "shortid";
 
 const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): Promise<Glue42Core.GlueCore> => {
     const gdVersion: number | undefined = Utils.getGDMajorVersion();
-    let glue42gd: GDObject | undefined;
+    let glue42gd: Glue42Core.GDObject | undefined;
     let preloadPromise: Promise<any> = Promise.resolve();
 
     if (gdVersion) {
@@ -150,6 +150,7 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
             system: "Glue42",
             service: identity?.service ?? "metrics-service",
             instance: identity?.instance ?? identity?.windowId ?? shortid(),
+            perf: true,
         });
 
         let rootSystem = rootMetrics;
