@@ -106,6 +106,14 @@ export namespace Glue42Core {
          *  If `true`, an App system will be created, and all metrics will live on top level.
          */
         disableAutoAppSystem?: boolean;
+
+        pagePerformanceMetrics: PagePerformanceMetricsConfig;
+    }
+
+    export interface PagePerformanceMetricsConfig {
+        enabled: boolean;
+        initialPublishTimeout: number;
+        publishInterval: number;
     }
 
     export interface Extension {
@@ -1606,7 +1614,8 @@ export namespace Glue42Core {
             isOwner: boolean
         };
         metrics?: {
-            performance: {
+            pagePerformanceMetrics: {
+                enabled: boolean;
                 initialPublishTimeout: number;
                 publishInterval: number;
             }

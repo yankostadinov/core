@@ -1,22 +1,19 @@
 import { Glue42Core } from "../../glue";
+import { count } from "console";
 
 export class PerfTracker {
 
-    private lastIndex = -1;
+    private lastCount = 0;
 
     private initialPublishTimeout = 10 * 1000; // 10 sec
     private publishInterval = 60 * 1000; // 60 sec
+    private system: Glue42Core.Metrics.System;
 
-    constructor(private api: Glue42Core.Metrics.API) {
-        if (typeof window !== "undefined" && window.performance) {
-            const perfConfig = window?.glue42gd?.metrics?.performance;
-            if (perfConfig) {
-                this.initialPublishTimeout = perfConfig.initialPublishTimeout ?? this.initialPublishTimeout;
-                this.publishInterval = perfConfig.publishInterval ?? this.publishInterval;
-            }
-
-            this.scheduleCollection();
-        }
+    constructor(private api: Glue42Core.Metrics.API, initialPublishTimeout?: number, publishInterval?: number) {
+        this.initialPublishTimeout = initialPublishTimeout ?? this.initialPublishTimeout;
+        this.publishInterval = publishInterval ?? this.publishInterval;
+        this.scheduleCollection();
+        this.system = this.api.subSystem("performance", "Performance data published by the web application");
     }
 
     private scheduleCollection() {
@@ -30,6 +27,7 @@ export class PerfTracker {
 
     private collect() {
         try {
+            // tslint:disable-next-line:no-console
             this.collectMemory();
             this.collectEntries();
         } catch {
@@ -40,18 +38,19 @@ export class PerfTracker {
     private collectMemory() {
         // memory - use performance.memory
         const memory = (window.performance as any).memory;
-        this.api.featureMetric("memory", "update", memory);
+        this.system.stringMetric("memory", JSON.stringify({
+            totalJSHeapSize: memory.totalJSHeapSize,
+            usedJSHeapSize: memory.usedJSHeapSize
+        }));
     }
 
     private collectEntries() {
         const allEntries = window.performance.getEntries();
-        const newEntries = allEntries.slice(this.lastIndex + 1);
-        for (const newEntry of newEntries) {
-            let name = "";
-            if (newEntry.constructor && newEntry.constructor.name) {
-                name = newEntry.constructor.name;
-            }
-            this.api.featureMetric("performance", name, newEntry.entryType);
+        if (allEntries.length <= this.lastCount) {
+            return;
         }
+        this.lastCount = allEntries.length;
+
+        this.system.stringMetric("entries", JSON.stringify(allEntries));
     }
 }

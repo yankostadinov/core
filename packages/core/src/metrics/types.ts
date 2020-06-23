@@ -13,7 +13,8 @@ export interface MetricsSettings {
     system: string;
     service: string;
     instance: string;
-    perf: boolean;
+    disableAutoAppSystem: boolean;
+    pagePerformanceMetrics?: Glue42Core.PagePerformanceMetricsConfig;
 }
 
 export interface Protocol {
