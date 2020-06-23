@@ -337,9 +337,6 @@ export namespace Glue42Web {
          * @docmenuorder 1
          */
         export interface API {
-            /** Lists all available layouts. */
-            list(): Layout[];
-
             /**
              * Saves a new layout.
              * @param layout Options for saving a layout.
@@ -357,14 +354,7 @@ export namespace Glue42Web {
              * @param type Type of the layout to remove.
              * @param name Name of the layout to remove.
              */
-            remove(type: string, name: string): Promise<void>;
-
-            /**
-             * Subscribes for layout save requests - your application has the option to save data (context) when a layout is saved.
-             * @param callback The callback passed as an argument will be invoked when a layout save is requested.
-             * @returns unsubscribe function.
-             */
-            onSaveRequested(callback: (context?: object) => SaveRequestResponse): UnsubscribeFunction;
+            remove(type: LayoutType, name: string): Promise<void>;
         }
 
         /**

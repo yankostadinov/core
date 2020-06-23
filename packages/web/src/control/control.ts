@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { LocalWebWindow } from "../windows/my";
-import { RemoteCommand, ControlDomain, LayoutRemoteCommand } from "./commands";
+import { RemoteCommand, ControlDomain } from "./commands";
 import { Glue42Web } from "../../web";
 
 /**
@@ -13,10 +14,10 @@ export class Control {
     private callbacks: { [domain: string]: (command: RemoteCommand) => void } = {};
     private logger!: Glue42Web.Logger.API;
 
-    public start(interop: Glue42Web.Interop.API, logger: Glue42Web.Logger.API) {
+    public start(interop: Glue42Web.Interop.API, logger: Glue42Web.Logger.API): void {
         this.interop = interop;
         this.logger = logger;
-        this.interop.register(Control.CONTROL_METHOD, async (arg: any) => {
+        this.interop.register(Control.CONTROL_METHOD, (arg: any) => {
             const command = arg as RemoteCommand;
             logger.trace(`received control command ${JSON.stringify(command)}`);
             if (command.domain === "windows") {
@@ -39,7 +40,7 @@ export class Control {
         });
     }
 
-    public send(command: RemoteCommand, target: Glue42Web.Interop.Instance) {
+    public send(command: RemoteCommand, target: Glue42Web.Interop.Instance): Promise<Glue42Web.Interop.InvocationResult<any>> {
         if (!this.interop) {
             throw new Error("Control not started");
         }
@@ -47,11 +48,11 @@ export class Control {
         return this.interop.invoke(Control.CONTROL_METHOD, command, target);
     }
 
-    public subscribe(domain: ControlDomain, callback: (command: RemoteCommand) => void) {
+    public subscribe(domain: ControlDomain, callback: (command: RemoteCommand) => void): void {
         this.callbacks[domain] = callback;
     }
 
-    public setLocalWindow(window: LocalWebWindow) {
+    public setLocalWindow(window: LocalWebWindow): void {
         this.myWindow = window;
     }
 }
