@@ -4,7 +4,8 @@
         "layouts": {
             "autoRestore": false,
             "autoSaveWindowContext": false
-        }
+        },
+        "channels": true
     },
     "gateway": {
         "location": "./gateway.js"
@@ -41,7 +42,7 @@
             }
         },
         {
-            "name": "DarkYellow",
+            "name": "Dark Yellow",
             "meta": {
                 "color": "#b09b00"
             }
