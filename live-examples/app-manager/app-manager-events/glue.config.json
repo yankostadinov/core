@@ -12,27 +12,15 @@
   "appManager": {
     "localApplications": [
       {
-        "name": "Application A",
-        "details": {
-          "url": "https://xy5ne.csb.app/app-a/index.html"
-        }
-      },
-      {
-        "name": "Application B",
-        "details": {
-          "url": "https://xy5ne.csb.app/app-b/index.html"
-        }
-      },
-      {
         "name": "Application C",
         "details": {
-          "url": "https://xy5ne.csb.app/app-c/index.html"
+          "url": "https://hu9ve.csb.app/app-c/index.html"
         }
       },
       {
         "name": "Application D",
         "details": {
-          "url": "https://xy5ne.csb.app/app-d/index.html"
+          "url": "https://hu9ve.csb.app/app-d/index.html"
         }
       }
     ]
