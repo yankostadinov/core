@@ -5,4 +5,7 @@ export interface Glue42CoreConfig {
   glue?: Glue42Web.Config;
   gateway?: any;
   channels?: Glue42Web.Channels.ChannelContext[];
+  layouts?: {
+    remoteType: "none" | "json";
+  };
 }

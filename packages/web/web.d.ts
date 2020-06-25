@@ -402,6 +402,20 @@ export namespace Glue42Web {
             main: boolean;
         }
 
+        export interface LayoutSummary {
+            /** Name of the layout. The name is unique per layout type. */
+            name: string;
+
+            /** Type of the layout. */
+            type: LayoutType;
+
+            /** Context object passed when the layout was saved. */
+            context: any;
+
+            /** Metadata passed when the layout was saved. */
+            metadata: any;
+        }
+
         /**
          * Object describing the layout that you want to save.
          */

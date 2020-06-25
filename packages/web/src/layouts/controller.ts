@@ -22,7 +22,24 @@ export class LayoutsController {
         this.registerRequestMethods();
     }
 
-    public async save(layoutOptions: Glue42Web.Layouts.NewLayoutOptions): Promise<Glue42Web.Layouts.Layout> {
+    public async export(layoutType?: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout[]> {
+        if (layoutType) {
+            return this.storage.getAll(layoutType);
+        }
+
+        const [globalLayouts, workspaceLayouts] = await Promise.all([
+            this.storage.getAll("Global"),
+            this.storage.getAll("Workspace")
+        ]);
+
+        return globalLayouts.concat(workspaceLayouts);
+    }
+
+    public async import(layout: Glue42Web.Layouts.Layout): Promise<void> {
+        return this.storage.store(layout, layout.type);
+    }
+
+    public async save(layoutOptions: Glue42Web.Layouts.NewLayoutOptions, autoSave = false): Promise<Glue42Web.Layouts.Layout> {
         const openedWindows = this.windows.getChildWindows().map((w) => w.id);
 
         const components = await this.getRemoteWindowsInfo(openedWindows);
@@ -36,9 +53,17 @@ export class LayoutsController {
             metadata: layoutOptions.metadata || {}
         };
 
-        await this.storage.store(layout, "Global");
+        if (autoSave) {
+            this.storage.storeAutoLayout(layout);
+        } else {
+            await this.storage.store(layout, "Global");
+        }
 
         return layout;
+    }
+
+    public async autoSave(layoutOptions: Glue42Web.Layouts.NewLayoutOptions): Promise<Glue42Web.Layouts.Layout> {
+        return this.save(layoutOptions, true);
     }
 
     public async restore(options: Glue42Web.Layouts.RestoreOptions): Promise<void> {
@@ -48,22 +73,12 @@ export class LayoutsController {
             throw new Error(`can not find layout with name ${options.name}`);
         }
 
-        layout.components.forEach((c) => {
-            if (c.type === "window") {
-                const state = c.state;
-                // do not restore the parent
-                if (state.main) {
-                    return;
-                }
-                const newWindowOptions: Glue42Web.Windows.CreateOptions = { ...state.bounds, context: state.context };
-                this.windows.open(state.name, state.url, newWindowOptions);
-            }
-        });
+        this.restoreComponents(layout);
     }
 
     public async restoreAutoSavedLayout(): Promise<void> {
         const layoutName = `_auto_${document.location.href}`;
-        const layout = await this.storage.get(layoutName, "Global");
+        const layout = await this.storage.getAutoLayout(layoutName);
 
         if (!layout) {
             return Promise.resolve();
@@ -79,23 +94,30 @@ export class LayoutsController {
         my.setContext(mainComponent?.state.context);
 
         try {
-            return this.restore({
-                name: layoutName,
-                closeRunningInstance: false,
-            });
+            this.restoreComponents(layout);
         } catch (e) {
             return;
         }
     }
 
-
     public remove(type: Glue42Web.Layouts.LayoutType, name: string): Promise<void> {
         return this.storage.remove(name, type);
     }
 
-    public async getLayoutNames(type: Glue42Web.Layouts.LayoutType): Promise<string[]> {
+    public async getAll(type: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.LayoutSummary[]> {
         const allLayouts = await this.storage.getAll(type);
-        return allLayouts.map((layout) => layout.name);
+        return allLayouts.map((layout) => {
+            return {
+                name: layout.name,
+                type: layout.type,
+                context: layout.context,
+                metadata: layout.metadata
+            };
+        });
+    }
+
+    public get(name: string, type: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout | undefined> {
+        return this.storage.get(name, type);
     }
 
     public getLocalLayoutComponent(context?: object, main = false): Glue42Web.Layouts.LayoutComponent {
@@ -109,7 +131,8 @@ export class LayoutsController {
                 };
             }
         } catch (err) {
-            console.warn(`onSaveRequested - error getting data from user function - ${err}`);
+            // todo: log warn
+            // console.warn(`onSaveRequested - error getting data from user function - ${err}`);
         }
 
         return {
@@ -125,6 +148,20 @@ export class LayoutsController {
                 main
             }
         };
+    }
+
+    private restoreComponents(layout: Glue42Web.Layouts.Layout): void {
+        layout.components.forEach((c) => {
+            if (c.type === "window") {
+                const state = c.state;
+                // do not restore the parent
+                if (state.main) {
+                    return;
+                }
+                const newWindowOptions: Glue42Web.Windows.CreateOptions = { ...state.bounds, context: state.context };
+                this.windows.open(state.name, state.url, newWindowOptions);
+            }
+        });
     }
 
     private async getRemoteWindowsInfo(windows: string[]): Promise<Glue42Web.Layouts.LayoutComponent[]> {
@@ -164,13 +201,13 @@ export class LayoutsController {
 
             components.push(args.parentInfo);
 
-            await this.storage.store({
+            await this.storage.storeAutoLayout({
                 type: "Global",
                 name: args.layoutName,
                 components,
                 context: args.context || {},
                 metadata: args.metadata || {}
-            }, "Global");
+            });
 
             // now close everyone
             args.childWindows.forEach((cw) => {

@@ -7,14 +7,7 @@ export class JSONStore implements RemoteStore {
 
     public async getAll(layoutType: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout[]> {
 
-        if (layoutType === "Global") {
-            return [];
-        }
-
-        const fetchUrl = `${this.storeBaseUrl}/glue.workspaces.json`;
-        // const fetchUrl = layoutType === "Global" ?
-        //     `${this.storeBaseUrl}/glue.layouts.json` :
-        //     `${this.storeBaseUrl}/glue.workspaces.json`;
+        const fetchUrl = `${this.storeBaseUrl}/glue.layouts.json`;
 
         const response = await this.fetchTimeout(fetchUrl);
 
@@ -22,11 +15,21 @@ export class JSONStore implements RemoteStore {
             return [];
         }
 
-        const layouts = await response.json();
+        let layouts;
+        try {
+            layouts = await response.json();
+        } catch (error) {
+            return [];
+        }
 
+        if (!layouts) {
+            return [];
+        }
         // todo: validate the layouts, warn and discard invalid ones
 
-        return layouts || [];
+        const layoutProp = layoutType === "Global" ? "globals" : "workspaces";
+
+        return layouts[layoutProp] || [];
     }
 
     public async get(name: string, layoutType: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout | undefined> {

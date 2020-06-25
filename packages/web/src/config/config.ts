@@ -65,6 +65,11 @@ export const buildConfig = async (userConfig?: Glue42Web.Config): Promise<Glue42
         const worker = resultWebConfig.extends.substr(0, lastIndex + 1) + defaultWorkerName;
         resultWebConfig.worker = worker;
     }
+
+    if (!remoteConfig.layouts) {
+        remoteConfig.layouts = { remoteType: "json" };
+    }
+
     return {
         ...remoteConfig,
         glue: resultWebConfig
