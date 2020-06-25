@@ -1,6 +1,6 @@
 ## Overview
 
-This tutorial is designed to walk you through every aspect of **Glue42 Core** - setting up a project with the [**Glue42 CLI**](../../../core/core-concepts/cli/index.html), initializing [**Glue42 Clients**](../../../core/core-concepts/glue42-client/overview/index.html) and extending your applications with [Shared Contexts](../../../core/capabilities/shared-contexts/index.html), [Interop](../../../core/capabilities/interop/index.html), [Window Management](../../../core/capabilities/window-management/index.html) and [Channels](../../../core/capabilities/channels/index.html) capabilities.
+This tutorial is designed to walk you through every aspect of **Glue42 Core** - setting up a project with the [**Glue42 CLI**](../../../core/core-concepts/cli/index.html), initializing [**Glue42 Clients**](../../../core/core-concepts/glue42-client/overview/index.html) and extending your applications with [Shared Contexts](../../../core/capabilities/shared-contexts/index.html), [Interop](../../../core/capabilities/interop/index.html), [Window Management](../../../core/capabilities/window-management/index.html), [Channels](../../../core/capabilities/channels/index.html) capabilities and [Application Management](../../../core/capabilities/application-management/index.html).
 
 This guide uses plain JavaScript and its goal is to allow you to put the basic concepts of **Glue42 Core** to practice. There are also [React](../react/index.html) and [Angular](../angular/index.html) tutorials for **Glue42 Core**, but it is recommended that you go through the JavaScript tutorial first in order to get acquainted with **Glue42 Core** without the distractions of additional libraries and frameworks.
 
@@ -110,7 +110,7 @@ npm install --save-dev @glue42/cli-core
 npx gluec init
 ```
 
-The `init` command installs the necessary dependencies and creates the necessary configuration files with default settings. 
+The `init` command installs the necessary dependencies and creates the necessary configuration files with default settings.
 
 Next, you have to configure the development server that comes with the Glue42 CLI. It will allow you to serve or proxy to your apps, define shared resources and serve the [**Glue42 Environment**](../../../glue42-core/what-is-glue42-core/core-concepts/environment/index.html) files correctly. To do that, open the `glue.config.dev.json` file that was created with the `init` command and add the locations and routes for the shared resources and the **Clients** and **Stocks** apps. Your configuration should look something like this:
 
@@ -283,7 +283,7 @@ const selectClientStocks = glue.interop.methods().find(method => method.name ===
 
 ### 3.3. Method Invocation
 
-What is left is to invoke the method, if present. Remember that the **Clients** and **Stocks** apps are designed to be launched and used on their own, so if the **Stocks** app is not open, there will be no method to invoke. 
+What is left is to invoke the method, if present. Remember that the **Clients** and **Stocks** apps are designed to be launched and used on their own, so if the **Stocks** app is not open, there will be no method to invoke.
 
 Find the `TODO: Chapter 3.3.` comment and invoke the method if it has been registered. The `clientClickedHandler()` accepts a `client` object as an argument. Wrap it in an object, invoke the `SelectClient` method and pass this object as its argument.
 
@@ -349,7 +349,7 @@ const stockClickedHandler = (stock) => {
 };
 ```
 
-After refreshing, when you click on a stock, a separate **Stock Details** window will be opened. 
+After refreshing, when you click on a stock, a separate **Stock Details** window will be opened.
 
 ### 4.2. Window Settings
 
@@ -408,7 +408,7 @@ The final version of the `start()` function in the **Stock Details** app should 
 
 ```javascript
 const start = async () => {
-    
+
     window.glue = await GlueWeb();
 
     toggleGlueAvailable();
@@ -667,6 +667,161 @@ Next, go to the **Stocks** app and comment out or delete the code in the `start(
 
 glue.channels.subscribe();
 ```
+
+## 7. Application Management
+
+While we wait for our users' feedback on v1 we need to take a step back to address some of the tech debt that was accumulated during the v1 sprint.
+
+### 7.1. Overview
+
+Up until now we used the Windows API to open the details application whenever a stock row inside of the stocks application is clicked. This works fine for small projects, but it doesn't scale well, because each application needs to know all details like url, start position, initial context, etc. about every other application it needs to start. In this chapter we will replace the Windows API with the AppManager API. It will allow us to predefine our applications inside the Glue42 Core environment, decoupling the stocks application from knowing anything about the details application besides its name.
+
+### 7.2. Configuring applications
+
+To take advantage of the AppManager API we first need to initialize the API by passing `{ appManager: true }` together with the application name to the GlueWeb (@glue42/web) factory function like this:
+
+```javascript
+// In `start()`.
+
+await window.GlueWeb({
+    channels: true,
+    appManager: true,
+    application: 'Clients'
+});
+```
+
+Do this for all three applications, passing in the correct application name. The application name is used by the platform to map it to an application definition that is then accessible using `glue.appManager.myInstance.application`. For the mapping to work when the application is accessed directly using the URL and not Glue42 Core's APIs it is important that the application name provided to `GlueWeb` is the same as the application name defined inside the local/remote application definition of the application!
+
+Additionally we need to predefine our applications inside our Glue42 Core environment. We do this by adding the following configuration to the `glue.config.json`. After adding it restart the `gluec` by quitting it and running `gluec serve` again for the changes to take effect:
+
+```json
+{
+    "glue": ...,
+    "gateway": ...,
+    "channels": ...,
+    "appManager": {
+        "localApplications": [
+            {
+                "name": "Clients",
+                "details": {
+                    "url": "http://localhost:4242/clients"
+                }
+            },
+            {
+                "name": "Stocks",
+                "details": {
+                    "url": "http://localhost:4242/stocks",
+                    "left": 0,
+                    "top": 0,
+                    "width": 860,
+                    "height": 600
+                }
+            },
+            {
+                "name": "Details",
+                "details": {
+                    "url": "http://localhost:4242/stocks/details",
+                    "left": 100,
+                    "top": 100,
+                    "width": 400,
+                    "height": 400
+                }
+            }
+        ]
+    }
+}
+```
+
+Well done. Тhe GlueWeb factory function will now initialize the AppManager API inside of our applications.
+
+### 7.3. Application starting
+
+To open the details application inside of the stocks application we will now switch from using the Windows API to using the AppManager API. After getting the Application using `glue.appManager.application("Details")` we can simply call `detailsApplication.start()` like this:
+
+```javascript
+// In `stockClickedHandler()`.
+
+const detailsApplication = window.glue.appManager.application('Details');
+detailsApplication.start(stock).catch(console.error);
+```
+
+To receive and to set the stock inside of the details application:
+
+```javascript
+// In `start()`.
+
+const stock = window.glue.appManager.myInstance.context;
+
+setFields(stock);
+```
+
+Great work! Everything should work as before.
+
+### 7.4. Application instances
+
+Let's use the AppManager API to add new functionality to the clients application. Each Application from the AppManager API has an `app.instances` property that allows us to get the running instances of an application. Whenever a client is selected we can check whether or not we have a running instance of the stocks application and if we don't we can start one using the AppManager API like this:
+
+```javascript
+// In `clientClickedHandler()`.
+
+const isStocksRunning = window.glue.appManager.application('Stocks').instances.length > 0;
+
+if (!isStocksRunning) {
+    window.glue.appManager.application('Stocks').start().catch(console.error);
+}
+```
+
+Like with the Windows API we can pass initial context to an application started using `start()`. Let's pass the current channel of the clients application to the stocks application as context on start like this:
+
+```javascript
+// In `clientClickedHandler()`.
+
+const myChannel = window.glue.channels.my();
+
+const isStocksRunning = window.glue.appManager.application('Stocks').instances.length > 0;
+
+if (!isStocksRunning) {
+    window.glue.appManager.application('Stocks').start({ channel: myChannel }).catch(console.error);
+}
+```
+
+Now inside the stocks application to receive and to join the channel:
+
+```javascript
+// In `start()`.
+
+const channelToJoin = window.glue.appManager.myInstance.context.channel;
+
+if (channelToJoin) {
+    window.glue.channels.join(channelToJoin);
+}
+```
+
+This won't, however, rerender the Channel Selector Widget with the newly, programmatically joined channel. To have the Channel Selector Widget react to call to `join()` and `leave()` we need to rerender it like this:
+
+```javascript
+// In `start()`.
+
+const updateChannelSelectorWidget = createChannelSelectorWidget(
+    NO_CHANNEL_VALUE,
+    channelNamesAndColors,
+    onChannelSelected
+);
+
+// Whenever a channel is joined or left rerender the channels.
+window.glue.channels.onChanged((channelName) => {
+    updateChannelSelectorWidget(channelName);
+});
+
+const channelToJoin = window.glue.appManager.myInstance.context.channel;
+
+if (channelToJoin) {
+    window.glue.channels.join(channelToJoin);
+}
+```
+
+Well done! We got rid of the accumulated, over the past 6 chapters, tech debt and you learned about the AppManager API!
+
 
 ## Congratulations!
 
