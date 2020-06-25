@@ -77,7 +77,8 @@ export const createFactoryFunction = (coreFactoryFunction: GlueCoreFactoryFuncti
                 return gdWindowContext.Glue({
                     windows: true,
                     logger: builtCoreConfig.glue?.logger,
-                    channels: shouldInitializeChannels
+                    channels: shouldInitializeChannels,
+                    layouts: true
                 });
             }
         }
