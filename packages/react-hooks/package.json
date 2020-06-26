@@ -41,7 +41,6 @@
         "react-dom": "^16.13.1"
     },
     "devDependencies": {
-        "@glue42/web": "^1.2.0",
         "@testing-library/react-hooks": "^3.2.1",
         "@types/enzyme": "^3.10.5",
         "@types/enzyme-adapter-react-16": "^1.0.6",
@@ -73,6 +72,8 @@
         "typescript": "^3.8.3"
     },
     "dependencies": {
+        "@glue42/desktop": "^5.1.0",
+        "@glue42/web": "^1.2.0",
         "prop-types": "^15.7.2"
     }
 }
