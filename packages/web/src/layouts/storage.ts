@@ -42,15 +42,10 @@ export class LayoutStorage {
 
     public async store(layout: Glue42Web.Layouts.Layout, layoutType: Glue42Web.Layouts.LayoutType): Promise<void> {
 
-        if (layout.metadata.allowSave) {
-            await this.localStore.store(layout, layoutType);
-            return;
-        }
-
         const remoteLayout = await this.remoteStore?.get(layout.name, layoutType);
 
         if (remoteLayout) {
-            return;
+            throw new Error(`Cannot save layout with name: ${layout.name} and type: ${layoutType}, because it is present in the remote store and is treated as readonly`);
         }
 
         layout.metadata.allowSave = true;
@@ -58,6 +53,12 @@ export class LayoutStorage {
     }
 
     public async remove(name: string, layoutType: Glue42Web.Layouts.LayoutType): Promise<void> {
+        const remoteLayout = await this.remoteStore?.get(name, layoutType);
+
+        if (remoteLayout) {
+            throw new Error(`Cannot remove layout with name: ${name} and type: ${layoutType}, because it is present in the remote store and is treated as readonly`);
+        }
+
         await this.localStore.delete(name, layoutType);
     }
 
