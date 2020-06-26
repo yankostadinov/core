@@ -7,22 +7,8 @@ The [**Glue42 React Hooks**](https://www.npmjs.com/package/@glue42/react-hooks) 
 The Glue42 React Hooks library comes with the latest version of the Glue42 Web, but requires React and ReactDOM libraries installed. To install the packages, navigate to the root directory of your project and run:
 
 ```cmd
-npm install --save @glue42/react-hooks react react-dom
+npm install --save @glue42/react-hooks
 ```
-
-Your `package.json` file should now have the following dependencies:
-
-```json
-{
-    "dependencies": {
-        "@glue42/react-hooks": "1.0.7",
-        "react": "^16.13.1",
-        "react-dom": "^16.13.1"
-    }
-}
-```
-
-*Keep in mind that the versions of the dependencies will probably be different from the example here due to newer package releases.*
 
 ## Library Features
 
@@ -111,7 +97,7 @@ Add the `GlueProvider` component by wrapping your other components inside it (pr
 ```javascript
 //index.js
 import GlueWeb from "@glue42/web";
-import { GlueProvider } from "glue42/react-hooks";
+import { GlueProvider } from "@glue42/react-hooks";
 
 ReactDOM.render(
     // Wrap your root component in the `GlueProvider` in order
