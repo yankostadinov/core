@@ -48,7 +48,12 @@ export class LayoutStorage {
             throw new Error(`Cannot save layout with name: ${layout.name} and type: ${layoutType}, because it is present in the remote store and is treated as readonly`);
         }
 
-        layout.metadata.allowSave = true;
+        if (!layout.metadata) {
+            layout.metadata = { allowSave: true };
+        } else {
+            layout.metadata.allowSave = true;
+        }
+
         await this.localStore.store(layout, layoutType);
     }
 
