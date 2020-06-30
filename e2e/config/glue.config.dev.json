@@ -1,0 +1,24 @@
+{
+    "glueAssets": {
+        "gateway": {
+            "location": "./glue/gateway-web.js"
+        },
+        "worker": "./glue/worker.js",
+        "config": "./glue.config.json",
+        "route": "/glue"
+    },
+    "server": {
+        "settings": {
+            "port": 4242,
+            "disableCache": true
+        },
+        "apps": [],
+        "sharedAssets": [
+            {
+                "route": "/glue/glue.layouts.json",
+                "path": "./glue/glue.layouts.json"
+            }
+        ]
+    },
+    "logging": "default"
+}

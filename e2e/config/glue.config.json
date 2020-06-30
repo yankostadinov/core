@@ -1,0 +1,26 @@
+{
+    "glue": {
+        "worker": "./worker.js",
+        "layouts": {
+            "autoRestore": false,
+            "autoSaveWindowContext": false
+        },
+        "channels": true,
+        "appManager": true,
+        "application": "TestRunner"
+    },
+    "gateway": {
+        "location": "./gateway.js"
+    },
+    "channels": [],
+    "appManager": {
+        "localApplications": [
+            {
+                "name": "TestRunner",
+                "details": {
+                    "url": "http://localhost:4242/clients"
+                }
+            }
+        ]
+    }
+}
