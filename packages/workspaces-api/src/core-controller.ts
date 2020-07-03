@@ -2,7 +2,7 @@ import { Bridge } from "./communication/bridge";
 import { IoC } from "./shared/ioc";
 import { PrivateDataManager } from "./privateDataManager";
 import { WorkspacesController } from "./types/controller";
-import { WorkspaceDefinition, WorkspaceCreateConfig, RestoreWorkspaceConfig, WorkspaceLayout, ResizeConfig, MoveConfig, Unsubscribe, WorkspaceWindowDefinition, ParentDefinition, Frame, WorkspaceSummary, WorkspaceWindow, WorkspaceParent, WorkspaceLayoutSummary } from "../workspaces";
+import { WorkspaceDefinition, WorkspaceCreateConfig, RestoreWorkspaceConfig, WorkspaceLayout, ResizeConfig, MoveConfig, Unsubscribe, WorkspaceWindowDefinition, ParentDefinition, Frame, WorkspaceSummary, WorkspaceWindow, WorkspaceParent, WorkspaceLayoutSummary, WorkspaceLayoutSaveConfig } from "../workspaces";
 import { RefreshChildrenConfig } from "./types/privateData";
 import { AddItemResult, WorkspaceSnapshotResult, FrameSnapshotResult, IsWindowInSwimlaneResult, WorkspaceCreateConfigProtocol, FrameSummaryResult, WorkspaceSummariesResult, WorkspaceSummaryResult, ParentSnapshotConfig, SwimlaneWindowSnapshotConfig, SimpleWindowOperationSuccessResult } from "./types/protocol";
 import { Child } from "./types/builders";
@@ -253,6 +253,19 @@ export class CoreController implements WorkspacesController {
 
     public async importLayout(layout: WorkspaceLayout): Promise<void> {
         await this.layouts.import(layout);
+    }
+
+    public async saveLayout(config: WorkspaceLayoutSaveConfig): Promise<WorkspaceLayout> {
+
+        const framesCount = this.frameUtils.getAllFrameInstances().length;
+
+        if (!framesCount) {
+            throw new Error(`Cannot save the layout with config: ${JSON.stringify(config)}, because no active frames were found`);
+        }
+
+        const frameInstance = await this.frameUtils.getFrameInstanceByItemId(config.workspaceId);
+
+        return await this.bridge.send<WorkspaceLayout>(OPERATIONS.saveLayout.name, { name: config.name, workspaceId: config.workspaceId }, frameInstance);
     }
 
     public async bundleTo(type: "row" | "column", workspaceId: string): Promise<void> {

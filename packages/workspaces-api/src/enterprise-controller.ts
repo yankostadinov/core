@@ -10,7 +10,7 @@ import { IoC } from "./shared/ioc";
 import { FrameCreateConfig, WorkspaceIoCCreateConfig, WindowCreateConfig, ParentCreateConfig } from "./types/ioc";
 import { RefreshChildrenConfig } from "./types/privateData";
 import { PrivateDataManager } from "./privateDataManager";
-import { WorkspaceDefinition, RestoreWorkspaceConfig, WorkspaceWindowDefinition, ParentDefinition, Unsubscribe, WorkspaceSummary, WorkspaceWindow, WorkspaceParent, WorkspaceLayoutSummary, WorkspaceLayout, ResizeConfig, MoveConfig, WorkspaceCreateConfig } from "../workspaces";
+import { WorkspaceDefinition, RestoreWorkspaceConfig, WorkspaceWindowDefinition, ParentDefinition, Unsubscribe, WorkspaceSummary, WorkspaceWindow, WorkspaceParent, WorkspaceLayoutSummary, WorkspaceLayout, ResizeConfig, MoveConfig, WorkspaceCreateConfig, WorkspaceLayoutSaveConfig } from "../workspaces";
 import { WorkspacesController } from "./types/controller";
 import { WindowsAPI, GDWindow } from "./types/glue";
 
@@ -235,6 +235,10 @@ export class EnterpriseController implements WorkspacesController {
 
             return matchingLayouts;
         }, []);
+    }
+
+    public async saveLayout(config: WorkspaceLayoutSaveConfig): Promise<WorkspaceLayout> {
+        return await this.bridge.send(OPERATIONS.saveLayout.name, { name: config.name, workspaceId: config.workspaceId });
     }
 
     public async bundleTo(type: "row" | "column", workspaceId: string): Promise<void> {

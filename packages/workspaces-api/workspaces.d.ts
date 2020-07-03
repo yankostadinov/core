@@ -238,6 +238,11 @@ export interface WorkspaceLayout {
     workspaceId?: string;
 }
 
+export interface WorkspaceLayoutSaveConfig {
+    name: string;
+    workspaceId: string;
+}
+
 export interface FrameSnapshot {
     id: string;
 }
@@ -272,6 +277,7 @@ export interface API {
         delete(name: string): Promise<void>;
         export(predicate?: (layout: WorkspaceLayout) => boolean): Promise<WorkspaceLayout[]>;
         import(layout: WorkspaceLayout): Promise<void>;
+        save(config: WorkspaceLayoutSaveConfig): Promise<WorkspaceLayout>;
     };
     onFrameOpened(callback: (frame: Frame) => void): Promise<Unsubscribe>;
     onFrameClosing(callback: (frame: Frame) => void): Promise<Unsubscribe>;

@@ -1,7 +1,7 @@
 import { Decoder, object, boolean, string, optional, array, oneOf, constant, lazy, number, anyJson, intersection } from "decoder-validate";
 import { IsWindowInSwimlaneResult, WorkspaceSnapshotResult, ChildSnapshotResult, WorkspaceConfigResult, FrameSummaryResult, WorkspaceCreateConfigProtocol, GetFrameSummaryConfig, WorkspaceSummaryResult, LayoutSummariesResult, LayoutSummary, OpenWorkspaceConfig, FrameSummariesResult, WorkspaceSummariesResult, ExportedLayoutsResult, DeleteLayoutConfig, SimpleItemConfig, ResizeItemConfig, MoveFrameConfig, FrameSnapshotResult, BaseChildSnapshotConfig, ParentSnapshotConfig, SwimlaneWindowSnapshotConfig, SimpleWindowOperationSuccessResult, SetItemTitleConfig, MoveWindowConfig, AddWindowConfig, AddContainerConfig, AddItemResult, BundleConfig, WorkspaceStreamData, FrameStreamData, ContainerStreamData, ContainerSummaryResult, WindowStreamData } from "../types/protocol";
 import { StreamType, StreamAction } from "../types/subscription";
-import { WorkspaceCreateConfig, ParentDefinition, WorkspaceWindowDefinition, NewFrameConfig, RestoreType, RestoreWorkspaceConfig, WorkspaceDefinition, BuilderConfig, WorkspaceSummary, ParentSummary, WorkspaceWindowSummary, CustomWorkspaceSnapshot, WorkspaceLayout, ResizeConfig, MoveConfig } from "../../workspaces";
+import { WorkspaceCreateConfig, ParentDefinition, WorkspaceWindowDefinition, NewFrameConfig, RestoreType, RestoreWorkspaceConfig, WorkspaceDefinition, BuilderConfig, WorkspaceSummary, ParentSummary, WorkspaceWindowSummary, CustomWorkspaceSnapshot, WorkspaceLayout, ResizeConfig, MoveConfig, WorkspaceLayoutSaveConfig } from "../../workspaces";
 
 export const nonEmptyStringDecoder: Decoder<string> = string().where((s) => s.length > 0, "Expected a non-empty string");
 export const nonNegativeNumberDecoder: Decoder<number> = number().where((num) => num >= 0, "Expected a non-negative number");
@@ -415,4 +415,9 @@ export const windowStreamDataDecoder: Decoder<WindowStreamData> = object({
         parentId: nonEmptyStringDecoder,
         config: swimlaneWindowSnapshotConfigDecoder
     })
+});
+
+export const workspaceLayoutSaveConfigDecoder: Decoder<WorkspaceLayoutSaveConfig> = object({
+    name: nonEmptyStringDecoder,
+    workspaceId: nonEmptyStringDecoder
 });

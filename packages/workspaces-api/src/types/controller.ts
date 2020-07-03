@@ -1,4 +1,4 @@
-import { WorkspaceDefinition, WorkspaceCreateConfig, Workspace, RestoreWorkspaceConfig, WorkspaceWindowDefinition, ParentDefinition, Unsubscribe, Frame, WorkspaceSummary, WorkspaceWindow, WorkspaceParent, WorkspaceLayoutSummary, WorkspaceLayout, ResizeConfig, MoveConfig } from "../../workspaces";
+import { WorkspaceDefinition, WorkspaceCreateConfig, Workspace, RestoreWorkspaceConfig, WorkspaceWindowDefinition, ParentDefinition, Unsubscribe, Frame, WorkspaceSummary, WorkspaceWindow, WorkspaceParent, WorkspaceLayoutSummary, WorkspaceLayout, ResizeConfig, MoveConfig, WorkspaceLayoutSaveConfig } from "../../workspaces";
 import { AddItemResult, WorkspaceSnapshotResult, FrameSnapshotResult } from "./protocol";
 import { SubscriptionConfig, StreamType, StreamAction } from "./subscription";
 import { RefreshChildrenConfig } from "./privateData";
@@ -23,6 +23,7 @@ export interface WorkspacesController {
     deleteLayout(name: string): Promise<void>;
     exportLayout(predicate?: (layout: WorkspaceLayout) => boolean): Promise<WorkspaceLayout[]>;
     bundleTo(type: "row" | "column", workspaceId: string): Promise<void>;
+    saveLayout(config: WorkspaceLayoutSaveConfig): Promise<WorkspaceLayout>;
     importLayout(layout: WorkspaceLayout): Promise<void>;
     restoreItem(itemId: string): Promise<void>;
     maximizeItem(itemId: string): Promise<void>;

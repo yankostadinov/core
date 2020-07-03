@@ -54,7 +54,7 @@ export const OPERATIONS: { [key in OperationsTypes]: ControlOperation } = {
     getAllLayoutsSummaries: { name: "getAllLayoutsSummaries", resultDecoder: layoutSummariesDecoder },
     openWorkspace: { name: "openWorkspace", argsDecoder: openWorkspaceConfigDecoder, resultDecoder: workspaceSnapshotResultDecoder },
     deleteLayout: { name: "deleteLayout", resultDecoder: voidResultDecoder, argsDecoder: deleteLayoutConfigDecoder },
-    saveLayout: { name: "saveLayout", resultDecoder: voidResultDecoder, argsDecoder: swimlaneLayoutDecoder },
+    saveLayout: { name: "saveLayout", resultDecoder: swimlaneLayoutDecoder, argsDecoder: swimlaneLayoutDecoder },
     exportAllLayouts: { name: "exportAllLayouts", resultDecoder: exportedLayoutsResultDecoder },
     restoreItem: { name: "restoreItem", argsDecoder: simpleItemConfigDecoder, resultDecoder: voidResultDecoder },
     maximizeItem: { name: "maximizeItem", argsDecoder: simpleItemConfigDecoder, resultDecoder: voidResultDecoder },

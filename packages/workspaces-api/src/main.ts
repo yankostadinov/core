@@ -1,8 +1,8 @@
 import { IoC } from "./shared/ioc";
-import { checkThrowCallback, nonEmptyStringDecoder, swimlaneLayoutDecoder, workspaceDefinitionDecoder, workspaceBuilderCreateConfigDecoder, builderConfigDecoder, restoreWorkspaceConfigDecoder } from "./shared/decoders";
+import { checkThrowCallback, nonEmptyStringDecoder, swimlaneLayoutDecoder, workspaceDefinitionDecoder, workspaceBuilderCreateConfigDecoder, builderConfigDecoder, restoreWorkspaceConfigDecoder, workspaceLayoutSaveConfigDecoder } from "./shared/decoders";
 import { FrameStreamData, WorkspaceStreamData, WorkspaceSnapshotResult, WindowStreamData, ContainerStreamData } from "./types/protocol";
 import { FrameCreateConfig, WorkspaceIoCCreateConfig } from "./types/ioc";
-import { API, BuilderConfig, WorkspaceBuilder, ParentBuilder, Frame, WorkspaceSummary, Workspace, WorkspaceWindow, WorkspaceParent, RestoreWorkspaceConfig, WorkspaceDefinition, WorkspaceCreateConfig, WorkspaceLayoutSummary, WorkspaceLayout, Unsubscribe } from "./../workspaces";
+import { API, BuilderConfig, WorkspaceBuilder, ParentBuilder, Frame, WorkspaceSummary, Workspace, WorkspaceWindow, WorkspaceParent, RestoreWorkspaceConfig, WorkspaceDefinition, WorkspaceCreateConfig, WorkspaceLayoutSummary, WorkspaceLayout, Unsubscribe, WorkspaceLayoutSaveConfig } from "./../workspaces";
 import { WorkspacesController } from "./types/controller";
 import { WindowsAPI, LayoutsAPI, InteropAPI } from "./types/glue";
 
@@ -129,9 +129,11 @@ export default (agm: InteropAPI, windows: WindowsAPI, layoutsAPI: LayoutsAPI, io
         },
         import: async (layout: WorkspaceLayout): Promise<void> => {
             swimlaneLayoutDecoder.runWithException(layout);
-            // tslint:disable-next-line: no-console
-            console.log("passed first decoder");
             return controller.importLayout(layout);
+        },
+        save: async (config: WorkspaceLayoutSaveConfig): Promise<WorkspaceLayout> => {
+            const verifiedConfig = workspaceLayoutSaveConfigDecoder.runWithException(config);
+            return controller.saveLayout(verifiedConfig);
         }
     };
 
