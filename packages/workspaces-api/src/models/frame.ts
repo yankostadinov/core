@@ -2,7 +2,6 @@ import { checkThrowCallback, nonEmptyStringDecoder, restoreWorkspaceConfigDecode
 import { SubscriptionConfig } from "../types/subscription";
 import { PrivateDataManager } from "../privateDataManager";
 import { FrameStreamData, WorkspaceStreamData, WindowStreamData, ContainerStreamData } from "../types/protocol";
-import { Window } from "./window";
 import {Frame as FrameAPI, ResizeConfig, MoveConfig, FrameSnapshot, RestoreWorkspaceConfig, Workspace, WorkspaceDefinition, WorkspaceCreateConfig, Unsubscribe, WorkspaceWindow, Row, Column, Group} from "../../workspaces.d";
 import { FramePrivateData } from "../types/privateData";
 
@@ -223,7 +222,7 @@ export class Frame implements FrameAPI {
         const wrappedCallback = async (payload: WindowStreamData): Promise<void> => {
             const foundParent = await getData(this).controller.getParent((parent) => parent.id === payload.windowSummary.parentId);
             const foundWindow = foundParent.getChild((child) => child.type === "window" && child.positionIndex === payload.windowSummary.config.positionIndex);
-            callback(foundWindow as Window);
+            callback(foundWindow as WorkspaceWindow);
         };
 
         const config: SubscriptionConfig = {
@@ -276,7 +275,7 @@ export class Frame implements FrameAPI {
                 return parent.id === payload.windowSummary.parentId;
             });
             const foundWindow = foundParent.getChild((child) => child.type === "window" && child.positionIndex === payload.windowSummary.config.positionIndex);
-            callback(foundWindow as Window);
+            callback(foundWindow as WorkspaceWindow);
         };
 
         const config: SubscriptionConfig = {
@@ -296,7 +295,7 @@ export class Frame implements FrameAPI {
         const wrappedCallback = async (payload: WindowStreamData): Promise<void> => {
             const foundParent = await getData(this).controller.getParent((parent) => parent.id === payload.windowSummary.parentId);
             const foundWindow = foundParent.getChild((child) => child.type === "window" && child.positionIndex === payload.windowSummary.config.positionIndex);
-            callback(foundWindow as Window);
+            callback(foundWindow as WorkspaceWindow);
         };
 
         const config: SubscriptionConfig = {

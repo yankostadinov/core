@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Subscription } from "./glue";
 
 export type StreamType = "frame" | "workspace" | "container" | "window";
@@ -8,7 +9,7 @@ export interface SubscriptionConfig {
     streamType: StreamType;
     level: StreamLevel;
     action: StreamAction;
-    callback: (args?: unknown) => void;
+    callback: (args?: any) => void;
     levelId?: string;
 }
 

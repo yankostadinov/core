@@ -48,7 +48,7 @@ export class LocalWebWindow implements Glue42Web.Windows.WebWindow {
         if (typeof title === "object" && title !== null) {
             title = title.title;
         }
-        document.title = title;
+        document.title = title as string;
         return this;
     }
 

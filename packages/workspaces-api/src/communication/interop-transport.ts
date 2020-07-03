@@ -12,9 +12,12 @@ export class InteropTransport {
 
     public async initiate(): Promise<void> {
 
-        await Promise.all(
-            Object.values(METHODS).map((method) => this.verifyMethodLive(method.name, method.isStream))
-        );
+        if (window.glue42gd) {
+            await Promise.all(
+                Object.values(METHODS).map((method) => this.verifyMethodLive(method.name, method.isStream))
+            );
+        }
+
     }
 
     public async subscribe(streamName: string, streamBranch: string, streamType: StreamType): Promise<Subscription> {

@@ -2,7 +2,6 @@ import { IoC } from "./shared/ioc";
 import { checkThrowCallback, nonEmptyStringDecoder, swimlaneLayoutDecoder, workspaceDefinitionDecoder, workspaceBuilderCreateConfigDecoder, builderConfigDecoder, restoreWorkspaceConfigDecoder } from "./shared/decoders";
 import { FrameStreamData, WorkspaceStreamData, WorkspaceSnapshotResult, WindowStreamData, ContainerStreamData } from "./types/protocol";
 import { FrameCreateConfig, WorkspaceIoCCreateConfig } from "./types/ioc";
-import { Window } from "./models/window";
 import { API, BuilderConfig, WorkspaceBuilder, ParentBuilder, Frame, WorkspaceSummary, Workspace, WorkspaceWindow, WorkspaceParent, RestoreWorkspaceConfig, WorkspaceDefinition, WorkspaceCreateConfig, WorkspaceLayoutSummary, WorkspaceLayout, Unsubscribe } from "./../workspaces";
 import { WorkspacesController } from "./types/controller";
 import { WindowsAPI, LayoutsAPI, InteropAPI } from "./types/glue";
@@ -281,7 +280,7 @@ export default (agm: InteropAPI, windows: WindowsAPI, layoutsAPI: LayoutsAPI, io
             const windowParent = workspace.getParent((parent) => parent.id === payload.windowSummary.parentId);
             const foundWindow = windowParent.getChild((child) => child.type === "window" && child.positionIndex === payload.windowSummary.config.positionIndex);
 
-            callback(foundWindow as Window);
+            callback(foundWindow as WorkspaceWindow);
         };
         const unsubscribe = await controller.processGlobalSubscription(wrappedCallback, "window", "added");
         return unsubscribe;

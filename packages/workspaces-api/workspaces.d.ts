@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Glue42 } from "@glue42/desktop";
+import { InteropAPI, WindowsAPI, LayoutsAPI, GDWindow } from "./src/types/glue";
+import { IoC } from "./src/shared/ioc";
 
 export type Unsubscribe = () => void;
 
@@ -206,8 +207,8 @@ export interface WorkspaceWindow extends WorkspaceWindowSummary {
     setTitle(title: string): Promise<void>;
     maximize(): Promise<void>;
     restore(): Promise<void>;
-    eject(): Promise<Glue42.Windows.GDWindow>;
-    getGdWindow(): Glue42.Windows.GDWindow;
+    eject(): Promise<GDWindow>;
+    getGdWindow(): GDWindow;
     moveTo(parent: WorkspaceParent): Promise<void>;
     onAdded(callback: () => void): Promise<Unsubscribe>;
     onLoaded(callback: () => void): Promise<Unsubscribe>;
@@ -287,3 +288,7 @@ export interface API {
     onParentAdded(callback: (parent: WorkspaceParent) => void): Promise<Unsubscribe>;
     onParentRemoved(callback: (removed: { id: string; workspaceId: string; frameId: string }) => void): Promise<Unsubscribe>;
 }
+
+export type WorkspacesFactoryFunction = (agm: InteropAPI, windows: WindowsAPI, layoutsAPI: LayoutsAPI, ioc?: IoC) => API;
+declare const WorkspacesFactory: WorkspacesFactoryFunction;
+export default WorkspacesFactory;
