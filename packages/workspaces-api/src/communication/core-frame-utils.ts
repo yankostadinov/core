@@ -6,7 +6,7 @@ import { WindowsAPI, Instance, GDWindow, InteropAPI } from "../types/glue";
 
 export class CoreFrameUtils {
 
-    private readonly workspacesRoute = "/glue/workspaces/index.html";
+    private readonly workspacesRoute = "/glue/workspaces/";
     private readonly defaultWidth = 1280;
     private readonly defaultHeight = 720;
 
@@ -109,5 +109,14 @@ export class CoreFrameUtils {
                 })
                 .catch(reject);
         });
+    }
+
+    public async closeFrame(frameId: string): Promise<void> {
+        const frameInstance = await this.getFrameInstanceByItemId(frameId);
+
+        if (frameInstance.peerId === frameId) {
+            const coreWindow = this.windows.list().find((w) => w.id === frameInstance.windowId);
+            await coreWindow.close();
+        }
     }
 }

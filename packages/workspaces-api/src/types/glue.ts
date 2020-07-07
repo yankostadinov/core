@@ -11,7 +11,7 @@ export type LayoutsAPI = {
 
 export type InvocationResult<T> = Glue42Core.Interop.InvocationResult<T>;
 export type InteropAPI = Glue42Core.Interop.API;
-export type GDWindow = { id: string };
+export type GDWindow = { id: string; close(): Promise<void> };
 export type Subscription = Glue42Core.Interop.Subscription;
 export type WindowsAPI = { list(): GDWindow[]; my(): GDWindow; open(name: string, url: string, options?: any): Promise<GDWindow> };
 export type Instance = Glue42Core.Interop.Instance;

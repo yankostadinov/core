@@ -40,6 +40,13 @@ export class InteropTransport {
     }
 
     public async transmitControl(operation: string, operationArguments: any, target?: Instance): Promise<any> {
+
+        const controlMethod = this.agm.methods().find((method) => method.name === METHODS.control.name);
+
+        if (!controlMethod) {
+            throw new Error(`Cannot complete operation: ${operation}, because no control method was found`);
+        }
+
         const invocationArguments = { operation, operationArguments };
 
         let invocationResult: InvocationResult<any>;

@@ -296,6 +296,8 @@ export class CoreController implements WorkspacesController {
         const frameInstance = await this.frameUtils.getFrameInstanceByItemId(itemId);
 
         await this.bridge.send(OPERATIONS.closeItem.name, { itemId }, frameInstance);
+
+        await this.frameUtils.closeFrame(itemId);
     }
 
     public async resizeItem(itemId: string, config: ResizeConfig): Promise<void> {
