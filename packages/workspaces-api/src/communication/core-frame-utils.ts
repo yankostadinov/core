@@ -83,10 +83,18 @@ export class CoreFrameUtils {
 
             let frameWindow: GDWindow;
 
-            const unsubscribe = this.interop.serverAdded((server) => {
-                if (frameWindow?.id && frameWindow.id === server.windowId) {
+            const unsubscribe = this.interop.serverMethodAdded((info) => {
+
+                if (!info?.server || !info?.method) {
+                    return;
+                }
+
+                const nameMatch = info.method.name === METHODS.control.name;
+                const serverMatch = info.server.windowId === frameWindow?.id;
+
+                if (frameWindow?.id && nameMatch && serverMatch) {
                     unsubscribe();
-                    resolve(server);
+                    resolve(info.server);
                 }
             });
 
@@ -100,7 +108,13 @@ export class CoreFrameUtils {
                 .then((frWin) => {
                     frameWindow = frWin;
 
-                    const foundServer = this.interop.servers().find((server) => server.windowId === frameWindow.id);
+                    const foundServer = this.interop.servers().find((server) => {
+
+                        const serverMatch = server.windowId === frameWindow.id;
+                        const methodMatch = server.getMethods().some((method) => method.name === METHODS.control.name);
+
+                        return serverMatch && methodMatch;
+                    });
 
                     if (foundServer) {
                         unsubscribe();
