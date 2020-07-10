@@ -6,7 +6,13 @@
     "scripts": {
         "build": "tsc -p ./tsconfig.json && npm run test && webpack --config ./webpack.prod.config.js",
         "build:dev": " tsc -p ./ && webpack --config ./webpack.config.js",
-        "test": "cross-env TS_NODE_PROJECT=./tsconfig.test.json mocha -r ts-node/register test/**/*.spec.ts"
+        "test": "cross-env TS_NODE_PROJECT=./tsconfig.test.json mocha -r ts-node/register test/**/*.spec.ts",
+        "audit": "node ../../scripts/audit/index.js",
+        "preversion": "npm run build && npm run test && npm run audit",
+        "version": "npm run build"
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "author": {
         "name": "Glue42",
@@ -45,8 +51,5 @@
         "typescript": "^3.9.5",
         "webpack": "^4.41.4",
         "webpack-cli": "^3.3.10"
-    },
-    "publishConfig": {
-        "registry": "https://registry.npmjs.org"
     }
 }
