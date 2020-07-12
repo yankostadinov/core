@@ -49,6 +49,7 @@ export interface GDObject {
         activityId?: string;
         activityWindowId?: string;
     };
+    getConsoleLogLevel(): Glue42Core.LogLevel | undefined;
 }
 
 /** @ignore */

@@ -160,12 +160,18 @@ export default function (configuration: Glue42Core.Config, ext: Glue42Core.Exten
             config = defaultLevel;
         }
 
+        // console level can be overridden by a gd setting
+        let gdConsoleLevel: Glue42Core.LogLevel | undefined;
+        if (glue42gd) {
+            gdConsoleLevel = glue42gd.getConsoleLogLevel();
+        }
+
         if (typeof config === "string") {
-            return { console: config, publish: defaultLevel };
+            return { console: gdConsoleLevel ?? config, publish: defaultLevel };
         }
 
         return {
-            console: config.console ?? defaultLevel,
+            console: gdConsoleLevel ?? config.console ?? defaultLevel,
             publish: config.publish ?? defaultLevel
         };
     }

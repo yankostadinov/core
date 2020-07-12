@@ -1,7 +1,9 @@
-5.0.8
+5.1.0
+feat: extra performance metrics
 chore: upgraded callback-registry to 2.6.0
 fix: better timeout error message
 fix: try to fool webpack when requiring ws module
+fix: add legacy methods to glue.agm
 5.0.7
 fix: extra check for running in browser or node
 5.0.6

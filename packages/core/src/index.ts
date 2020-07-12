@@ -130,6 +130,9 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
         _logger.consoleLevel(internalConfig.logger.console);
         _logger.publishLevel(internalConfig.logger.publish);
 
+        if (_logger.canPublish("debug")) {
+            _logger.debug("initializing glue...");
+        }
         registerLib("logger", _logger, initTimer);
 
         return Promise.resolve(undefined);
@@ -352,6 +355,24 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
 
         if (glue42gd && glue42gd.updatePerfData) {
             glue42gd.updatePerfData(glue.performance);
+        }
+
+        if (glue.agm) {
+            const deprecatedDecorator = (fn: any, wrong: string, proper: string) => {
+                // tslint:disable-next-line:only-arrow-functions
+                return function () {
+                    // tslint:disable-next-line:no-console
+                    console.warn(`glue.js - 'glue.agm.${wrong}' method is deprecated, use 'glue.interop.${proper}' instead.`);
+                    fn.apply(glue.agm, arguments);
+                };
+            };
+            // extend glue.agm with legacy support
+            const agmAny: any = glue.agm;
+            agmAny.method_added = deprecatedDecorator(glue.agm.methodAdded, "method_added", "methodAdded");
+            agmAny.method_removed = deprecatedDecorator(glue.agm.methodRemoved, "method_removed", "methodRemoved");
+            agmAny.server_added = deprecatedDecorator(glue.agm.serverAdded, "server_added", "serverAdded");
+            agmAny.server_method_aded = deprecatedDecorator(glue.agm.serverMethodAdded, "server_method_aded", "serverMethodAdded");
+            agmAny.server_method_removed = deprecatedDecorator(glue.agm.serverMethodRemoved, "server_method_removed", "serverMethodRemoved");
         }
         return glue;
     }

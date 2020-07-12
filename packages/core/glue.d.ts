@@ -1605,6 +1605,7 @@ export namespace Glue42Core {
             gwToken: string,
             isOwner: boolean
         };
+        getMetricsPublishingEnabled: () => boolean;
         updatePerfData: (perf: object) => void;
         getGWToken(): Promise<string>;
         getWindowInfo(id: string): {
@@ -1612,7 +1613,6 @@ export namespace Glue42Core {
             activityId?: string;
             activityWindowId?: string;
         };
-        getMetricsPublishingEnabled: () => boolean;
     }
 
     export interface LoggerConfig {
