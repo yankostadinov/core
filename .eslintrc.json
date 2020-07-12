@@ -16,7 +16,10 @@
         "tutorials/*",
         "packages/web/**/*.js",
         "packages/core/**/*.js",
-        "docs/*"
+        "packages/workspaces-app/**/*.js",
+        "packages/golden-layout/*",
+        "docs/*",
+        "e2e/*"
     ],
     "rules": {
         "indent": [
@@ -31,6 +34,13 @@
             "error",
             "always"
         ]
+    },
+    "globals": {
+        "expect": true,
+        "glue": true,
+        "glueReady": true,
+        "gtfReady": true,
+        "GlueWeb": true
     },
     "overrides": [
         {

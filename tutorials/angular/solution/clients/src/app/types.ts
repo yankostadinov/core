@@ -1,3 +1,5 @@
+import { Glue42Web } from '@glue42/web';
+
 export interface Client {
     accountManager: string;
     address: string;
@@ -16,4 +18,6 @@ export interface Client {
     notes: string[];
 }
 
-export type GlueStatus = "disconnected" | "failed" | "ready";
+export type GlueStatus = "disconnected" | "unavailable" | "available";
+
+export type Channel = Glue42Web.Channels.ChannelContext;

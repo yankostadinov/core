@@ -39,7 +39,8 @@ Below you can see the default content and settings in the `glue.config.json` fil
     "gateway": {
         "location": "./gateway.js"
     },
-    "channels": []
+    "channels": [],
+    "appManager": {}
 }
 ```
 
@@ -70,9 +71,99 @@ The `gateway` top-level key has the following properties:
 
 For more information on defining a custom log appender, see the [Advanced Setup](../setup/index.html#advanced) section.
 
-- `channels` - An *optional* configuration object that defines the [color channels](../../../capabilities/channels/index.html) with their names, colors and initial contexts. The channels configuration is shared between all applications.
+- `channels` - An *optional* configuration property that defines all available [color channels](../../../capabilities/channels/index.html) the applications can use. Each channel has a name, color and initial contexts. The configuration for the channels is shared between all applications.
 
-The shape of the property is the same as the [**Glue42 Enterprise: Channels Configuration**](../../../../developers/configuration/channels/index.html#channels_configuration).
+The shape of the `channels` property is the same as the one in the [**Glue42 Enterprise: Channels Configuration**](../../../../developers/configuration/channels/index.html#channels_configuration) section.
+
+- `appManager` - An *optional* configuration property that holds the local application definitions and defines the remote sources of application definitions.
+
+The `appManager` top-level key has the following properties:
+
+| Property | Type | Description | Required | Default |
+|----------|------|-------------|----------|---------|
+| `localApplications` | `Glue42CoreApplicationConfig[]` | The local application definitions. | No | `[]` |
+| `remoteSources` | `RemoteSource[]` | The remote sources of application definitions. | No | `[]` |
+
+A `Glue42CoreApplicationConfig` has the following properties:
+
+| Property | Type | Description | Required | Default |
+|----------|------|-------------|----------|---------|
+| `name` | `string` | Application name. Must be unique. | Yes | `-` |
+| `title` | `string` | The title of the application. Sets the window title. | No | `""` |
+| `version` | `string` | Application version. | No | `""` |
+| `details` | `object` | Detailed configuration. Has the same shape as the [CreateOptions](../../../../reference/core/latest/windows/index.html#!CreateOptions) object and must have a defined `url` field. | Yes | `-` |
+| `customProperties` | `object` | Generic object for passing properties, settings, etc., in the form of key/value pairs. Accessed using the [`userProperties`](../../../../reference/core/latest/appmanager/index.html#!Application-userProperties) property of the `application` object. | No | `{}` |
+
+A `RemoteSource` has the following properties:
+
+| Property | Type | Description | Required | Default |
+|----------|------|-------------|----------|---------|
+| `url` | `string` | The URL of the remote source of application definitions. The provided application definitions need to be of type `Glue42CoreApplicationConfig`. | Yes | `-` |
+| `pollingInterval` | `number` | The polling interval for fetching application definitions from the remote source. | No | `3000` |
+
+The expected response from the remote application store is in JSON format and with the following shape:
+
+```json
+{
+    "message": "OK",
+    "applications": [
+        {
+            "name": "Clients",
+            "details": {
+                "url": "http://localhost:4242/clients"
+            }
+        },
+        {
+            "name": "Stocks",
+            "details": {
+                "url": "http://localhost:4242/stocks",
+                "left": 0,
+                "top": 0,
+                "width": 860,
+                "height": 600
+            }
+        }
+    ]
+}
+```
+
+If the response contains invalid application definitions, a warning will be displayed in the application console. The application name serves as an identifier and must be unique across all application definitions.
+
+Below is an example configuration for defining local and remote application definitions:
+
+```json
+{
+    "glue": ...,
+    "gateway": ...,
+    "channels": ...,
+    "appManager": {
+        "localApplications": [
+            {
+                "name": "Clients",
+                "details": {
+                    "url": "http://localhost:4242/clients"
+                }
+            },
+            {
+                "name": "Stocks",
+                "details": {
+                    "url": "http://localhost:4242/stocks",
+                    "left": 0,
+                    "top": 0,
+                    "width": 860,
+                    "height": 600
+                }
+            }
+        ],
+        "remoteSources": [
+            {
+                "url": "http://localhost:3001/v1/apps/search",
+                "pollingInterval": 5000
+            }
+        ]
+    }
+}
+```
 
 ## Glue42 Gateway
 

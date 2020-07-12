@@ -1,6 +1,6 @@
 {
     "name": "@glue42/core",
-    "version": "5.0.6",
+    "version": "5.0.7",
     "description": "Glue42 core library",
     "main": "dist/core.umd.js",
     "module": "dist/core.es.js",
@@ -32,7 +32,7 @@
     },
     "license": "MIT",
     "dependencies": {
-        "callback-registry": "^2.5.2",
+        "callback-registry": "^2.6.0",
         "shortid": "^2.2.6",
         "ws": "7.1.2"
     },

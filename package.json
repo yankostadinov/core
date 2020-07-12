@@ -9,6 +9,7 @@
     "bootstrap": "lerna bootstrap",
     "build": "lerna run build",
     "test": "npm run test:scripts && lerna run test",
+    "e2e": "node ./e2e/index.js",
     "release": "gulp release",
     "test:scripts": "mocha ./scripts/test/**/*spec.js",
     "lint:fix": "./node_modules/.bin/eslint --ignore-path .gitignore . --fix",
@@ -25,6 +26,10 @@
     "eslint-plugin-react": "^7.19.0",
     "gulp": "^4.0.2",
     "husky": "^4.2.3",
+    "karma": "^5.1.0",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-mocha": "^2.0.1",
     "lerna": "^3.20.2",
     "lerna-changelog": "^1.0.0",
     "lint-staged": "^10.0.8",
@@ -42,5 +47,8 @@
     "*.{js,ts}": [
       "./node_modules/.bin/eslint --ignore-path .gitignore ."
     ]
+  },
+  "dependencies": {
+    "tree-kill": "^1.2.2"
   }
 }
