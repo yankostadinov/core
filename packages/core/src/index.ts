@@ -1,4 +1,4 @@
-import metrics, { addFAVSupport } from "./metrics/main";
+import metrics from "./metrics/main";
 import Connection from "./connection/connection";
 import { Logger } from "./logger/logger";
 import { Glue42Core } from "../glue";
@@ -146,24 +146,17 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
         const metricsPublishingEnabledFunc = glue42gd?.getMetricsPublishingEnabled;
         const identity = internalConfig.connection.identity;
         const canUpdateMetric = metricsPublishingEnabledFunc ? metricsPublishingEnabledFunc : () => true;
-
-        const rootMetrics = metrics({
+        const disableAutoAppSystem: boolean = (typeof config !== "boolean" && config.disableAutoAppSystem) ?? false;
+        _metrics = metrics({
             connection: config ? _connection : undefined,
             logger: _logger.subLogger("metrics"),
             canUpdateMetric,
             system: "Glue42",
             service: identity?.service ?? "metrics-service",
             instance: identity?.instance ?? identity?.windowId ?? shortid(),
+            disableAutoAppSystem,
+            pagePerformanceMetrics: typeof config !== "boolean" ? config?.pagePerformanceMetrics : undefined
         });
-
-        let rootSystem = rootMetrics;
-        if (typeof config !== "boolean" && config.disableAutoAppSystem) {
-            rootSystem = rootMetrics;
-        } else {
-            rootSystem = rootMetrics.subSystem("App");
-        }
-
-        _metrics = addFAVSupport(rootSystem);
 
         registerLib("metrics", _metrics, initTimer);
         return Promise.resolve();
