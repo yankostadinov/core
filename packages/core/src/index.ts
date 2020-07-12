@@ -303,7 +303,15 @@ const GlueCore = (userConfig?: Glue42Core.Config, ext?: Glue42Core.Extension): P
                 return (window as any).performance.memory;
             },
             get initTimes() {
-                return getAllTimers();
+                const all = getAllTimers();
+                return Object.keys(all).map((key) => {
+                    const t = all[key];
+                    return {
+                        name: key,
+                        duration: t.endTime - t.startTime,
+                        marks: t.marks
+                    };
+                });
             }
         };
 
