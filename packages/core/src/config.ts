@@ -163,7 +163,7 @@ export default function (configuration: Glue42Core.Config, ext: Glue42Core.Exten
         // console level can be overridden by a gd setting
         let gdConsoleLevel: Glue42Core.LogLevel | undefined;
         if (glue42gd) {
-            gdConsoleLevel = glue42gd.getConsoleLogLevel();
+            gdConsoleLevel = glue42gd.consoleLogLevel;
         }
 
         if (typeof config === "string") {

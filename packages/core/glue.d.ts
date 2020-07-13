@@ -1620,6 +1620,7 @@ export namespace Glue42Core {
                 publishInterval: number;
             }
         };
+        consoleLogLevel: Glue42Core.LogLevel | undefined;
         updatePerfData: (perf: object) => void;
         getMetricsPublishingEnabled: () => boolean;
         getGWToken: () => Promise<string>;
