@@ -1,3 +1,5 @@
+5.1.1
+fix: logger can try to invoke before interop is ready
 5.1.0
 feat: extra performance metrics
 feat: respect log level coming from Enterprise configuration
