@@ -4,6 +4,7 @@
 import { UnsubscribeFunction } from "callback-registry";
 import { Glue42Core } from "@glue42/core";
 import { Glue42 } from "@glue42/desktop";
+import { API as WorkspacesAPI } from "@glue42/workspaces-api";
 
 /**
  * Factory function that creates a new glue instance.
@@ -126,6 +127,7 @@ export namespace Glue42Web {
         notifications: Glue42Web.Notifications.API;
         channels: Glue42Web.Channels.API;
         appManager: Glue42Web.AppManager.API;
+        workspaces?: WorkspacesAPI;
     }
 
     /**

@@ -14,9 +14,9 @@ export type InteropAPI = Glue42Core.Interop.API;
 export type GDWindow = {
     id: string;
     close(): Promise<GDWindow>;
-    moveTo(config: { top: number; left: number }): Promise<void>;
-    resizeTo(config: { width: number; height: number }): Promise<void>;
-    moveResize(config: Bounds): Promise<void>;
+    moveTo(top: number, left: number): Promise<GDWindow>;
+    resizeTo(width: number, height: number): Promise<GDWindow>;
+    moveResize(config: Bounds): Promise<GDWindow>;
 };
 export type Subscription = Glue42Core.Interop.Subscription;
 export type WindowsAPI = { list(): GDWindow[]; my(): GDWindow; open(name: string, url: string, options?: any): Promise<GDWindow> };
