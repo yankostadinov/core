@@ -146,7 +146,7 @@ export class CoreFrameUtils {
         const coreWindow = this.windows.list().find((w) => w.id === frameInstance.windowId);
 
         if (config.relative) {
-            await coreWindow.moveTo({ top: config.top, left: config.left });
+            await coreWindow.moveTo(config.top, config.left);
             return;
         }
 
@@ -163,7 +163,7 @@ export class CoreFrameUtils {
         const coreWindow = this.windows.list().find((w) => w.id === frameInstance.windowId);
 
         if (config.relative) {
-            await coreWindow.resizeTo({ width: config.width, height: config.height });
+            await coreWindow.resizeTo(config.width, config.height);
             return;
         }
 
