@@ -113,6 +113,11 @@ export namespace Glue42Web {
          * Application name. If not specified the Application Manager API won't know about the application and its instances.
          */
         application?: string;
+
+        /**
+         * A list of glue libraries which will be initiated internally and provide access to specific functionalities
+         */
+        libraries?: Array<(glue: Glue42Web.API, config?: Glue42Web.Config) => Promise<void>>;
     }
 
     /**

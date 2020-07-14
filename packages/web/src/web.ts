@@ -20,7 +20,6 @@ import { JSONStore } from "./layouts/stores/json";
 import { AutoStorage } from "./layouts/stores/auto";
 import { RemoteStore } from "./layouts/types";
 import { LocalInstance } from "./app-manager/my";
-import WorkspacesFactory, { API } from "@glue42/workspaces-api";
 
 const hookCloseEvents = (api: Glue42Web.API, config: Glue42Web.Config, control: Control, layoutsController?: LayoutsController): void => {
     // hook up page close event's, so we can cleanup properly
@@ -140,12 +139,6 @@ export const createFactoryFunction = (coreFactoryFunction: GlueCoreFactoryFuncti
                         layouts = new Layouts(layoutsController);
                         return layouts;
                     }
-                },
-                {
-                    name: "workspaces",
-                    create: (coreLib): API => {
-                        return WorkspacesFactory(coreLib.interop, windows, layouts);
-                    }
                 }
             );
 
@@ -168,6 +161,9 @@ export const createFactoryFunction = (coreFactoryFunction: GlueCoreFactoryFuncti
         };
 
         const core = await coreFactoryFunction(coreConfig, ext) as Glue42Web.API;
+
+        await Promise.all(config?.libraries?.map((lib) => lib(core, builtCoreConfig?.glue)));
+
         // start control component
         control.start(core.interop, core.logger.subLogger("control"));
         if (isWebEnvironment) {

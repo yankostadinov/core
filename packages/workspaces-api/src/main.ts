@@ -1,25 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { IoC } from "./shared/ioc";
 import { checkThrowCallback, nonEmptyStringDecoder, swimlaneLayoutDecoder, workspaceDefinitionDecoder, workspaceBuilderCreateConfigDecoder, builderConfigDecoder, restoreWorkspaceConfigDecoder, workspaceLayoutSaveConfigDecoder } from "./shared/decoders";
 import { FrameStreamData, WorkspaceStreamData, WorkspaceSnapshotResult, WindowStreamData, ContainerStreamData } from "./types/protocol";
 import { FrameCreateConfig, WorkspaceIoCCreateConfig } from "./types/ioc";
-import { API, BuilderConfig, WorkspaceBuilder, ParentBuilder, Frame, WorkspaceSummary, Workspace, WorkspaceWindow, WorkspaceParent, RestoreWorkspaceConfig, WorkspaceDefinition, WorkspaceCreateConfig, WorkspaceLayoutSummary, WorkspaceLayout, Unsubscribe, WorkspaceLayoutSaveConfig } from "./../workspaces";
+import { BuilderConfig, WorkspaceBuilder, ParentBuilder, Frame, WorkspaceSummary, Workspace, WorkspaceWindow, WorkspaceParent, RestoreWorkspaceConfig, WorkspaceDefinition, WorkspaceCreateConfig, WorkspaceLayoutSummary, WorkspaceLayout, Unsubscribe, WorkspaceLayoutSaveConfig, API } from "./../workspaces";
 import { WorkspacesController } from "./types/controller";
-import { WindowsAPI, LayoutsAPI, InteropAPI } from "./types/glue";
 
-export default (agm: InteropAPI, windows: WindowsAPI, layoutsAPI: LayoutsAPI, ioc?: IoC): API => {
-    // this is done for maximum ease of unit testing
-    ioc = ioc || new IoC(agm, windows, layoutsAPI);
-
-    const moduleReadyPromise = ioc.initiate();
+export const composeAPI = (glue: any, ioc: IoC): API => {
 
     const controller: WorkspacesController = ioc.controller;
 
-    const ready = (): Promise<void> => {
-        return moduleReadyPromise;
-    };
-
     const inWorkspace = (): Promise<boolean> => {
-        const myId = windows.my().id;
+        const myId: string = glue.windows.my().id;
 
         if (!myId) {
             throw new Error("Cannot get my frame, because my id is undefined.");
@@ -35,7 +27,7 @@ export default (agm: InteropAPI, windows: WindowsAPI, layoutsAPI: LayoutsAPI, io
     };
 
     const getMyFrame = async (): Promise<Frame> => {
-        const windowId = windows.my().id;
+        const windowId: string = glue.windows.my().id;
 
         if (!windowId) {
             throw new Error("Cannot get my frame, because my id is undefined.");
@@ -67,7 +59,7 @@ export default (agm: InteropAPI, windows: WindowsAPI, layoutsAPI: LayoutsAPI, io
     };
 
     const getMyWorkspace = async (): Promise<Workspace> => {
-        const myId = windows.my().id;
+        const myId: string = glue.windows.my().id;
 
         if (!myId) {
             throw new Error("Cannot get my workspace, because my id is undefined.");
@@ -188,8 +180,6 @@ export default (agm: InteropAPI, windows: WindowsAPI, layoutsAPI: LayoutsAPI, io
     };
 
     const onWorkspaceOpened = async (callback: (workspace: Workspace) => void): Promise<Unsubscribe> => {
-        // tslint:disable-next-line: no-console
-        console.log("test 123");
 
         checkThrowCallback(callback);
         const wrappedCallback = async (payload: WorkspaceStreamData): Promise<void> => {
@@ -206,11 +196,7 @@ export default (agm: InteropAPI, windows: WindowsAPI, layoutsAPI: LayoutsAPI, io
 
             callback(workspace);
         };
-        // tslint:disable-next-line: no-console
-        console.log("trying to subscribe for workspace opened");
         const unsubscribe = await controller.processGlobalSubscription(wrappedCallback, "workspace", "opened");
-        // tslint:disable-next-line: no-console
-        console.log("subscribed for workspace opened");
         return unsubscribe;
     };
 
@@ -373,7 +359,6 @@ export default (agm: InteropAPI, windows: WindowsAPI, layoutsAPI: LayoutsAPI, io
     };
 
     return {
-        ready,
         inWorkspace,
         getBuilder,
         getMyFrame,

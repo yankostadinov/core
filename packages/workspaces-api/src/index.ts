@@ -1,3 +1,12 @@
-import WorkspacesFactory from "./main";
+import { IoC } from "./shared/ioc";
+import { composeAPI } from "./main";
 
-export default WorkspacesFactory;
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export default async (glue: any): Promise<void> => {
+
+    const ioc = new IoC(glue.agm, glue.windows, glue.layouts);
+
+    await ioc.initiate();
+
+    glue.workspaces = composeAPI(glue, ioc);
+};

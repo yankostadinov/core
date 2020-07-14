@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { InteropAPI, WindowsAPI, LayoutsAPI, GDWindow } from "./src/types/glue";
-import { IoC } from "./src/shared/ioc";
 
 export type Unsubscribe = () => void;
 
@@ -205,8 +203,8 @@ export interface WorkspaceWindow extends WorkspaceWindowSummary {
     setTitle(title: string): Promise<void>;
     maximize(): Promise<void>;
     restore(): Promise<void>;
-    eject(): Promise<GDWindow>;
-    getGdWindow(): GDWindow;
+    eject(): Promise<any>;
+    getGdWindow(): any;
     moveTo(parent: WorkspaceParent): Promise<void>;
     onAdded(callback: () => void): Promise<Unsubscribe>;
     onLoaded(callback: () => void): Promise<Unsubscribe>;
@@ -256,7 +254,6 @@ export interface CustomWorkspaceSnapshot {
 }
 
 export interface API {
-    ready(): Promise<void>;
     inWorkspace(): Promise<boolean>;
     getBuilder(config: BuilderConfig): WorkspaceBuilder | ParentBuilder;
     getMyFrame(): Promise<Frame>;
@@ -293,6 +290,6 @@ export interface API {
     onParentRemoved(callback: (removed: { id: string; workspaceId: string; frameId: string }) => void): Promise<Unsubscribe>;
 }
 
-export type WorkspacesFactoryFunction = (agm: InteropAPI, windows: WindowsAPI, layoutsAPI: LayoutsAPI, ioc?: IoC) => API;
+export type WorkspacesFactoryFunction = (glue: any, config?: any) => API;
 declare const WorkspacesFactory: WorkspacesFactoryFunction;
 export default WorkspacesFactory;
