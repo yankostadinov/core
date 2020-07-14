@@ -11,7 +11,14 @@ export type LayoutsAPI = {
 
 export type InvocationResult<T> = Glue42Core.Interop.InvocationResult<T>;
 export type InteropAPI = Glue42Core.Interop.API;
-export type GDWindow = { id: string; close(): Promise<GDWindow> };
+export type GDWindow = {
+    id: string;
+    close(): Promise<GDWindow>;
+    moveTo(config: { top: number; left: number }): Promise<void>;
+    resizeTo(config: { width: number; height: number }): Promise<void>;
+    moveResize(config: Bounds): Promise<void>;
+};
 export type Subscription = Glue42Core.Interop.Subscription;
 export type WindowsAPI = { list(): GDWindow[]; my(): GDWindow; open(name: string, url: string, options?: any): Promise<GDWindow> };
 export type Instance = Glue42Core.Interop.Instance;
+export type Bounds = { height?: number; width?: number; top?: number; left?: number };

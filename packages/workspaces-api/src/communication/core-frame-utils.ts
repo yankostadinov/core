@@ -1,5 +1,5 @@
 import { METHODS, OPERATIONS } from "./constants";
-import { NewFrameConfig } from "../../workspaces";
+import { NewFrameConfig, ResizeConfig, MoveConfig } from "../../workspaces";
 import { Bridge } from "./bridge";
 import { FrameSummaryResult } from "../types/protocol";
 import { WindowsAPI, Instance, GDWindow, InteropAPI } from "../types/glue";
@@ -128,9 +128,45 @@ export class CoreFrameUtils {
     public async closeFrame(frameId: string): Promise<void> {
         const frameInstance = await this.getFrameInstanceByItemId(frameId);
 
-        if (frameInstance.peerId === frameId) {
-            const coreWindow = this.windows.list().find((w) => w.id === frameInstance.windowId);
-            await coreWindow.close();
+        if (frameId !== frameInstance.peerId) {
+            return;
         }
+
+        const coreWindow = this.windows.list().find((w) => w.id === frameInstance.windowId);
+        await coreWindow.close();
+    }
+
+    public async moveFrame(frameId: string, config: MoveConfig): Promise<void> {
+        const frameInstance = await this.getFrameInstanceByItemId(frameId);
+
+        if (frameId !== frameInstance.peerId) {
+            return;
+        }
+
+        const coreWindow = this.windows.list().find((w) => w.id === frameInstance.windowId);
+
+        if (config.relative) {
+            await coreWindow.moveTo({ top: config.top, left: config.left });
+            return;
+        }
+
+        await coreWindow.moveResize({ top: config.top, left: config.left });
+    }
+
+    public async resizeFrame(frameId: string, config: ResizeConfig): Promise<void> {
+        const frameInstance = await this.getFrameInstanceByItemId(frameId);
+
+        if (frameId !== frameInstance.peerId) {
+            return;
+        }
+
+        const coreWindow = this.windows.list().find((w) => w.id === frameInstance.windowId);
+
+        if (config.relative) {
+            await coreWindow.resizeTo({ width: config.width, height: config.height });
+            return;
+        }
+
+        await coreWindow.moveResize({ width: config.width, height: config.height });
     }
 }

@@ -97,8 +97,6 @@ export interface WorkspaceLayoutSummary {
 }
 
 export interface Frame extends FrameSummary {
-    restore(): Promise<void>;
-    maximize(): Promise<void>;
     resize(config: ResizeConfig): Promise<void>;
     move(config: MoveConfig): Promise<void>;
     focus(): Promise<void>;

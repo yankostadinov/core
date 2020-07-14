@@ -29,16 +29,6 @@ export class Frame implements FrameAPI {
         return getData(this).summary.id;
     }
 
-    public restore(): Promise<void> {
-        const myId = getData(this).summary.id;
-        return getData(this).controller.restoreItem(myId);
-    }
-
-    public maximize(): Promise<void> {
-        const myId = getData(this).summary.id;
-        return getData(this).controller.maximizeItem(myId);
-    }
-
     public resize(config: ResizeConfig): Promise<void> {
         const validatedConfig = resizeConfigDecoder.runWithException(config);
         const myId = getData(this).summary.id;

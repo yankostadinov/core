@@ -85,9 +85,7 @@ export class Workspace implements Workspace {
 
     public async saveLayout(name: string): Promise<void> {
         nonEmptyStringDecoder.runWithException(name);
-        // tslint:disable-next-line: no-console
-        console.log("Saving layout for workspace", getData(this));
-        await getData(this).controller.importLayout({ name, workspaceId: this.id });
+        await getData(this).controller.saveLayout({name, workspaceId: this.id});
     }
 
     public async setTitle(title: string): Promise<void> {
