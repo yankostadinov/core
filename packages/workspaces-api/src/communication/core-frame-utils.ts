@@ -125,14 +125,9 @@ export class CoreFrameUtils {
         });
     }
 
-    public async closeFrame(frameId: string): Promise<void> {
-        const frameInstance = await this.getFrameInstanceByItemId(frameId);
-
-        if (frameId !== frameInstance.peerId) {
-            return;
-        }
-
+    public async closeFrame(frameInstance: Instance): Promise<void> {
         const coreWindow = this.windows.list().find((w) => w.id === frameInstance.windowId);
+
         await coreWindow.close();
     }
 

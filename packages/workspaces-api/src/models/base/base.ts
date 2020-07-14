@@ -2,7 +2,7 @@ import { Workspace } from "../workspace";
 import { ParentBuilder } from "../../builders/parentBuilder";
 import { strictParentDefinitionDecoder, swimlaneWindowDefinitionDecoder, checkThrowCallback } from "../../shared/decoders";
 import { SubParent, AllParentTypes, Child, SubParentTypes, AllParent } from "../../types/builders";
-import { PrivateDataManager } from "../../privateDataManager";
+import { PrivateDataManager } from "../../shared/privateDataManager";
 import { ParentPrivateData, WorkspacePrivateData } from "../../types/privateData";
 import { Window } from "../../models/window";
 import { Frame, WorkspaceWindowDefinition, WorkspaceWindow, ParentDefinition } from "../../../workspaces";

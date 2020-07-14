@@ -1,6 +1,6 @@
 import { checkThrowCallback, nonEmptyStringDecoder } from "../shared//decoders";
 import { SubscriptionConfig } from "../types/subscription";
-import { PrivateDataManager } from "../privateDataManager";
+import { PrivateDataManager } from "../shared/privateDataManager";
 import { Row } from "./row";
 import { Column } from "./column";
 import { Group } from "./group";

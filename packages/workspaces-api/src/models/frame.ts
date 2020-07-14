@@ -1,6 +1,6 @@
 import { checkThrowCallback, nonEmptyStringDecoder, restoreWorkspaceConfigDecoder, workspaceDefinitionDecoder, workspaceBuilderCreateConfigDecoder, resizeConfigDecoder, moveConfigDecoder } from "../shared/decoders";
 import { SubscriptionConfig } from "../types/subscription";
-import { PrivateDataManager } from "../privateDataManager";
+import { PrivateDataManager } from "../shared/privateDataManager";
 import { FrameStreamData, WorkspaceStreamData, WindowStreamData, ContainerStreamData } from "../types/protocol";
 import {Frame as FrameAPI, ResizeConfig, MoveConfig, FrameSnapshot, RestoreWorkspaceConfig, Workspace, WorkspaceDefinition, WorkspaceCreateConfig, Unsubscribe, WorkspaceWindow, Row, Column, Group} from "../../workspaces.d";
 import { FramePrivateData } from "../types/privateData";

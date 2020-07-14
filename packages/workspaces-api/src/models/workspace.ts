@@ -1,6 +1,6 @@
 import { WorkspaceSnapshotResult, WindowStreamData, ContainerStreamData } from "../types/protocol";
 import { checkThrowCallback, nonEmptyStringDecoder } from "../shared/decoders";
-import { PrivateDataManager } from "../privateDataManager";
+import { PrivateDataManager } from "../shared/privateDataManager";
 import { FrameCreateConfig } from "../types/ioc";
 import { Window } from "./window";
 import { Frame } from "./frame";

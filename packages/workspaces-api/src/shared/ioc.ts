@@ -1,13 +1,13 @@
 /*eslint indent: [2, 4, {"SwitchCase": 1}]*/
 import CallbackFactory from "callback-registry";
-import { EnterpriseController } from "../enterprise-controller";
+import { EnterpriseController } from "../controllers/enterprise";
 import { Bridge } from "../communication/bridge";
 import { InteropTransport } from "../communication/interop-transport";
 import { BaseBuilder } from "../builders/baseBuilder";
 import { ParentBuilder } from "../builders/parentBuilder";
 import { WorkspaceBuilder } from "../builders/workspaceBuilder";
 import { ModelMaps, ModelTypes, FramePrivateData, WindowPrivateData, WorkspacePrivateData, ParentPrivateData } from "../types/privateData";
-import { PrivateDataManager } from "../privateDataManager";
+import { PrivateDataManager } from "./privateDataManager";
 import { FrameCreateConfig, ModelCreateConfig, WindowCreateConfig, WorkspaceIoCCreateConfig, ParentCreateConfig } from "../types/ioc";
 import { Frame } from "../models/frame";
 import { Window } from "../models/window";
@@ -19,10 +19,11 @@ import { Column } from "../models/column";
 import { Group } from "../models/group";
 import { Base } from "../models/base/base";
 import { BuilderConfig, WorkspaceDefinition, ParentDefinition } from "../../workspaces";
-import { CoreController } from "../core-controller";
+import { CoreController } from "../controllers/core";
 import { WorkspacesController } from "../types/controller";
 import { CoreFrameUtils } from "../communication/core-frame-utils";
 import { InteropAPI, WindowsAPI, LayoutsAPI } from "../types/glue";
+import { BaseController } from "../controllers/base";
 
 export class IoC {
 
@@ -31,14 +32,23 @@ export class IoC {
     private _transportInstance: InteropTransport;
     private _privateDataManagerInstance: PrivateDataManager;
     private _parentBaseInstance: Base;
+    private _baseController: BaseController;
 
     constructor(private readonly agm: InteropAPI, private readonly windows: WindowsAPI, private readonly layouts: LayoutsAPI) { }
+
+    public get baseController(): BaseController {
+        if (!this._baseController) {
+            this._baseController = new BaseController(this, this.windows);
+        }
+
+        return this._baseController;
+    }
 
     public get controller(): WorkspacesController {
         if (!this._controllerInstance) {
             this._controllerInstance = window.glue42gd ?
-                new EnterpriseController(this.bridge, this.windows, this, this.privateDataManager) :
-                new CoreController(this.bridge, this.windows, this, this.privateDataManager, new CoreFrameUtils(this.agm, this.windows, this.bridge), this.layouts);
+                new EnterpriseController(this.bridge, this.baseController) :
+                new CoreController(this.bridge, new CoreFrameUtils(this.agm, this.windows, this.bridge), this.layouts, this.baseController);
         }
         return this._controllerInstance;
     }

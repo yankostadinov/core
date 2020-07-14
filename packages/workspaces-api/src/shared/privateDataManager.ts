@@ -1,12 +1,12 @@
-import { Row } from "./models/row";
-import { Column } from "./models/column";
-import { Group } from "./models/group";
-import { ParentPrivateData, WorkspacePrivateData, WindowPrivateData, FramePrivateData, RemapChildData, RemapWorkspaceData } from "./types/privateData";
-import { Workspace } from "./models/workspace";
-import { Window } from "./models/window";
-import { Frame } from "./models/frame";
-import { SwimlaneWindowSnapshotConfig, ParentSnapshotConfig, FrameSummaryResult } from "./types/protocol";
-import { Child } from "./types/builders";
+import { Row } from "../models/row";
+import { Column } from "../models/column";
+import { Group } from "../models/group";
+import { ParentPrivateData, WorkspacePrivateData, WindowPrivateData, FramePrivateData, RemapChildData, RemapWorkspaceData } from "../types/privateData";
+import { Workspace } from "../models/workspace";
+import { Window } from "../models/window";
+import { Frame } from "../models/frame";
+import { SwimlaneWindowSnapshotConfig, ParentSnapshotConfig, FrameSummaryResult } from "../types/protocol";
+import { Child } from "../types/builders";
 
 export class PrivateDataManager {
     private readonly parentsData = new WeakMap<Row | Column | Group, ParentPrivateData>();
