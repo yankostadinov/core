@@ -13,6 +13,7 @@ const startupReader_1 = require("./config/startupReader");
 const utils_1 = require("./utils");
 const factory_2 = require("./config/factory");
 const eventEmitter_2 = require("./eventEmitter");
+const constants_1 = require("./constants");
 class WorkspacesManager {
     constructor() {
         this._appNameToURL = {};
@@ -48,8 +49,9 @@ class WorkspacesManager {
     }
     async saveWorkspace(name, id) {
         const workspace = store_1.default.getById(id) || store_1.default.getActiveWorkspace();
-        await this._layoutsManager.save(name, workspace);
+        const result = await this._layoutsManager.save(name, workspace);
         store_1.default.getWorkspaceLayoutItemById(id).setTitle(name);
+        return result;
     }
     async openWorkspace(name, options) {
         if (!this._isLayoutInitialized) {
@@ -97,6 +99,7 @@ class WorkspacesManager {
     }
     async closeItem(itemId) {
         const win = store_1.default.getWindow(itemId);
+        const container = store_1.default.getContainer(itemId);
         if (this._frameId === itemId) {
             store_1.default.workspaceIds.forEach((wid) => this.closeWorkspace(store_1.default.getById(wid)));
             // await window.glue.windows.my().close();
@@ -104,6 +107,9 @@ class WorkspacesManager {
         else if (win) {
             const windowContentItem = store_1.default.getWindowContentItem(itemId);
             this.closeTab(windowContentItem);
+        }
+        else if (container) {
+            this._controller.closeContainer(itemId);
         }
         else {
             const workspace = store_1.default.getById(itemId);
@@ -114,6 +120,10 @@ class WorkspacesManager {
         return this._controller.addContainer(config, parentId);
     }
     addWindow(itemConfig, parentId) {
+        const parent = store_1.default.getContainer(parentId);
+        if ((!parent || parent.type !== "stack") && itemConfig.type === "component") {
+            itemConfig = factory_2.default.wrapInGroup([itemConfig]);
+        }
         return this._controller.addWindow(itemConfig, parentId);
     }
     setItemTitle(itemId, title) {
@@ -142,9 +152,14 @@ class WorkspacesManager {
         await this._controller.addWorkspace(id, config);
         return id;
     }
-    loadWindow(itemId) {
-        const contentItem = store_1.default.getWindowContentItem(itemId);
-        const { windowId } = contentItem.config.componentState.windowId;
+    async loadWindow(itemId) {
+        let contentItem = store_1.default.getWindowContentItem(itemId);
+        let { windowId } = contentItem.config.componentState;
+        if (!windowId) {
+            await this.waitForFrameLoaded(itemId);
+            contentItem = store_1.default.getWindowContentItem(itemId);
+            windowId = contentItem.config.componentState.windowId;
+        }
         return new Promise((res, rej) => {
             if (!windowId) {
                 rej(`The window id of ${itemId} is missing`);
@@ -220,6 +235,9 @@ class WorkspacesManager {
     }
     subscribeForLayout() {
         this._controller.emitter.onContentComponentCreated(async (component, workspaceId) => {
+            if (component.config.componentName === constants_1.EmptyVisibleWindowName) {
+                return;
+            }
             const workspace = store_1.default.getById(workspaceId);
             const newWindowBounds = utils_1.getElementBounds(component.element);
             const { componentState } = component.config;
@@ -315,12 +333,6 @@ class WorkspacesManager {
         });
         this._controller.emitter.onSelectionChanged(async (toBack, toFront) => {
             this._frameController.selectionChanged(toFront.map((tf) => tf.id), toBack.map((t) => t.id));
-            this._workspacesEventEmitter.raiseWindowEvent({
-                action: "focus",
-                payload: {
-                    windowSummary: await this.stateResolver.getWindowSummary(toFront[0].id)
-                }
-            });
         });
         this._controller.emitter.onWorkspaceAdded((workspace) => {
             const allOtherWindows = store_1.default.workspaceIds.filter((wId) => wId !== workspace.id).reduce((acc, w) => {
@@ -480,6 +492,24 @@ class WorkspacesManager {
         else {
             this._controller.removeWorkspace(workspace.id);
         }
+    }
+    waitForFrameLoaded(itemId) {
+        return new Promise((res, rej) => {
+            let unsub = () => {
+                // safety
+            };
+            const timeout = setTimeout(() => {
+                unsub();
+                rej(`Did not hear frame loaded for ${itemId} in 5000ms`);
+            }, 5000);
+            unsub = this.workspacesEventEmitter.onWindowEvent((action, payload) => {
+                if (action === "loaded" && payload.windowSummary.itemId === itemId) {
+                    res();
+                    clearTimeout(timeout);
+                    unsub();
+                }
+            });
+        });
     }
 }
 exports.default = new WorkspacesManager();

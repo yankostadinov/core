@@ -15,6 +15,7 @@ import factory from "./config/factory";
 import { WorkspacesEventEmitter } from "./eventEmitter";
 import { Glue42Web } from "@glue42/web";
 import { RestoreWorkspaceConfig } from "./interop/types";
+import { EmptyVisibleWindowName } from "./constants";
 
 declare const window: Window & { glue: Glue42Web.API };
 
@@ -65,8 +66,9 @@ class WorkspacesManager {
 
     public async saveWorkspace(name: string, id?: string) {
         const workspace = store.getById(id) || store.getActiveWorkspace();
-        await this._layoutsManager.save(name, workspace);
+        const result = await this._layoutsManager.save(name, workspace);
         store.getWorkspaceLayoutItemById(id).setTitle(name);
+        return result;
     }
 
     public async openWorkspace(name: string, options?: RestoreWorkspaceConfig): Promise<string> {
@@ -124,13 +126,15 @@ class WorkspacesManager {
 
     public async closeItem(itemId: string) {
         const win = store.getWindow(itemId);
-
+        const container = store.getContainer(itemId);
         if (this._frameId === itemId) {
             store.workspaceIds.forEach((wid) => this.closeWorkspace(store.getById(wid)));
             // await window.glue.windows.my().close();
         } else if (win) {
             const windowContentItem = store.getWindowContentItem(itemId);
             this.closeTab(windowContentItem);
+        } else if (container) {
+            this._controller.closeContainer(itemId);
         } else {
             const workspace = store.getById(itemId);
             this.closeWorkspace(workspace);
@@ -142,6 +146,10 @@ class WorkspacesManager {
     }
 
     public addWindow(itemConfig: GoldenLayout.ItemConfig, parentId: string) {
+        const parent = store.getContainer(parentId);
+        if ((!parent || parent.type !== "stack") && itemConfig.type === "component") {
+            itemConfig = factory.wrapInGroup([itemConfig]);
+        }
         return this._controller.addWindow(itemConfig, parentId);
     }
 
@@ -179,11 +187,15 @@ class WorkspacesManager {
         return id;
     }
 
-    public loadWindow(itemId: string) {
-        const contentItem = store.getWindowContentItem(itemId);
-        const { windowId } = contentItem.config.componentState.windowId;
-
-        return new Promise((res, rej) => {
+    public async loadWindow(itemId: string) {
+        let contentItem = store.getWindowContentItem(itemId);
+        let { windowId } = contentItem.config.componentState;
+        if (!windowId) {
+            await this.waitForFrameLoaded(itemId);
+            contentItem = store.getWindowContentItem(itemId);
+            windowId = contentItem.config.componentState.windowId;
+        }
+        return new Promise<{ windowId: string }>((res, rej) => {
             if (!windowId) {
                 rej(`The window id of ${itemId} is missing`);
             }
@@ -272,6 +284,9 @@ class WorkspacesManager {
 
     private subscribeForLayout() {
         this._controller.emitter.onContentComponentCreated(async (component, workspaceId) => {
+            if (component.config.componentName === EmptyVisibleWindowName) {
+                return;
+            }
             const workspace = store.getById(workspaceId);
             const newWindowBounds = getElementBounds(component.element);
             const { componentState } = component.config;
@@ -390,13 +405,6 @@ class WorkspacesManager {
 
         this._controller.emitter.onSelectionChanged(async (toBack, toFront) => {
             this._frameController.selectionChanged(toFront.map((tf) => tf.id), toBack.map((t) => t.id));
-
-            this._workspacesEventEmitter.raiseWindowEvent({
-                action: "focus",
-                payload: {
-                    windowSummary: await this.stateResolver.getWindowSummary(toFront[0].id)
-                }
-            });
         });
 
         this._controller.emitter.onWorkspaceAdded((workspace) => {
@@ -587,6 +595,26 @@ class WorkspacesManager {
         } else {
             this._controller.removeWorkspace(workspace.id);
         }
+    }
+
+    private waitForFrameLoaded(itemId: string) {
+        return new Promise((res, rej) => {
+            let unsub = () => {
+                // safety
+            };
+            const timeout = setTimeout(() => {
+                unsub();
+                rej(`Did not hear frame loaded for ${itemId} in 5000ms`);
+            }, 5000);
+
+            unsub = this.workspacesEventEmitter.onWindowEvent((action, payload) => {
+                if (action === "loaded" && payload.windowSummary.itemId === itemId) {
+                    res();
+                    clearTimeout(timeout);
+                    unsub();
+                }
+            });
+        });
     }
 }
 

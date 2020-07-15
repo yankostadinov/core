@@ -12,11 +12,22 @@
             "port": 4242,
             "disableCache": true
         },
-        "apps": [],
+        "apps": [
+            {
+                "route": "/dummyApp",
+                "file": {
+                    "path": "./dummyApp"
+                }
+            }
+        ],
         "sharedAssets": [
             {
                 "route": "/glue/glue.layouts.json",
                 "path": "./glue/glue.layouts.json"
+            },
+            {
+                "route": "/glue/workspaces/",
+                "path": "./glue/workspaces"
             }
         ]
     },

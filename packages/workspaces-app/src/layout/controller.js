@@ -49,7 +49,7 @@ class LayoutController {
             maximizedItem.toggleMaximise();
         }
         let contentItem = workspace.layout.root.getItemsByFilter((ci) => ci.isColumn || ci.isRow)[0];
-        if (parentId) {
+        if (parentId && parentId !== workspace.id) {
             contentItem = workspace.layout.root.getItemsById(parentId)[0];
         }
         if (!contentItem) {
@@ -154,6 +154,11 @@ class LayoutController {
                 contentItem.addChild(config);
             }
         });
+    }
+    closeContainer(itemId) {
+        const workspace = store_1.default.getByContainerId(itemId) || store_1.default.getByWindowId(itemId);
+        const contentItem = workspace.layout.root.getItemsById(itemId)[0];
+        contentItem.remove();
     }
     bundleWorkspace(workspaceId, type) {
         const workspace = store_1.default.getById(workspaceId);

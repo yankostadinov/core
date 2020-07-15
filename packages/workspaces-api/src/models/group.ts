@@ -26,15 +26,15 @@ export class Group implements GroupAPI {
     }
 
     public get frameId(): string {
-        return getBase(this).frameId;
+        return getBase(this).getFrameId(this);
     }
 
     public get workspaceId(): string {
-        return getBase(this).workspaceId;
+        return getBase(this).getWorkspaceId(this);
     }
 
     public get positionIndex(): number {
-        return getBase(this).positionIndex;
+        return getBase(this).getPositionIndex(this);
     }
 
     public getChild(predicate: (child: WorkspaceChild) => boolean): WorkspaceChild {

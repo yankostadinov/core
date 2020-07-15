@@ -90,6 +90,10 @@ class LayoutsManager {
             metadata: {},
             components: [{ type: this._layoutComponentType, state: { workspace: workspaceConfig, context: {} } }]
         });
+        return {
+            name,
+            layout: workspaceConfig
+        };
     }
     async saveWorkspacesFrame(workspaces) {
         const configPromises = workspaces.map((w) => {
@@ -109,6 +113,7 @@ class LayoutsManager {
         this.removeWorkspaceIds(workspaceConfig);
         await this.applyWindowLayoutState(workspaceConfig);
         const workspaceItem = converter_1.default.convertToAPIConfig(workspaceConfig);
+        this.removeWorkspaceItemIds(workspaceItem);
         return workspaceItem;
     }
     addWorkspaceIds(configToPopulate) {
@@ -142,7 +147,7 @@ class LayoutsManager {
     }
     removeWorkspaceIds(configToClean) {
         const removeRecursive = (config) => {
-            if (config.id) {
+            if ("id" in config) {
                 delete config.id;
             }
             if ((config === null || config === void 0 ? void 0 : config.type) === "component") {
@@ -151,6 +156,18 @@ class LayoutsManager {
             }
             if (config.type !== "component" && config.content) {
                 config.content.forEach((i) => removeRecursive(i));
+            }
+        };
+        removeRecursive(configToClean);
+    }
+    removeWorkspaceItemIds(configToClean) {
+        const removeRecursive = (config) => {
+            var _a;
+            if ("id" in config) {
+                delete config.id;
+            }
+            if (config.type !== "window") {
+                (_a = config.children) === null || _a === void 0 ? void 0 : _a.forEach((i) => removeRecursive(i));
             }
         };
         removeRecursive(configToClean);
