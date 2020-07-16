@@ -23,7 +23,7 @@
         "dist",
         "popups",
         "index.html",
-        "manifest.webmanifest"
+        "workspaces.webmanifest"
     ],
     "license": "MIT",
     "dependencies": {
