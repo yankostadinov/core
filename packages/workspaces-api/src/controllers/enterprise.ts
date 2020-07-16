@@ -50,7 +50,7 @@ export class EnterpriseController implements WorkspacesController {
             }
         }
 
-        return await this.base.restoreWorkspace(options);
+        return await this.base.restoreWorkspace(name, options);
     }
 
     public async add(type: "container" | "window", parentId: string, parentType: "row" | "column" | "group" | "workspace", definition: WorkspaceWindowDefinition | ParentDefinition): Promise<AddItemResult> {

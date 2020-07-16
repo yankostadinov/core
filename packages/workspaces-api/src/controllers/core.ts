@@ -56,7 +56,7 @@ export class CoreController implements WorkspacesController {
 
         const frameInstance: Instance = await this.frameUtils.getFrameInstance({ frameId: options?.frameId, newFrame: options.newFrame });
 
-        return await this.base.restoreWorkspace(options, frameInstance);
+        return await this.base.restoreWorkspace(name, options, frameInstance);
     }
 
     public async add(type: "container" | "window", parentId: string, parentType: "row" | "column" | "group" | "workspace", definition: WorkspaceWindowDefinition | ParentDefinition): Promise<AddItemResult> {

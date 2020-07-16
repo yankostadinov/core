@@ -40,7 +40,7 @@ export class BaseController {
         return this.ioc.getModel<"workspace">("workspace", workspaceConfig);
     }
 
-    public async restoreWorkspace(options: RestoreWorkspaceConfig, frameInstance?: Instance): Promise<Workspace> {
+    public async restoreWorkspace(name: string, options: RestoreWorkspaceConfig, frameInstance?: Instance): Promise<Workspace> {
         const snapshot = await this.bridge.send<WorkspaceSnapshotResult>(OPERATIONS.openWorkspace.name, { name, restoreOptions: options }, frameInstance);
 
         const frameSummary = await this.bridge.send<FrameSummaryResult>(OPERATIONS.getFrameSummary.name, { itemId: snapshot.config.frameId }, frameInstance);
