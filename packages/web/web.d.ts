@@ -342,7 +342,7 @@ export namespace Glue42Web {
          * @docmenuorder 11
          *
          */
-        export type LayoutType = "Global" | "Workspace";
+        export type LayoutType = "Global" | "Workspace" | "Activity";
 
         /**
          * Controls the import behavior. If `replace` (default), all existing layouts will be removed.
@@ -402,7 +402,7 @@ export namespace Glue42Web {
             metadata?: any;
         }
 
-        export type ComponentType = "application";
+        export type ComponentType = "application" | "activity";
 
         export interface WindowComponent {
             type: "window";
