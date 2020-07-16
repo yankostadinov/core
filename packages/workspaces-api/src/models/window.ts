@@ -35,11 +35,11 @@ export class Window implements WorkspaceWindow {
     }
 
     public get frameId(): string {
-        return getData(this).config.frameId;
+        return getData(this).frame.id;
     }
 
     public get workspaceId(): string {
-        return getData(this).config.workspaceId;
+        return getData(this).workspace.id;
     }
 
     public get positionIndex(): number {

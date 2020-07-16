@@ -42,6 +42,19 @@ export class Base {
         return getData(this, model).id;
     }
 
+    public getPositionIndex(model: AllParentTypes): number {
+        return getData(this, model).config.positionIndex;
+    }
+
+    public getWorkspaceId(model: AllParentTypes): string {
+        const privateData = getData(this, model) as ParentPrivateData;
+        return privateData.config.workspaceId || privateData.workspace.id;
+    }
+
+    public getFrameId(model: AllParentTypes): string {
+        return getData(this, model).frame.id;
+    }
+
     public getChild(model: AllParentTypes, predicate: (child: Child) => boolean): Child {
         checkThrowCallback(predicate);
         const children = getData(this, model).children;

@@ -128,8 +128,7 @@ class LayoutStateResolver {
     getWorkspaceTabIndex(workspaceId) {
         const workspaceLayoutStack = store_1.default.workspaceLayout.root.getItemsById(workspaceId)[0].parent;
         const workspaceIndex = (workspaceLayoutStack.header)
-            .tabs
-            .findIndex((t) => t.contentItem.config.id === workspaceId);
+            .tabs.findIndex((t) => t.contentItem.config.id === workspaceId);
         return workspaceIndex;
     }
     getWindowSummaryCore(windowContentItem, winId) {
@@ -140,8 +139,8 @@ class LayoutStateResolver {
         const { appName, url, windowId } = windowContentItem.config.componentState;
         const userFriendlyParent = this.getUserFriendlyParent(windowContentItem);
         return {
-            itemId: windowId,
-            parentId: userFriendlyParent.config.id,
+            itemId: utils_1.idAsString(windowContentItem.config.id),
+            parentId: utils_1.idAsString(userFriendlyParent.config.id),
             config: {
                 frameId: this._frameId,
                 isFocused,

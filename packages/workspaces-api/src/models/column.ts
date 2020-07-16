@@ -1,5 +1,5 @@
 import { Base } from "./base/base";
-import {Column as ColumnApi, WorkspaceChild, WorkspaceParent, Workspace, Frame, WorkspaceWindowDefinition, WorkspaceWindow, Group, ParentDefinition, Row} from "../../workspaces.d";
+import { Column as ColumnApi, WorkspaceChild, WorkspaceParent, Workspace, Frame, WorkspaceWindowDefinition, WorkspaceWindow, Group, ParentDefinition, Row } from "../../workspaces.d";
 
 interface PrivateData {
     base: Base;
@@ -26,15 +26,15 @@ export class Column implements ColumnApi {
     }
 
     public get frameId(): string {
-        return getBase(this).frameId;
+        return getBase(this).getFrameId(this);
     }
 
     public get workspaceId(): string {
-        return getBase(this).workspaceId;
+        return getBase(this).getWorkspaceId(this);
     }
 
     public get positionIndex(): number {
-        return getBase(this).positionIndex;
+        return getBase(this).getPositionIndex(this);
     }
 
     public getChild(predicate: (child: WorkspaceChild) => boolean): WorkspaceChild {

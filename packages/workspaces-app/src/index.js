@@ -4,9 +4,11 @@ const manager_1 = require("./manager");
 const facade_1 = require("./interop/facade");
 const jquery = require("jquery");
 const web_1 = require("@glue42/web");
+const workspaces_api_1 = require("@glue42/workspaces-api");
 const config = {
     application: "Workspaces",
-    appManager: true
+    appManager: true,
+    libraries: [workspaces_api_1.default]
 };
 window.$ = jquery;
 web_1.default(config).then((glue) => {

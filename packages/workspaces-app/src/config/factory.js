@@ -51,7 +51,11 @@ class WorkspacesConfigurationFactory {
                 isLoaded: args.windowId !== undefined,
                 isFocused: args.isFocused,
                 appName: args.appName,
-                url: args.url
+                url: args.url,
+                title: args.title,
+                workspaceId: args.workspaceId,
+                frameId: args.frameId,
+                positionIndex: args.positionIndex
             }
         };
     }
@@ -142,12 +146,24 @@ class WorkspacesConfigurationFactory {
             workspaceLayout: workspacesConfig
         };
     }
+    wrapInGroup(content) {
+        return this.wrap(content, "stack");
+    }
     createWindowConfigurationCore(id) {
         return {
             workspacesConfig: {},
             type: "component",
             id: id || this.getId(),
             componentName: constants_1.EmptyVisibleWindowName,
+        };
+    }
+    wrap(content, wrapper) {
+        return {
+            workspacesConfig: {
+                wrapper: true
+            },
+            type: wrapper,
+            content
         };
     }
 }

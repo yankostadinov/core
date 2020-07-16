@@ -92,13 +92,18 @@ class ConfigConverter {
             return this.flat(config.content.map((c) => this.convertToApiConfigCore(c)));
         }
         else if (config.type === "component") {
+            const wspsConfig = config.workspacesConfig;
             const resultWindow = factory_1.default.createApiWindow({
                 id: config.id,
                 isFocused: false,
                 isMaximized: false,
                 windowId: config.componentState.windowId,
                 appName: config.componentState.appName,
-                url: config.componentState.url
+                url: config.componentState.url,
+                frameId: wspsConfig.frameId,
+                workspaceId: wspsConfig.workspaceId,
+                title: wspsConfig.title,
+                positionIndex: wspsConfig.positionIndex
             });
             return resultWindow;
         }

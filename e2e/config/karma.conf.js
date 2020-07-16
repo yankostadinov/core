@@ -19,12 +19,16 @@ module.exports = function (config) {
         client: {
             mocha: {
                 timeout: 20000
-            }
+            },
+            captureConsole: true
         },
         files: [
             `e2e/tests/${folderGlob}/**/*.spec.js`,
             {
                 pattern: 'e2e/config/glue/web.umd.js'
+            },
+            {
+                pattern: 'e2e/config/glue/workspaces.umd.js'
             },
             {
                 pattern: 'e2e/config/glue/gtf.js'

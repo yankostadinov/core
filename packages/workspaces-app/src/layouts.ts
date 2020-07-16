@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // TODO remove when the layouts api is ready ^
 import GoldenLayout from "@glue42/golden-layout";
-import { Workspace, FrameLayoutConfig, WorkspaceItem } from "./types/internal";
+import { Workspace, FrameLayoutConfig, WorkspaceItem, WorkspaceLayout, AnyItem } from "./types/internal";
 import storage from "./storage";
 import configFactory from "./config/factory";
 import configConverter from "./config/converter";
@@ -93,7 +93,7 @@ export class LayoutsManager {
         await window.glue.layouts.remove(name, this._layoutsType);
     }
 
-    public async save(name: string, workspace: Workspace) {
+    public async save(name: string, workspace: Workspace): Promise<WorkspaceLayout> {
         if (!workspace.layout) {
             throw new Error("An empty layout cannot be saved");
         }
@@ -107,6 +107,11 @@ export class LayoutsManager {
             metadata: {},
             components: [{ type: this._layoutComponentType, state: { workspace: workspaceConfig, context: {} } }]
         });
+
+        return {
+            name,
+            layout: workspaceConfig
+        }
     }
 
     public async saveWorkspacesFrame(workspaces: Workspace[]) {
@@ -121,14 +126,17 @@ export class LayoutsManager {
         this._initialWorkspaceConfig = config;
     }
 
-    private async saveWorkspaceCore(workspace: Workspace) {
+    private async saveWorkspaceCore(workspace: Workspace): Promise<WorkspaceItem> {
         if (!workspace.layout) {
             return undefined;
         }
         const workspaceConfig = workspace.layout.toConfig();
         this.removeWorkspaceIds(workspaceConfig);
         await this.applyWindowLayoutState(workspaceConfig);
-        const workspaceItem = configConverter.convertToAPIConfig(workspaceConfig);
+
+        const workspaceItem = configConverter.convertToAPIConfig(workspaceConfig) as WorkspaceItem;
+        this.removeWorkspaceItemIds(workspaceItem);
+
         return workspaceItem;
     }
 
@@ -170,7 +178,7 @@ export class LayoutsManager {
 
     private removeWorkspaceIds(configToClean: GoldenLayout.Config) {
         const removeRecursive = (config: GoldenLayout.Config | GoldenLayout.ItemConfig) => {
-            if (config.id) {
+            if ("id" in config) {
                 delete config.id;
             }
 
@@ -181,6 +189,20 @@ export class LayoutsManager {
 
             if (config.type !== "component" && config.content) {
                 config.content.forEach((i) => removeRecursive(i));
+            }
+        };
+
+        removeRecursive(configToClean);
+    }
+
+    private removeWorkspaceItemIds(configToClean: WorkspaceItem) {
+        const removeRecursive = (config: AnyItem) => {
+            if ("id" in config) {
+                delete config.id;
+            }
+
+            if (config.type !== "window") {
+                config.children?.forEach((i) => removeRecursive(i));
             }
         };
 

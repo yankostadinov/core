@@ -10,7 +10,6 @@ class StartupReader {
 
     public loadConfig() {
         const urlParams = new URLSearchParams(window.location.search);
-
         const emptyFrameParam = urlParams.get(EmptyFrameQueryParam);
         const disableCustomButtons = urlParams.get(DisableCustomButtonsQueryParam);
         const workspaceNameParam = urlParams.get(WorkspaceNameQueryParam);

@@ -63,7 +63,7 @@ export class LayoutController {
         }
 
         let contentItem = workspace.layout.root.getItemsByFilter((ci) => ci.isColumn || ci.isRow)[0];
-        if (parentId) {
+        if (parentId && parentId !== workspace.id) {
             contentItem = workspace.layout.root.getItemsById(parentId)[0];
         }
 
@@ -189,6 +189,13 @@ export class LayoutController {
                 contentItem.addChild(config);
             }
         });
+    }
+
+    public closeContainer(itemId: string) {
+        const workspace = store.getByContainerId(itemId) || store.getByWindowId(itemId);
+        const contentItem = workspace.layout.root.getItemsById(itemId)[0];
+
+        contentItem.remove();
     }
 
     public bundleWorkspace(workspaceId: string, type: "row" | "column") {

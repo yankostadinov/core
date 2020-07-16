@@ -136,6 +136,11 @@ export interface Workspace {
     context?: object;
 }
 
+export interface WorkspaceLayout {
+    name: string;
+    layout: WorkspaceItem;
+}
+
 export interface FrameLayoutConfig {
     workspaceLayout: GoldenLayout.Config;
     workspaceConfigs: Array<{ id: string; config: GoldenLayout.Config }>;
@@ -154,6 +159,20 @@ export interface StartupConfig {
     workspaceName?: string;
     workspaceNames?: string[];
     context?: object;
+}
+
+
+export interface APIWIndowSettings {
+    id: string | string[];
+    windowId: string;
+    isMaximized: boolean;
+    isFocused: boolean;
+    appName?: string;
+    url?: string;
+    workspaceId: string;
+    frameId: string;
+    title: string;
+    positionIndex: number;
 }
 
 export type WorkspaceOptionsWithTitle = GoldenLayout.WorkspacesOptions & { title?: string };

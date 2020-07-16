@@ -3182,7 +3182,12 @@
                             if (remoteLayout) {
                                 throw new Error("Cannot save layout with name: " + layout.name + " and type: " + layoutType + ", because it is present in the remote store and is treated as readonly");
                             }
-                            layout.metadata.allowSave = true;
+                            if (!layout.metadata) {
+                                layout.metadata = { allowSave: true };
+                            }
+                            else {
+                                layout.metadata.allowSave = true;
+                            }
                             return [4, this.localStore.store(layout, layoutType)];
                         case 2:
                             _b.sent();
@@ -3746,13 +3751,13 @@
     };
     var createFactoryFunction = function (coreFactoryFunction) {
         return function (config) { return __awaiter(void 0, void 0, void 0, function () {
-            var builtCoreConfig, isWebEnvironment, shouldInitializeChannels, shouldInitializeAppManager, gdWindowContext, control, windows, layoutsController, ext, channelsLib, appManagerLib, coreConfig, core;
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
-            return __generator(this, function (_r) {
-                switch (_r.label) {
+            var builtCoreConfig, isWebEnvironment, shouldInitializeChannels, shouldInitializeAppManager, gdWindowContext, control, windows, layouts, layoutsController, ext, channelsLib, appManagerLib, coreConfig, core;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r;
+            return __generator(this, function (_s) {
+                switch (_s.label) {
                     case 0: return [4, buildConfig(config)];
                     case 1:
-                        builtCoreConfig = _r.sent();
+                        builtCoreConfig = _s.sent();
                         isWebEnvironment = typeof window !== "undefined";
                         shouldInitializeChannels = ((_a = builtCoreConfig.glue) === null || _a === void 0 ? void 0 : _a.channels) || false;
                         shouldInitializeAppManager = ((_b = builtCoreConfig.glue) === null || _b === void 0 ? void 0 : _b.appManager) || false;
@@ -3804,7 +3809,8 @@
                                     var autoStore = new AutoStorage();
                                     var layoutsStorage = new LayoutStorage(localStore, autoStore, remoteStore);
                                     layoutsController = new LayoutsController(layoutsStorage, windows, control, coreLib.interop, builtCoreConfig === null || builtCoreConfig === void 0 ? void 0 : builtCoreConfig.glue);
-                                    return new Layouts(layoutsController);
+                                    layouts = new Layouts(layoutsController);
+                                    return layouts;
                                 }
                             });
                             if (shouldInitializeAppManager) {
@@ -3825,22 +3831,25 @@
                         };
                         return [4, coreFactoryFunction(coreConfig, ext)];
                     case 2:
-                        core = _r.sent();
-                        control.start(core.interop, core.logger.subLogger("control"));
-                        if (!isWebEnvironment) return [3, 7];
-                        return [4, initStartupContext(core.windows.my(), core.interop, (_m = core.appManager) === null || _m === void 0 ? void 0 : _m.myInstance)];
+                        core = _s.sent();
+                        return [4, Promise.all((_m = config === null || config === void 0 ? void 0 : config.libraries) === null || _m === void 0 ? void 0 : _m.map(function (lib) { return lib(core, builtCoreConfig === null || builtCoreConfig === void 0 ? void 0 : builtCoreConfig.glue); }))];
                     case 3:
-                        _r.sent();
-                        if (!((_p = (_o = builtCoreConfig.glue) === null || _o === void 0 ? void 0 : _o.layouts) === null || _p === void 0 ? void 0 : _p.autoRestore)) return [3, 5];
-                        return [4, (layoutsController === null || layoutsController === void 0 ? void 0 : layoutsController.restoreAutoSavedLayout())];
+                        _s.sent();
+                        control.start(core.interop, core.logger.subLogger("control"));
+                        if (!isWebEnvironment) return [3, 8];
+                        return [4, initStartupContext(core.windows.my(), core.interop, (_o = core.appManager) === null || _o === void 0 ? void 0 : _o.myInstance)];
                     case 4:
-                        _r.sent();
-                        _r.label = 5;
-                    case 5: return [4, hookCloseEvents(core, (_q = builtCoreConfig.glue) !== null && _q !== void 0 ? _q : {}, control, layoutsController)];
-                    case 6:
-                        _r.sent();
-                        _r.label = 7;
-                    case 7: return [2, core];
+                        _s.sent();
+                        if (!((_q = (_p = builtCoreConfig.glue) === null || _p === void 0 ? void 0 : _p.layouts) === null || _q === void 0 ? void 0 : _q.autoRestore)) return [3, 6];
+                        return [4, (layoutsController === null || layoutsController === void 0 ? void 0 : layoutsController.restoreAutoSavedLayout())];
+                    case 5:
+                        _s.sent();
+                        _s.label = 6;
+                    case 6: return [4, hookCloseEvents(core, (_r = builtCoreConfig.glue) !== null && _r !== void 0 ? _r : {}, control, layoutsController)];
+                    case 7:
+                        _s.sent();
+                        _s.label = 8;
+                    case 8: return [2, core];
                 }
             });
         }); };

@@ -34,8 +34,7 @@ class GlueFacade {
                         successCallback(await this.handleOpenWorkspace(args.operationArguments));
                         break;
                     case "saveLayout":
-                        await this.handleSaveLayout(args.operationArguments);
-                        successCallback(undefined);
+                        successCallback(await this.handleSaveLayout(args.operationArguments));
                         break;
                     case "exportAllLayouts":
                         successCallback(await this.handleExportAllLayouts());
@@ -75,8 +74,7 @@ class GlueFacade {
                         successCallback(await this.handleCreateWorkspace(args.operationArguments));
                         break;
                     case "forceLoadWindow":
-                        await this.handleForceLoadWindow(args.operationArguments);
-                        successCallback(undefined);
+                        successCallback(await this.handleForceLoadWindow(args.operationArguments));
                         break;
                     case "focusItem":
                         this.handleFocusItem(args.operationArguments);
@@ -167,7 +165,7 @@ class GlueFacade {
         };
     }
     async handleSaveLayout(operationArguments) {
-        await manager_1.default.saveWorkspace(operationArguments.name, operationArguments.workspaceId);
+        return await manager_1.default.saveWorkspace(operationArguments.name, operationArguments.workspaceId);
     }
     handleDeleteLayout(operationArguments) {
         manager_1.default.deleteLayout(operationArguments.name);
