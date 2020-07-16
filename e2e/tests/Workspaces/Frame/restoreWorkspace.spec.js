@@ -97,7 +97,7 @@ describe('restoreWorkspace() Should', function () {
         expect(frames.length).to.eql(1);
     });
 
-    it("reuse the specified workspace when the reuseWorkspaceIdOptions is passed", async () => {
+    it.skip("reuse the specified workspace when the reuseWorkspaceIdOptions is passed", async () => {
         await workspace.addWindow({
             type: "window",
             appName: "dummyApp"

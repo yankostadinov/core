@@ -2088,7 +2088,11 @@
         close() {
             return __awaiter(this, void 0, void 0, function* () {
                 const controller = getData(this).controller;
+                const shouldCloseFrame = (yield getData(this).frame.workspaces()).length === 1;
                 yield controller.closeItem(this.id);
+                if (shouldCloseFrame) {
+                    yield getData(this).frame.close();
+                }
             });
         }
         snapshot() {
@@ -2363,10 +2367,8 @@
                     yield this.refreshReference();
                     console.log("payload for window loaded", payload);
                     const foundWindow = this.getWindow((win) => {
-                        console.log("Window checked", win);
                         return win.id && win.id === payload.windowSummary.config.windowId;
                     });
-                    console.log("found window", foundWindow);
                     callback(foundWindow);
                 });
                 const config = {
@@ -2699,6 +2701,12 @@
             const myId = getData$2(this).summary.id;
             return getData$2(this).controller.getSnapshot(myId, "frame");
         }
+        workspaces() {
+            return __awaiter(this, void 0, void 0, function* () {
+                const controller = getData$2(this).controller;
+                return controller.getWorkspaces((wsp) => wsp.frameId === this.id);
+            });
+        }
         restoreWorkspace(name, options) {
             return __awaiter(this, void 0, void 0, function* () {
                 nonEmptyStringDecoder.runWithException(name);
@@ -2879,7 +2887,6 @@
                 const myId = getData$2(this).summary.id;
                 const wrappedCallback = (payload) => __awaiter(this, void 0, void 0, function* () {
                     const foundParent = yield getData$2(this).controller.getParent((parent) => {
-                        console.log("Parent checked", parent);
                         return parent.id === payload.windowSummary.parentId;
                     });
                     const foundWindow = foundParent.getChild((child) => child.type === "window" && child.positionIndex === payload.windowSummary.config.positionIndex);
@@ -3115,7 +3122,6 @@
                 const validatedDefinition = swimlaneWindowDefinitionDecoder.runWithException(definition);
                 const controller = getData$3(this, model).controller;
                 const operationResult = yield controller.add("window", getData$3(this, model).id, parentType, validatedDefinition);
-                console.log("add window operation reuslt", operationResult);
                 if (model instanceof Workspace) {
                     yield model.refreshReference();
                     return getWindowFromPlacementId(this, operationResult.itemId);
@@ -3177,6 +3183,7 @@
                 yield controller.closeItem(modelData.id);
                 if (modelData.parent instanceof Workspace) {
                     yield modelData.parent.refreshReference();
+                    console.log("workspace reference refreshed", modelData.parent.getAllChildren());
                 }
                 else {
                     yield this.getMyWorkspace(modelData.parent).refreshReference();

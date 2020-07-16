@@ -146,7 +146,7 @@ class GlueFacade {
         }, { subscriptionRequestHandler: this.handleSubscriptionRequested });
     }
     async handleOpenWorkspace(operationArguments) {
-        const id = await manager_1.default.openWorkspace(operationArguments.name, operationArguments.options);
+        const id = await manager_1.default.openWorkspace(operationArguments.name, operationArguments.restoreOptions);
         const workspaceConfig = manager_1.default.stateResolver.getWorkspaceConfig(id);
         const workspaceItem = converter_1.default.convertToAPIConfig(workspaceConfig);
         return {

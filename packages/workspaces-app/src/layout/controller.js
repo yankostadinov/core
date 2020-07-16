@@ -176,13 +176,14 @@ class LayoutController {
         $(`#nestHere${workspaceId}`).children(".add-button").show();
     }
     async addWorkspace(id, config) {
+        var _a;
         const stack = store_1.default.workspaceLayout.root.getItemsByFilter((ci) => ci.isStack)[0];
         const componentConfig = {
             componentName: factory_1.default.getWorkspaceLayoutComponentName(id),
             type: "component",
             workspacesConfig: {},
             id,
-            title: factory_1.default.getWorkspaceTitle(store_1.default.workspaceTitles)
+            title: ((_a = config === null || config === void 0 ? void 0 : config.workspacesOptions) === null || _a === void 0 ? void 0 : _a.title) || factory_1.default.getWorkspaceTitle(store_1.default.workspaceTitles)
         };
         this.registerWorkspaceComponent(id);
         stack.addChild(componentConfig);

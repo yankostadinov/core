@@ -145,7 +145,7 @@ export interface ItemSelector {
 
 export interface OpenWorkspaceArguments {
     name: string;
-    options?: RestoreWorkspaceConfig;
+    restoreOptions?: RestoreWorkspaceConfig;
 }
 
 export interface SaveLayoutArguments {

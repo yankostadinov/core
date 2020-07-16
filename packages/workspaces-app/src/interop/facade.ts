@@ -173,7 +173,7 @@ class GlueFacade {
     }
 
     private async handleOpenWorkspace(operationArguments: OpenWorkspaceArguments): Promise<OpenWorkspaceResult> {
-        const id = await manager.openWorkspace(operationArguments.name, operationArguments.options);
+        const id = await manager.openWorkspace(operationArguments.name, operationArguments.restoreOptions);
         const workspaceConfig = manager.stateResolver.getWorkspaceConfig(id);
         const workspaceItem = configConverter.convertToAPIConfig(workspaceConfig);
 
