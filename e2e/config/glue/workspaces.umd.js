@@ -1075,13 +1075,42 @@
         id: optional(nonEmptyStringDecoder),
         children: array(customWorkspaceChildSnapshotDecoder),
     });
-    const swimlaneLayoutDecoder = object({
+    const windowLayoutItemDecoder = object({
+        type: constant("window"),
+        config: object({
+            appName: nonEmptyStringDecoder,
+            url: optional(nonEmptyStringDecoder)
+        })
+    });
+    const groupLayoutItemDecoder = object({
+        type: constant("group"),
+        config: anyJson(),
+        children: array(oneOf(windowLayoutItemDecoder))
+    });
+    const columnLayoutItemDecoder = object({
+        type: constant("column"),
+        config: anyJson(),
+        children: array(oneOf(groupLayoutItemDecoder, windowLayoutItemDecoder, lazy(() => columnLayoutItemDecoder), lazy(() => rowLayoutItemDecoder)))
+    });
+    const rowLayoutItemDecoder = object({
+        type: constant("row"),
+        config: anyJson(),
+        children: array(oneOf(columnLayoutItemDecoder, groupLayoutItemDecoder, windowLayoutItemDecoder, lazy(() => rowLayoutItemDecoder)))
+    });
+    const workspaceLayoutDecoder = object({
         name: nonEmptyStringDecoder,
-        layout: optional(customWorkspaceSnapshotDecoder),
-        workspaceId: optional(nonEmptyStringDecoder)
+        type: constant("Workspace"),
+        metadata: optional(anyJson()),
+        components: array(object({
+            type: constant("Workspace"),
+            state: object({
+                config: anyJson(),
+                children: array(oneOf(rowLayoutItemDecoder, columnLayoutItemDecoder, groupLayoutItemDecoder, windowLayoutItemDecoder))
+            })
+        }))
     });
     const exportedLayoutsResultDecoder = object({
-        layouts: array(swimlaneLayoutDecoder)
+        layouts: array(workspaceLayoutDecoder)
     });
     const frameSummaryResultDecoder = object({
         id: nonEmptyStringDecoder,
@@ -1205,7 +1234,7 @@
         getAllLayoutsSummaries: { name: "getAllLayoutsSummaries", resultDecoder: layoutSummariesDecoder },
         openWorkspace: { name: "openWorkspace", argsDecoder: openWorkspaceConfigDecoder, resultDecoder: workspaceSnapshotResultDecoder },
         deleteLayout: { name: "deleteLayout", resultDecoder: voidResultDecoder, argsDecoder: deleteLayoutConfigDecoder },
-        saveLayout: { name: "saveLayout", resultDecoder: swimlaneLayoutDecoder, argsDecoder: swimlaneLayoutDecoder },
+        saveLayout: { name: "saveLayout", resultDecoder: workspaceLayoutDecoder, argsDecoder: workspaceLayoutSaveConfigDecoder },
         exportAllLayouts: { name: "exportAllLayouts", resultDecoder: exportedLayoutsResultDecoder },
         restoreItem: { name: "restoreItem", argsDecoder: simpleItemConfigDecoder, resultDecoder: voidResultDecoder },
         maximizeItem: { name: "maximizeItem", argsDecoder: simpleItemConfigDecoder, resultDecoder: voidResultDecoder },
@@ -2321,7 +2350,6 @@
                 const wrappedCallback = (payload) => __awaiter(this, void 0, void 0, function* () {
                     yield this.refreshReference();
                     const windowParent = this.getParent((parent) => parent.id === payload.windowSummary.parentId);
-                    console.log("workspace window added payload", payload);
                     const foundWindow = windowParent.getChild((child) => {
                         console.log("checking child", child);
                         return child.type === "window" && child.positionIndex === payload.windowSummary.config.positionIndex;
@@ -2365,10 +2393,11 @@
                 const id = getData(this).id;
                 const wrappedCallback = (payload) => __awaiter(this, void 0, void 0, function* () {
                     yield this.refreshReference();
-                    console.log("payload for window loaded", payload);
                     const foundWindow = this.getWindow((win) => {
+                        console.log("Window checked", win);
                         return win.id && win.id === payload.windowSummary.config.windowId;
                     });
+                    console.log("found window", foundWindow);
                     callback(foundWindow);
                 });
                 const config = {
@@ -2471,6 +2500,7 @@
     class Window {
         constructor(dataManager) {
             data$1.set(this, { manager: dataManager });
+            console.log("private data for window", getData$1(this));
         }
         get id() {
             return getData$1(this).config.windowId;
@@ -2516,6 +2546,7 @@
                 const controller = getData$1(this).controller;
                 const itemId = getData$1(this).id;
                 const windowId = yield controller.forceLoadWindow(itemId);
+                console.log("Private data for window", windowId);
                 getData$1(this).config.windowId = windowId;
                 getData$1(this).config.isLoaded = true;
             });
@@ -2887,6 +2918,7 @@
                 const myId = getData$2(this).summary.id;
                 const wrappedCallback = (payload) => __awaiter(this, void 0, void 0, function* () {
                     const foundParent = yield getData$2(this).controller.getParent((parent) => {
+                        console.log("Parent checked", parent);
                         return parent.id === payload.windowSummary.parentId;
                     });
                     const foundWindow = foundParent.getChild((child) => child.type === "window" && child.positionIndex === payload.windowSummary.config.positionIndex);
@@ -3005,6 +3037,7 @@
             }
         }
         setWindowData(model, data) {
+            console.log("setting window data", data);
             this.windowPlacementIdData[data.id] = model;
             this.windowsData.set(model, data);
         }
@@ -3122,6 +3155,7 @@
                 const validatedDefinition = swimlaneWindowDefinitionDecoder.runWithException(definition);
                 const controller = getData$3(this, model).controller;
                 const operationResult = yield controller.add("window", getData$3(this, model).id, parentType, validatedDefinition);
+                console.log("add window operation reuslt", operationResult);
                 if (model instanceof Workspace) {
                     yield model.refreshReference();
                     return getWindowFromPlacementId(this, operationResult.itemId);
@@ -3959,6 +3993,7 @@
                 case "workspace": {
                     const { snapshot, frame } = createConfig;
                     const newWorkspace = new Workspace(this.privateDataManager);
+                    console.log("building children with this snapshot", snapshot);
                     const children = this.buildChildren(snapshot.children, frame, newWorkspace, newWorkspace);
                     const workspacePrivateData = {
                         id: snapshot.id,
@@ -4110,7 +4145,7 @@
                 return controller.exportLayout(predicate);
             }),
             import: (layout) => __awaiter(void 0, void 0, void 0, function* () {
-                swimlaneLayoutDecoder.runWithException(layout);
+                workspaceLayoutDecoder.runWithException(layout);
                 return controller.importLayout(layout);
             }),
             save: (config) => __awaiter(void 0, void 0, void 0, function* () {

@@ -173,7 +173,6 @@ describe('createWorkspace() ', function () {
 
         });
 
-        // BUG
         it("reject when reuseFrameId is specified and it is a valid string, but there isn't a frame with that id", (done) => {
             glue.workspaces.createWorkspace(basicConfig).then((wsp) => {
                 const reuseFrameConfig = Object.assign(JSON.parse(JSON.stringify(basicConfig)), {

@@ -20,8 +20,8 @@ describe('saveLayout() Should ', function () {
 
     beforeEach(async () => {
         workspace = await glue.workspaces.createWorkspace(basicConfig);
-    })
-    // BUG
+    });
+    
     afterEach(async () => {
         const summaries = await glue.workspaces.layouts.getSummaries();
 

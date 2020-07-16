@@ -14,7 +14,6 @@ describe('addGroup() Should ', function () {
     }
     let workspace = undefined;
 
-    // BUG
     before(() => {
         return Promise.all([glueReady, gtfReady]);
     });

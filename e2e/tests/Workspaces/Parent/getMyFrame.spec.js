@@ -40,7 +40,6 @@ describe("getMyFrame() Should", () => {
     };
 
     let workspace = undefined;
-    // BUG
     before(async () => {
         await Promise.all([glueReady, gtfReady]);
         await glue.workspaces.createWorkspace(config);

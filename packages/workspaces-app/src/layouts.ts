@@ -8,13 +8,16 @@ import configConverter from "./config/converter";
 import scReader from "./config/startupReader";
 import factory from "./config/factory";
 import { generate } from "shortid";
+import { LayoutStateResolver } from "./layout/stateResolver";
 
 declare const window: Window & { glue: any };
 
 export class LayoutsManager {
     private _initialWorkspaceConfig: GoldenLayout.Config;
-    private readonly _layoutsType = "Workspace"; // TODO should be Workspaces to be compatible with GD
-    private readonly _layoutComponentType = "workspace";
+    private readonly _layoutsType = "Workspace";
+    private readonly _layoutComponentType = "Workspace";
+
+    constructor(private readonly resolver: LayoutStateResolver) { }
 
     public async getInitialConfig(): Promise<FrameLayoutConfig> {
         // Preset initial config
@@ -80,7 +83,7 @@ export class LayoutsManager {
 
     public async getWorkspaceByName(name: string): Promise<GoldenLayout.Config> {
         const savedWorkspaceLayout = await window.glue.layouts.get(name, this._layoutsType);
-        const savedWorkspace: WorkspaceItem = savedWorkspaceLayout.components[0].state.workspace;
+        const savedWorkspace: WorkspaceItem = savedWorkspaceLayout.components[0].state;
         const rendererFriendlyConfig = configConverter.convertToRendererConfig(savedWorkspace);
 
         this.addWorkspaceIds(rendererFriendlyConfig);
@@ -99,19 +102,22 @@ export class LayoutsManager {
         }
         workspace.layout.config.workspacesOptions.name = name;
         const workspaceConfig = await this.saveWorkspaceCore(workspace);
-
-        await window.glue.layouts.import({
+        const layoutToImport = {
             name,
-            type: this._layoutsType,
+            type: this._layoutsType as "Workspace",
             token: generate(),
             metadata: {},
-            components: [{ type: this._layoutComponentType, state: { workspace: workspaceConfig, context: {} } }]
-        });
+            components: [{
+                type: this._layoutComponentType as "Workspace", state: {
+                    children: workspaceConfig.children,
+                    config: workspaceConfig.config, context: {}
+                }
+            }]
+        };
 
-        return {
-            name,
-            layout: workspaceConfig
-        }
+        await window.glue.layouts.import(layoutToImport);
+
+        return layoutToImport;
     }
 
     public async saveWorkspacesFrame(workspaces: Workspace[]) {
@@ -130,14 +136,50 @@ export class LayoutsManager {
         if (!workspace.layout) {
             return undefined;
         }
-        const workspaceConfig = workspace.layout.toConfig();
+        const workspaceConfig = this.resolver.getWorkspaceConfig(workspace.id);
         this.removeWorkspaceIds(workspaceConfig);
         await this.applyWindowLayoutState(workspaceConfig);
 
         const workspaceItem = configConverter.convertToAPIConfig(workspaceConfig) as WorkspaceItem;
         this.removeWorkspaceItemIds(workspaceItem);
 
+        // The excess properties should be cleaned
+        this.windowSummariesToWindowLayout(workspaceItem);
+        this.addWindowUrlsToWindows(workspaceItem);
+
         return workspaceItem;
+    }
+
+    private windowSummariesToWindowLayout(workspaceItem: WorkspaceItem) {
+        const transform = (item: AnyItem) => {
+            if (item.type === "window") {
+                delete item.config.isMaximized;
+                delete item.config.isLoaded;
+                delete item.config.isFocused;
+                delete item.config.windowId;
+                return;
+            }
+
+            item.children.forEach(c => transform(c));
+        }
+
+        transform(workspaceItem);
+    }
+
+    private addWindowUrlsToWindows(workspaceItem: WorkspaceItem) {
+        const add = (item: AnyItem) => {
+            if (item.type === "window" && !item.config.url) {
+                const app = window.glue.appManager.application(item.config.appName);
+                item.config.url = app?.userProperties?.details?.url;
+                return;
+            }
+
+            if (item.type !== "window") {
+                item.children.forEach(c => add(c));
+            }
+        }
+
+        add(workspaceItem);
     }
 
     private addWorkspaceIds(configToPopulate: GoldenLayout.Config | GoldenLayout.ItemConfig) {

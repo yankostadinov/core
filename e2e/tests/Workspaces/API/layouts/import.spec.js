@@ -29,7 +29,6 @@ describe('import() Should ', function () {
             }
         ]
     }
-    // BUG
     before(async () => {
         await Promise.all([glueReady, gtfReady]);
         const workspace = await glue.workspaces.createWorkspace(basicConfig);

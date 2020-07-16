@@ -8,9 +8,10 @@ const startupReader_1 = require("./config/startupReader");
 const factory_2 = require("./config/factory");
 const shortid_1 = require("shortid");
 class LayoutsManager {
-    constructor() {
-        this._layoutsType = "Workspace"; // TODO should be Workspaces to be compatible with GD
-        this._layoutComponentType = "workspace";
+    constructor(resolver) {
+        this.resolver = resolver;
+        this._layoutsType = "Workspace";
+        this._layoutComponentType = "Workspace";
     }
     async getInitialConfig() {
         // Preset initial config
@@ -68,7 +69,7 @@ class LayoutsManager {
     }
     async getWorkspaceByName(name) {
         const savedWorkspaceLayout = await window.glue.layouts.get(name, this._layoutsType);
-        const savedWorkspace = savedWorkspaceLayout.components[0].state.workspace;
+        const savedWorkspace = savedWorkspaceLayout.components[0].state;
         const rendererFriendlyConfig = converter_1.default.convertToRendererConfig(savedWorkspace);
         this.addWorkspaceIds(rendererFriendlyConfig);
         this.addWindowIds(rendererFriendlyConfig);
@@ -83,17 +84,21 @@ class LayoutsManager {
         }
         workspace.layout.config.workspacesOptions.name = name;
         const workspaceConfig = await this.saveWorkspaceCore(workspace);
-        await window.glue.layouts.import({
+        const layoutToImport = {
             name,
             type: this._layoutsType,
             token: shortid_1.generate(),
             metadata: {},
-            components: [{ type: this._layoutComponentType, state: { workspace: workspaceConfig, context: {} } }]
-        });
-        return {
-            name,
-            layout: workspaceConfig
+            components: [{
+                    type: this._layoutComponentType,
+                    state: {
+                        children: workspaceConfig.children,
+                        config: workspaceConfig.config, context: {}
+                    }
+                }]
         };
+        await window.glue.layouts.import(layoutToImport);
+        return layoutToImport;
     }
     async saveWorkspacesFrame(workspaces) {
         const configPromises = workspaces.map((w) => {
@@ -109,12 +114,41 @@ class LayoutsManager {
         if (!workspace.layout) {
             return undefined;
         }
-        const workspaceConfig = workspace.layout.toConfig();
+        const workspaceConfig = this.resolver.getWorkspaceConfig(workspace.id);
         this.removeWorkspaceIds(workspaceConfig);
         await this.applyWindowLayoutState(workspaceConfig);
         const workspaceItem = converter_1.default.convertToAPIConfig(workspaceConfig);
         this.removeWorkspaceItemIds(workspaceItem);
+        this.windowSummariesToWindowLayout(workspaceItem);
+        this.addWindowUrlsToWindows(workspaceItem);
         return workspaceItem;
+    }
+    windowSummariesToWindowLayout(workspaceItem) {
+        const transform = (item) => {
+            if (item.type === "window") {
+                delete item.config.isMaximized;
+                delete item.config.isLoaded;
+                delete item.config.isFocused;
+                delete item.config.windowId;
+                return;
+            }
+            item.children.forEach(c => transform(c));
+        };
+        transform(workspaceItem);
+    }
+    addWindowUrlsToWindows(workspaceItem) {
+        const add = (item) => {
+            var _a, _b;
+            if (item.type === "window" && !item.config.url) {
+                const app = window.glue.appManager.application(item.config.appName);
+                item.config.url = (_b = (_a = app === null || app === void 0 ? void 0 : app.userProperties) === null || _a === void 0 ? void 0 : _a.details) === null || _b === void 0 ? void 0 : _b.url;
+                return;
+            }
+            if (item.type !== "window") {
+                item.children.forEach(c => add(c));
+            }
+        };
+        add(workspaceItem);
     }
     addWorkspaceIds(configToPopulate) {
         if (!configToPopulate) {

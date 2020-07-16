@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LayoutController = void 0;
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 const GoldenLayout = require("@glue42/golden-layout");
 const callback_registry_1 = require("callback-registry");
 const ResizeObserver = require("resize-observer-polyfill").default;

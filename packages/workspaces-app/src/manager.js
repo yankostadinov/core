@@ -39,7 +39,7 @@ class WorkspacesManager {
         this._stateResolver = new stateResolver_1.LayoutStateResolver(this._frameId, eventEmitter);
         this._controller = new controller_1.LayoutController(eventEmitter, this._stateResolver, startupConfig);
         this._frameController = new iframeController_1.IFrameController();
-        this._layoutsManager = new layouts_1.LayoutsManager();
+        this._layoutsManager = new layouts_1.LayoutsManager(this.stateResolver);
         this._popupManager = new popupManager_1.PopupManager();
         this._workspacesEventEmitter = new eventEmitter_2.WorkspacesEventEmitter();
         if (!startupConfig.emptyFrame) {

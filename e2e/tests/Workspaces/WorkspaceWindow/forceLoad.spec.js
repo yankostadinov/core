@@ -15,7 +15,7 @@ describe("forceLoad() Should", () => {
     }
 
     let workspace = undefined;
-    // BUG
+
     before(async () => {
         await Promise.all([glueReady, gtfReady]);
     });

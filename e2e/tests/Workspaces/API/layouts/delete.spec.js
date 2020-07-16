@@ -13,7 +13,6 @@ describe('delete() Should ', function () {
         ]
     }
 
-    // BUG
     before(() => {
         return Promise.all([glueReady, gtfReady]);
     });
