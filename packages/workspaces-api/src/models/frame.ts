@@ -58,6 +58,11 @@ export class Frame implements FrameAPI {
         return getData(this).controller.getSnapshot(myId, "frame");
     }
 
+    public async workspaces(): Promise<Workspace[]> {
+        const controller = getData(this).controller;
+        return controller.getWorkspaces((wsp) => wsp.frameId === this.id);
+    }
+
     public async restoreWorkspace(name: string, options?: RestoreWorkspaceConfig): Promise<Workspace> {
         nonEmptyStringDecoder.runWithException(name);
         const validatedOptions = restoreWorkspaceConfigDecoder.runWithException(options);

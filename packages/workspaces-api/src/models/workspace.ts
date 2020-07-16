@@ -76,7 +76,13 @@ export class Workspace implements Workspace {
     public async close(): Promise<void> {
         const controller = getData(this).controller;
 
+        const shouldCloseFrame = (await getData(this).frame.workspaces()).length === 1;
+
         await controller.closeItem(this.id);
+
+        if (shouldCloseFrame) {
+            await getData(this).frame.close();
+        }
     }
 
     public snapshot(): Promise<WorkspaceSnapshot> {
