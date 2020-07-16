@@ -100,6 +100,7 @@ export interface Frame extends FrameSummary {
     focus(): Promise<void>;
     close(): Promise<void>;
     snapshot(): Promise<FrameSnapshot>;
+    workspaces(): Promise<Workspace[]>;
     restoreWorkspace(name: string, options?: RestoreWorkspaceConfig): Promise<Workspace>;
     createWorkspace(definition: WorkspaceDefinition, config?: WorkspaceCreateConfig): Promise<Workspace>;
     onClosing(callback: (frame: Frame) => void): Promise<Unsubscribe>;
