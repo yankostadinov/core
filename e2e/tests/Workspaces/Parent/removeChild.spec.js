@@ -144,7 +144,7 @@ describe("removeChild() Should", () => {
                         children: [
                             {
                                 type: "group",
-                                children: [[{ type: "window", appName: "dummyApp" }]]
+                                children: [{ type: "window", appName: "dummyApp" }]
                             }
                         ]
                     }]
@@ -160,7 +160,7 @@ describe("removeChild() Should", () => {
 
         const parents = workspace.getAllParents();
 
-        expect(parents.length).to.eql(3);
+        expect(parents.length).to.eql(2);
     });
 
     it("remove the child and all of its children when the child is a group and has more children and the parent is a row", async () => {

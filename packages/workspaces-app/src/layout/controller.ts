@@ -1,3 +1,4 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 import GoldenLayout = require("@glue42/golden-layout");
 import registryFactory from "callback-registry";
 const ResizeObserver = require("resize-observer-polyfill").default;
@@ -227,7 +228,7 @@ export class LayoutController {
             type: "component",
             workspacesConfig: {},
             id,
-            title: configFactory.getWorkspaceTitle(store.workspaceTitles)
+            title: (config?.workspacesOptions as any)?.title || configFactory.getWorkspaceTitle(store.workspaceTitles)
         };
 
         this.registerWorkspaceComponent(id);
