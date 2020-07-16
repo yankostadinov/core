@@ -54,7 +54,7 @@ export class CoreController implements WorkspacesController {
             throw new Error(`This layout: ${name} cannot be restored, because it doesn't exist.`);
         }
 
-        const frameInstance: Instance = await this.frameUtils.getFrameInstance({ frameId: options?.frameId, newFrame: options.newFrame });
+        const frameInstance: Instance = await this.frameUtils.getFrameInstance({ frameId: options?.frameId, newFrame: options?.newFrame });
 
         return await this.base.restoreWorkspace(name, options, frameInstance);
     }
