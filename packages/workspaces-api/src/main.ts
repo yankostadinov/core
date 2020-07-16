@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { IoC } from "./shared/ioc";
-import { checkThrowCallback, nonEmptyStringDecoder, swimlaneLayoutDecoder, workspaceDefinitionDecoder, workspaceBuilderCreateConfigDecoder, builderConfigDecoder, restoreWorkspaceConfigDecoder, workspaceLayoutSaveConfigDecoder } from "./shared/decoders";
+import { checkThrowCallback, nonEmptyStringDecoder, workspaceLayoutDecoder, workspaceDefinitionDecoder, workspaceBuilderCreateConfigDecoder, builderConfigDecoder, restoreWorkspaceConfigDecoder, workspaceLayoutSaveConfigDecoder } from "./shared/decoders";
 import { FrameStreamData, WorkspaceStreamData, WorkspaceSnapshotResult, WindowStreamData, ContainerStreamData } from "./types/protocol";
 import { FrameCreateConfig, WorkspaceIoCCreateConfig } from "./types/ioc";
 import { BuilderConfig, WorkspaceBuilder, ParentBuilder, Frame, WorkspaceSummary, Workspace, WorkspaceWindow, WorkspaceParent, RestoreWorkspaceConfig, WorkspaceDefinition, WorkspaceCreateConfig, WorkspaceLayoutSummary, WorkspaceLayout, Unsubscribe, WorkspaceLayoutSaveConfig, API } from "./../workspaces";
@@ -120,7 +120,7 @@ export const composeAPI = (glue: any, ioc: IoC): API => {
             return controller.exportLayout(predicate);
         },
         import: async (layout: WorkspaceLayout): Promise<void> => {
-            swimlaneLayoutDecoder.runWithException(layout);
+            workspaceLayoutDecoder.runWithException(layout);
             return controller.importLayout(layout);
         },
         save: async (config: WorkspaceLayoutSaveConfig): Promise<WorkspaceLayout> => {

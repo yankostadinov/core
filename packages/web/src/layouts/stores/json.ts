@@ -1,11 +1,14 @@
 import { RemoteStore } from "../types";
 import { Glue42Web } from "../../../web";
+import { layoutTypeDecoder, layoutDecoder } from "../validation/";
 
 export class JSONStore implements RemoteStore {
 
     constructor(private readonly storeBaseUrl: string) { }
 
     public async getAll(layoutType: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout[]> {
+
+        layoutTypeDecoder.runWithException(layoutType);
 
         const fetchUrl = `${this.storeBaseUrl}/glue.layouts.json`;
 
@@ -25,11 +28,20 @@ export class JSONStore implements RemoteStore {
         if (!layouts) {
             return [];
         }
-        // todo: validate the layouts, warn and discard invalid ones
 
         const layoutProp = layoutType === "Global" ? "globals" : "workspaces";
 
-        return layouts[layoutProp] || [];
+        const layoutsToVerify = (layouts[layoutProp] || []) as Glue42Web.Layouts.Layout[];
+
+        return layoutsToVerify.filter((layout) => {
+            const decodeResult = layoutDecoder.run(layout);
+
+            if (!decodeResult.ok) {
+                console.warn(`Fetched layout: ${layout.name} is discarded, because it failed the validation: ${JSON.stringify(decodeResult)}`);
+            }
+
+            return decodeResult.ok;
+        });
     }
 
     public async get(name: string, layoutType: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout | undefined> {

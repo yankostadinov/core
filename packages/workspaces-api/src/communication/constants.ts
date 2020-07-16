@@ -1,4 +1,4 @@
-import { isWindowInSwimlaneResultDecoder, frameSummaryDecoder, workspaceSnapshotResultDecoder, frameSummariesResultDecoder, workspaceCreateConfigDecoder, getFrameSummaryConfigDecoder, layoutSummariesDecoder, openWorkspaceConfigDecoder, workspaceSummariesResultDecoder, voidResultDecoder, exportedLayoutsResultDecoder, swimlaneLayoutDecoder, deleteLayoutConfigDecoder, simpleItemConfigDecoder, resizeItemConfigDecoder, moveFrameConfigDecoder, frameSnapshotResultDecoder, simpleWindowOperationSuccessResultDecoder, setItemTitleConfigDecoder, moveWindowConfigDecoder, addWindowConfigDecoder, addContainerConfigDecoder, addItemResultDecoder, bundleConfigDecoder, workspaceStreamDataDecoder, frameStreamDataDecoder, containerStreamDataDecoder, windowStreamDataDecoder } from "../shared/decoders";
+import { isWindowInSwimlaneResultDecoder, frameSummaryDecoder, workspaceSnapshotResultDecoder, frameSummariesResultDecoder, workspaceCreateConfigDecoder, getFrameSummaryConfigDecoder, layoutSummariesDecoder, openWorkspaceConfigDecoder, workspaceSummariesResultDecoder, voidResultDecoder, exportedLayoutsResultDecoder, workspaceLayoutDecoder, deleteLayoutConfigDecoder, simpleItemConfigDecoder, resizeItemConfigDecoder, moveFrameConfigDecoder, frameSnapshotResultDecoder, simpleWindowOperationSuccessResultDecoder, setItemTitleConfigDecoder, moveWindowConfigDecoder, addWindowConfigDecoder, addContainerConfigDecoder, addItemResultDecoder, bundleConfigDecoder, workspaceStreamDataDecoder, frameStreamDataDecoder, containerStreamDataDecoder, windowStreamDataDecoder, workspaceLayoutSaveConfigDecoder } from "../shared/decoders";
 import { ControlOperation, StreamOperation } from "../types/protocol";
 import { StreamType } from "../types/subscription";
 
@@ -54,7 +54,7 @@ export const OPERATIONS: { [key in OperationsTypes]: ControlOperation } = {
     getAllLayoutsSummaries: { name: "getAllLayoutsSummaries", resultDecoder: layoutSummariesDecoder },
     openWorkspace: { name: "openWorkspace", argsDecoder: openWorkspaceConfigDecoder, resultDecoder: workspaceSnapshotResultDecoder },
     deleteLayout: { name: "deleteLayout", resultDecoder: voidResultDecoder, argsDecoder: deleteLayoutConfigDecoder },
-    saveLayout: { name: "saveLayout", resultDecoder: swimlaneLayoutDecoder, argsDecoder: swimlaneLayoutDecoder },
+    saveLayout: { name: "saveLayout", resultDecoder: workspaceLayoutDecoder, argsDecoder: workspaceLayoutSaveConfigDecoder },
     exportAllLayouts: { name: "exportAllLayouts", resultDecoder: exportedLayoutsResultDecoder },
     restoreItem: { name: "restoreItem", argsDecoder: simpleItemConfigDecoder, resultDecoder: voidResultDecoder },
     maximizeItem: { name: "maximizeItem", argsDecoder: simpleItemConfigDecoder, resultDecoder: voidResultDecoder },

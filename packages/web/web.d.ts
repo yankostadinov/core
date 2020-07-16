@@ -4,7 +4,7 @@
 import { UnsubscribeFunction } from "callback-registry";
 import { Glue42Core } from "@glue42/core";
 import { Glue42 } from "@glue42/desktop";
-import { API as WorkspacesAPI } from "@glue42/workspaces-api";
+import { API as WorkspacesAPI, WorkspaceComponent } from "@glue42/workspaces-api";
 
 /**
  * Factory function that creates a new glue instance.
@@ -342,7 +342,7 @@ export namespace Glue42Web {
          * @docmenuorder 11
          *
          */
-        export type LayoutType = "Global" | "Workspace" | "Activity";
+        export type LayoutType = "Global" | "Workspace";
 
         /**
          * Controls the import behavior. If `replace` (default), all existing layouts will be removed.
@@ -393,18 +393,18 @@ export namespace Glue42Web {
             type: LayoutType;
 
             /** Array of component objects describing the applications that are saved in the layout. */
-            components: LayoutComponent[];
+            components: Array<WindowComponent | WorkspaceComponent>;
 
             /** Context object passed when the layout was saved. */
-            context: any;
+            context?: any;
 
             /** Metadata passed when the layout was saved. */
-            metadata: any;
+            metadata?: any;
         }
 
-        export type ComponentType = "activity" | "application";
+        export type ComponentType = "application";
 
-        export interface LayoutComponent {
+        export interface WindowComponent {
             type: "window";
 
             /** Type of the component - can be application or activity. */

@@ -1,5 +1,46 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+export interface WorkspaceLayout {
+    name: string;
+    type: "Workspace";
+    components: Array<WorkspaceComponent>;
+    metadata?: any;
+}
+
+export interface WorkspaceComponent {
+    type: "Workspace";
+    state: {
+        children: Array<RowLayoutItem | ColumnLayoutItem | GroupLayoutItem | WindowLayoutItem>;
+        config: any;
+    };
+}
+
+export interface RowLayoutItem {
+    type: "row";
+    children: Array<RowLayoutItem | ColumnLayoutItem | GroupLayoutItem | WindowLayoutItem>;
+    config: any;
+}
+
+export interface ColumnLayoutItem {
+    type: "column";
+    children: Array<RowLayoutItem | ColumnLayoutItem | GroupLayoutItem | WindowLayoutItem>;
+    config: any;
+}
+
+export interface GroupLayoutItem {
+    type: "group";
+    children: WindowLayoutItem[];
+    config: any;
+}
+
+export interface WindowLayoutItem {
+    type: "window";
+    config: {
+        appName: string;
+        url?: string;
+    };
+}
+
 export type Unsubscribe = () => void;
 
 export interface RestoreWorkspaceConfig {
@@ -227,12 +268,6 @@ export interface ParentBuilder {
     addGroup(definition?: ParentDefinition): ParentBuilder;
     addWindow(definition: WorkspaceWindowDefinition): ParentBuilder;
     serialize(): ParentDefinition;
-}
-
-export interface WorkspaceLayout {
-    name: string;
-    layout?: CustomWorkspaceSnapshot;
-    workspaceId?: string;
 }
 
 export interface WorkspaceLayoutSaveConfig {

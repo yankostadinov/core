@@ -1,42 +1,54 @@
 import { Glue42Web } from "../../web";
 import { LayoutsController } from "./controller";
+import { layoutTypeDecoder, nonEmptyStringDecoder, newLayoutOptionsDecoder, restoreOptionsDecoder, layoutDecoder } from "./validation";
 
 export class Layouts implements Glue42Web.Layouts.API {
 
     constructor(private readonly controller: LayoutsController) { }
 
     public getAll(type: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.LayoutSummary[]> {
-        // todo validate
+        layoutTypeDecoder.runWithException(type);
+
         return this.controller.getAll(type);
     }
 
     public get(name: string, type: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout | undefined> {
-        // todo validate
+        nonEmptyStringDecoder.runWithException(name);
+        layoutTypeDecoder.runWithException(type);
+
         return this.controller.get(name, type);
     }
 
     public async export(layoutType?: Glue42Web.Layouts.LayoutType): Promise<Glue42Web.Layouts.Layout[]> {
-        // todo validate
+        if (layoutType) {
+            layoutTypeDecoder.runWithException(layoutType);
+        }
+
         return this.controller.export(layoutType);
     }
 
     public import(layout: Glue42Web.Layouts.Layout): Promise<void> {
-        // todo: validate
+        layoutDecoder.runWithException(layout);
+
         return this.controller.import(layout);
     }
 
     public save(layout: Glue42Web.Layouts.NewLayoutOptions): Promise<Glue42Web.Layouts.Layout> {
-        // todo: validate
+        newLayoutOptionsDecoder.runWithException(layout);
+
         return this.controller.save(layout);
     }
 
     public restore(options: Glue42Web.Layouts.RestoreOptions): Promise<void> {
-        // todo: validate
+        restoreOptionsDecoder.runWithException(options);
+
         return this.controller.restore(options);
     }
 
     public remove(type: Glue42Web.Layouts.LayoutType, name: string): Promise<void> {
-        // todo: validate
+        nonEmptyStringDecoder.runWithException(name);
+        layoutTypeDecoder.runWithException(type);
+
         return this.controller.remove(type, name);
     }
 

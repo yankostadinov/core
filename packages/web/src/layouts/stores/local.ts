@@ -3,6 +3,7 @@ import { openDB, IDBPDatabase } from "idb";
 import { dbName, dbVersion } from "../constants";
 import { LayoutsDB } from "../types";
 import { Glue42Web } from "../../../web";
+import { layoutDecoder, layoutTypeDecoder } from "../validation";
 
 export class LocalStore {
 
@@ -54,7 +55,9 @@ export class LocalStore {
     }
 
     public async store(layout: Glue42Web.Layouts.Layout, layoutType: Glue42Web.Layouts.LayoutType): Promise<string> {
-        // todo validate
+        layoutDecoder.runWithException(layout);
+        layoutTypeDecoder.runWithException(layoutType);
+
         switch (layoutType) {
             case "Workspace": return (await this.database).put("workspaceLayouts", layout, layout.name);
             case "Global": return (await this.database).put("globalLayouts", layout, layout.name);

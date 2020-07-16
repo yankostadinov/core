@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
 import { Decoder, object, boolean, string, optional, array, oneOf, constant, lazy, number, anyJson, intersection } from "decoder-validate";
 import { IsWindowInSwimlaneResult, WorkspaceSnapshotResult, ChildSnapshotResult, WorkspaceConfigResult, FrameSummaryResult, WorkspaceCreateConfigProtocol, GetFrameSummaryConfig, WorkspaceSummaryResult, LayoutSummariesResult, LayoutSummary, OpenWorkspaceConfig, FrameSummariesResult, WorkspaceSummariesResult, ExportedLayoutsResult, DeleteLayoutConfig, SimpleItemConfig, ResizeItemConfig, MoveFrameConfig, FrameSnapshotResult, BaseChildSnapshotConfig, ParentSnapshotConfig, SwimlaneWindowSnapshotConfig, SimpleWindowOperationSuccessResult, SetItemTitleConfig, MoveWindowConfig, AddWindowConfig, AddContainerConfig, AddItemResult, BundleConfig, WorkspaceStreamData, FrameStreamData, ContainerStreamData, ContainerSummaryResult, WindowStreamData } from "../types/protocol";
 import { StreamType, StreamAction } from "../types/subscription";
-import { WorkspaceCreateConfig, ParentDefinition, WorkspaceWindowDefinition, NewFrameConfig, RestoreType, RestoreWorkspaceConfig, WorkspaceDefinition, BuilderConfig, WorkspaceSummary, ParentSummary, WorkspaceWindowSummary, CustomWorkspaceSnapshot, WorkspaceLayout, ResizeConfig, MoveConfig, WorkspaceLayoutSaveConfig } from "../../workspaces";
+import { WorkspaceCreateConfig, ParentDefinition, WorkspaceWindowDefinition, NewFrameConfig, RestoreType, RestoreWorkspaceConfig, WorkspaceDefinition, BuilderConfig, WorkspaceSummary, ParentSummary, WorkspaceWindowSummary, CustomWorkspaceSnapshot, WorkspaceLayout, ResizeConfig, MoveConfig, WorkspaceLayoutSaveConfig, RowLayoutItem, ColumnLayoutItem, GroupLayoutItem, WindowLayoutItem } from "../../workspaces";
 
 export const nonEmptyStringDecoder: Decoder<string> = string().where((s) => s.length > 0, "Expected a non-empty string");
 export const nonNegativeNumberDecoder: Decoder<number> = number().where((num) => num >= 0, "Expected a non-negative number");
@@ -278,14 +279,64 @@ export const customWorkspaceSnapshotDecoder: Decoder<CustomWorkspaceSnapshot> = 
     children: array(customWorkspaceChildSnapshotDecoder),
 });
 
-export const swimlaneLayoutDecoder: Decoder<WorkspaceLayout> = object({
+export const windowLayoutItemDecoder: Decoder<WindowLayoutItem> = object({
+    type: constant("window"),
+    config: object({
+        appName: nonEmptyStringDecoder,
+        url: optional(nonEmptyStringDecoder)
+    })
+});
+
+export const groupLayoutItemDecoder: Decoder<GroupLayoutItem> = object({
+    type: constant("group"),
+    config: anyJson(),
+    children: array(oneOf<WindowLayoutItem>(
+        windowLayoutItemDecoder
+    ))
+});
+
+export const columnLayoutItemDecoder: Decoder<ColumnLayoutItem> = object({
+    type: constant("column"),
+    config: anyJson(),
+    children: array(oneOf<RowLayoutItem | ColumnLayoutItem | GroupLayoutItem | WindowLayoutItem>(
+        groupLayoutItemDecoder,
+        windowLayoutItemDecoder,
+        lazy(() => columnLayoutItemDecoder),
+        lazy(() => rowLayoutItemDecoder)
+    ))
+});
+
+export const rowLayoutItemDecoder: Decoder<RowLayoutItem> = object({
+    type: constant("row"),
+    config: anyJson(),
+    children: array(oneOf<RowLayoutItem | ColumnLayoutItem | GroupLayoutItem | WindowLayoutItem>(
+        columnLayoutItemDecoder,
+        groupLayoutItemDecoder,
+        windowLayoutItemDecoder,
+        lazy(() => rowLayoutItemDecoder)
+    ))
+});
+
+export const workspaceLayoutDecoder: Decoder<WorkspaceLayout> = object({
     name: nonEmptyStringDecoder,
-    layout: optional(customWorkspaceSnapshotDecoder),
-    workspaceId: optional(nonEmptyStringDecoder)
+    type: constant("Workspace"),
+    metadata: optional(anyJson()),
+    components: array(object({
+        type: constant("Workspace"),
+        state: object({
+            config: anyJson(),
+            children: array(oneOf<RowLayoutItem | ColumnLayoutItem | GroupLayoutItem | WindowLayoutItem>(
+                rowLayoutItemDecoder,
+                columnLayoutItemDecoder,
+                groupLayoutItemDecoder,
+                windowLayoutItemDecoder
+            ))
+        })
+    }))
 });
 
 export const exportedLayoutsResultDecoder: Decoder<ExportedLayoutsResult> = object({
-    layouts: array(swimlaneLayoutDecoder)
+    layouts: array(workspaceLayoutDecoder)
 });
 
 export const frameSummaryResultDecoder: Decoder<FrameSummaryResult> = object({
