@@ -96,7 +96,7 @@ class ConfigConverter {
             const resultWindow = factory_1.default.createApiWindow({
                 id: config.id,
                 isFocused: false,
-                isMaximized: false,
+                isMaximized: wspsConfig.isMaximized,
                 windowId: config.componentState.windowId,
                 appName: config.componentState.appName,
                 url: config.componentState.url,

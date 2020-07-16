@@ -126,7 +126,7 @@ describe('restoreWorkspace() Should', function () {
         expect(workspaceWindows.length).to.eql(1);
     });
 
-    it.skip("restore the layout in a new frame when the workspace is still opened and newFrame is true", async () => {
+    it("restore the layout in a new frame when the workspace is still opened and newFrame is true", async () => {
         const secondWorkspace = await glue.workspaces.restoreWorkspace(layoutName, { newFrame: true });
         const frames = await glue.workspaces.getAllFrames();
 

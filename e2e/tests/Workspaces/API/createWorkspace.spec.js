@@ -182,7 +182,7 @@ describe('createWorkspace() ', function () {
                         reuseFrameId: wsp.frameId
                     }
                 });
-                return wsp.close().then(() => {
+                return wsp.getMyFrame().close().then(() => {
                     glue.workspaces.createWorkspace(reuseFrameConfig).then(() => done("Should not resolve")).catch(() => done());
                 });
             }).catch(done);

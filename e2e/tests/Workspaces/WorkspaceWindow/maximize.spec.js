@@ -1,4 +1,4 @@
-describe.only("maximize() Should", () => {
+describe("maximize() Should", () => {
     const windowConfig = {
         type: "window",
         appName: "dummyApp"
