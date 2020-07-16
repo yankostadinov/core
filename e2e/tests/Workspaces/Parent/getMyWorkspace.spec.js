@@ -1,4 +1,4 @@
-describe.skip("getMyWorkspace() Should", () => {
+describe("getMyWorkspace() Should", () => {
     const config = {
         children: [
             {

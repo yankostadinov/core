@@ -62,7 +62,7 @@ describe('close() Should ', function () {
 
     it("remove the workspace from getAllWorkspaces when the workspace has been closed twice", async () => {
         try {
-            await Promise.all(workspace.close(), workspace.close());
+            await Promise.all([workspace.close(), workspace.close()]);
 
         } catch (error) {
             // Tested elsewhere
@@ -77,14 +77,12 @@ describe('close() Should ', function () {
 
     it("remove the workspace from getAllWorkspacesSummaries when the workspace has been closed twice", async () => {
         try {
-            await Promise.all(workspace.close(), workspace.close());
+            await Promise.all([workspace.close(), workspace.close()]);
 
         } catch (error) {
             // Tested elsewhere
         }
-
         const getAllWorkspaces = await glue.workspaces.getAllWorkspacesSummaries();
-
         const isWorkspaceInCollection = getAllWorkspaces.filter(w => w.id === workspace.id).length > 0;
 
         expect(isWorkspaceInCollection).to.be.false;
@@ -128,14 +126,12 @@ describe('close() Should ', function () {
 
         it("remove the workspace from getAllWorkspaces when the workspace has been closed twice when the workspace is not focused", async () => {
             try {
-                await Promise.all(workspace.close(), workspace.close());
+                await Promise.all([workspace.close(), workspace.close()]);
 
             } catch (error) {
                 // Tested elsewhere
             }
-
             const getAllWorkspaces = await glue.workspaces.getAllWorkspaces();
-
             const isWorkspaceInCollection = getAllWorkspaces.filter(w => w.id === workspace.id).length > 0;
 
             expect(isWorkspaceInCollection).to.be.false;
@@ -143,7 +139,7 @@ describe('close() Should ', function () {
 
         it("remove the workspace from getAllWorkspacesSummaries when the workspace has been closed twice when the workspace is not focused", async () => {
             try {
-                await Promise.all(workspace.close(), workspace.close());
+                await Promise.all([workspace.close(), workspace.close()]);
 
             } catch (error) {
                 // Tested elsewhere
@@ -166,7 +162,7 @@ describe('close() Should ', function () {
     });
 
     it("reject when the workspace has been closed twice without waiting", (done) => {
-        Promise.all(workspace.close(), workspace.close()).then(() => {
+        Promise.all([workspace.close(), workspace.close()]).then(() => {
             done("Should not resolve");
         }).catch(() => done());
     });

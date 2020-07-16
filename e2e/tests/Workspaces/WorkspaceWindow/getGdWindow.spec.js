@@ -1,4 +1,4 @@
-describe.only("getGdWindow() Should", () => {
+describe("getGdWindow() Should", () => {
     const windowConfig = {
         type: "window",
         appName: "dummyApp"

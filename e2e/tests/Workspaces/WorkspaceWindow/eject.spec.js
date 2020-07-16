@@ -19,20 +19,13 @@ describe("eject() Should", () => {
 
     before(async () => {
         await Promise.all([glueReady, gtfReady]);
+    });
+
+    beforeEach(async () => {
         workspace = await glue.workspaces.createWorkspace(basicConfig);
-    });
-    // BUG
+    })
+
     afterEach(async () => {
-        await workspace.refreshReference();
-
-        const windows = workspace.getAllWindows();
-
-        await Promise.all(windows.map(w => w.close()));
-        await Promise.all(windowsForClosing.filter(w => w).map(w => w.close()));
-        windowsForClosing = [];
-    });
-
-    after(async () => {
         const frames = await glue.workspaces.getAllFrames();
         await Promise.all(frames.map((f) => f.close()));
     });
@@ -45,6 +38,7 @@ describe("eject() Should", () => {
 
         const windows = workspace.getAllWindows();
         const window = windows[0];
+        await window.forceLoad();
         windowsForClosing.push(window.getGdWindow());
         const ejectPromise = window.eject();
 
@@ -59,28 +53,11 @@ describe("eject() Should", () => {
 
         const windows = workspace.getAllWindows();
         const window = windows[0];
+        await window.forceLoad();
 
         windowsForClosing.push(window.getGdWindow());
 
         await window.eject();
-    });
-
-    it("remove the workspace window when it is invoked before the window was loaded", async () => {
-        // Potential race if the window loads very fast
-        // TODO refactor
-        await workspace.addWindow(windowConfig);
-
-        await workspace.refreshReference();
-
-        const windows = workspace.getAllWindows();
-        const window = windows[0];
-        windowsForClosing.push(window.getGdWindow());
-        await window.eject();
-
-        await workspace.refreshReference();
-        const windowsAfterEject = workspace.getAllWindows();
-
-        expect(windowsAfterEject.length).to.eql(0);
     });
 
     it("remove the workspace window when it is invoked after the window was loaded", async () => {
@@ -90,8 +67,8 @@ describe("eject() Should", () => {
 
         const windows = workspace.getAllWindows();
         const window = windows[0];
-        windowsForClosing.push(window.getGdWindow());
         await window.forceLoad();
+        windowsForClosing.push(window.getGdWindow());
         await window.eject();
         await workspace.refreshReference();
         const windowsAfterEject = workspace.getAllWindows();
@@ -107,8 +84,9 @@ describe("eject() Should", () => {
 
         const windows = workspace.getAllWindows();
         const window = windows[0];
-        windowsForClosing.push(window.getGdWindow());
         await window.forceLoad();
+
+        windowsForClosing.push(window.getGdWindow());
         await window.eject();
         const windowsAfterEject = glue.windows.list();
 
@@ -127,6 +105,7 @@ describe("eject() Should", () => {
 
             const windows = workspace.getAllWindows();
             const window = windows[0];
+            await window.forceLoad();
 
             windowsForClosing.push(window.getGdWindow());
 
@@ -142,6 +121,8 @@ describe("eject() Should", () => {
 
             const windows = workspace.getAllWindows();
             const window = windows[0];
+            await window.forceLoad();
+
             windowsForClosing.push(window.getGdWindow());
             await window.eject();
 
@@ -158,8 +139,9 @@ describe("eject() Should", () => {
 
             const windows = workspace.getAllWindows();
             const window = windows[0];
-            windowsForClosing.push(window.getGdWindow());
             await window.forceLoad();
+
+            windowsForClosing.push(window.getGdWindow());
             await window.eject();
             await workspace.refreshReference();
             const windowsAfterEject = workspace.getAllWindows();
@@ -175,8 +157,8 @@ describe("eject() Should", () => {
 
             const windows = workspace.getAllWindows();
             const window = windows[0];
-            windowsForClosing.push(window.getGdWindow());
             await window.forceLoad();
+            windowsForClosing.push(window.getGdWindow());
             await window.eject();
             const windowsAfterEject = glue.windows.list();
 
@@ -184,7 +166,7 @@ describe("eject() Should", () => {
         });
     })
 
-    it.skip("reject when invoked twice on the same window and the window is loaded", async () => {
+    it("reject when invoked twice on the same window and the window is loaded", async () => {
         let errorThrown = false;
         try {
             await workspace.addWindow(windowConfig);
@@ -193,25 +175,8 @@ describe("eject() Should", () => {
 
             const windows = workspace.getAllWindows();
             const window = windows[0];
-            windowsForClosing.push(window.getGdWindow());
             await window.forceLoad();
-            await Promise.all([window.eject(), window.eject()]);
-        } catch (error) {
-            errorThrown = true;
-        }
 
-        expect(errorThrown).to.be.true;
-    });
-
-    it.skip("reject when invoked twice on the same window and the window is not loaded", async () => {
-        let errorThrown = false;
-        try {
-            await workspace.addWindow(windowConfig);
-
-            await workspace.refreshReference();
-
-            const windows = workspace.getAllWindows();
-            const window = windows[0];
             windowsForClosing.push(window.getGdWindow());
             await Promise.all([window.eject(), window.eject()]);
         } catch (error) {

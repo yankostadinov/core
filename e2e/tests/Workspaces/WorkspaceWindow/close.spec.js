@@ -57,8 +57,6 @@ describe("close() Should", () => {
     });
 
     it("remove the workspace window when it is invoked before the window was loaded", async () => {
-        // Potential race if the window loads very fast
-        // TODO refactor
         await workspace.addWindow(windowConfig);
 
         await workspace.refreshReference();
@@ -69,7 +67,7 @@ describe("close() Should", () => {
         await window.close();
 
         await workspace.refreshReference();
-        const windowsAfterClose = workspace.getAllWindows();
+        const windowsAfterClose = workspace.getAllWindows().filter(w => w.name === "dummyApp");;
 
         expect(windowsAfterClose.length).to.eql(0);
     });
@@ -91,7 +89,7 @@ describe("close() Should", () => {
     });
 
     it("close the corresponding gd window when it is invoked before the window was loaded", async () => {
-        const gdWindows = glue.windows.list();
+        const gdWindows = glue.windows.list().filter(w => w.name === "dummyApp");
 
         await workspace.addWindow(windowConfig);
 
@@ -102,27 +100,26 @@ describe("close() Should", () => {
 
         await window.close();
 
-        const gdWindowsAfterClose = glue.windows.list();
+        const gdWindowsAfterClose = glue.windows.list().filter(w => w.name === "dummyApp");
 
         expect(gdWindowsAfterClose.length).to.eql(gdWindows.length);
     })
 
     it("close the corresponding gd window when it is invoked after the window was loaded", async () => {
-        const gdWindows = glue.windows.list();
-
         await workspace.addWindow(windowConfig);
-
         await workspace.refreshReference();
 
         const windows = workspace.getAllWindows();
         const window = windows[0];
 
         await window.forceLoad();
+        const gdWindows = glue.windows.list();
+
         await window.close();
 
         const gdWindowsAfterClose = glue.windows.list();
 
-        expect(gdWindowsAfterClose.length).to.eql(gdWindows.length);
+        expect(gdWindowsAfterClose.length).to.eql(gdWindows.length - 1);
     });
 
     describe("", () => {
@@ -192,7 +189,7 @@ describe("close() Should", () => {
         });
 
         it("close the corresponding gd window when it is invoked before the window was loaded when the workspace is not focused", async () => {
-            const gdWindows = glue.windows.list();
+            const gdWindows = glue.windows.list().filter(w => w.name === "dummyApp");
 
             await workspace.addWindow(windowConfig);
 
@@ -203,13 +200,13 @@ describe("close() Should", () => {
 
             await window.close();
 
-            const gdWindowsAfterClose = glue.windows.list();
+            const gdWindowsAfterClose = glue.windows.list().filter(w => w.name === "dummyApp");;
 
             expect(gdWindowsAfterClose.length).to.eql(gdWindows.length);
         })
 
         it("close the corresponding gd window when it is invoked after the window was loaded when the workspace is not focused", async () => {
-            const gdWindows = glue.windows.list();
+            const gdWindows = glue.windows.list().filter(w => w.name === "dummyApp");
 
             await workspace.addWindow(windowConfig);
 
@@ -221,7 +218,7 @@ describe("close() Should", () => {
             await window.forceLoad();
             await window.close();
 
-            const gdWindowsAfterClose = glue.windows.list();
+            const gdWindowsAfterClose = glue.windows.list().filter(w => w.name === "dummyApp");
 
             expect(gdWindowsAfterClose.length).to.eql(gdWindows.length);
         });

@@ -1,4 +1,4 @@
-describe.skip("forceLoad() Should", () => {
+describe("forceLoad() Should", () => {
     const windowConfig = {
         type: "window",
         appName: "dummyApp"
@@ -18,18 +18,13 @@ describe.skip("forceLoad() Should", () => {
     // BUG
     before(async () => {
         await Promise.all([glueReady, gtfReady]);
+    });
+
+    beforeEach(async () => {
         workspace = await glue.workspaces.createWorkspace(basicConfig);
     });
 
     afterEach(async () => {
-        await workspace.refreshReference();
-
-        const windows = workspace.getAllWindows();
-
-        await Promise.all(windows.map(w => w.close()));
-    });
-
-    after(async () => {
         const frames = await glue.workspaces.getAllFrames();
         await Promise.all(frames.map((f) => f.close()));
     });
@@ -75,7 +70,7 @@ describe.skip("forceLoad() Should", () => {
     });
 
     it("add a new gd window", async () => {
-        const gdWindows = glue.windows.list();
+        const gdWindows = glue.windows.list().filter(w => w.name === "dummyApp");
         await workspace.addWindow(windowConfig);
 
         await workspace.refreshReference();
@@ -86,7 +81,7 @@ describe.skip("forceLoad() Should", () => {
         await window.forceLoad();
         await workspace.refreshReference();
 
-        const gdWindowsAfterLoad = glue.windows.list();
+        const gdWindowsAfterLoad = glue.windows.list().filter(w => w.name === "dummyApp");
         expect(gdWindowsAfterLoad.length).to.eql(gdWindows.length + 1);
     });
 
@@ -108,7 +103,7 @@ describe.skip("forceLoad() Should", () => {
     });
 
     describe("", () => {
-        before(async() => {
+        before(async () => {
             await glue.workspaces.createWorkspace(basicConfig);
         });
 
@@ -140,7 +135,7 @@ describe.skip("forceLoad() Should", () => {
         });
 
         it("add a new gd window when the workspace is not focused", async () => {
-            const gdWindows = glue.windows.list();
+            const gdWindows = glue.windows.list().filter(w => w.name === "dummyApp");
             await workspace.addWindow(windowConfig);
 
             await workspace.refreshReference();
@@ -151,7 +146,7 @@ describe.skip("forceLoad() Should", () => {
             await window.forceLoad();
             await workspace.refreshReference();
 
-            const gdWindowsAfterLoad = glue.windows.list();
+            const gdWindowsAfterLoad = glue.windows.list().filter(w => w.name === "dummyApp");
             expect(gdWindowsAfterLoad.length).to.eql(gdWindows.length + 1);
         });
 

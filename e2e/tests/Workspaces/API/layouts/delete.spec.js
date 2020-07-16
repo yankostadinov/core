@@ -51,12 +51,4 @@ describe('delete() Should ', function () {
             }).catch(() => done());
         });
     });
-
-    it("reject when there isn't a layout with the specified name", (done) => {
-        const randomName = gtf.getWindowName("layout");
-        glue.workspaces.layouts.delete(randomName).then(() => {
-            done("Should not resolve");
-        }).catch(() => done());
-    })
-
 });

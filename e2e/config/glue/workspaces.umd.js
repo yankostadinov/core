@@ -1254,7 +1254,7 @@
                         throw new Error(`Cannot reuse the frame with id: ${options.frameId}, because there is no frame with that ID found`);
                     }
                 }
-                return yield this.base.restoreWorkspace(options);
+                return yield this.base.restoreWorkspace(name, options);
             });
         }
         add(type, parentId, parentType, definition) {
@@ -2111,7 +2111,6 @@
         refreshReference() {
             return __awaiter(this, void 0, void 0, function* () {
                 const newSnapshot = (yield getData(this).controller.getSnapshot(this.id, "workspace"));
-                console.log("new workspace snapshot", newSnapshot);
                 const existingChildren = newSnapshot.children.reduce((foundChildren, child) => {
                     let foundChild;
                     if (child.type === "window") {
@@ -2470,7 +2469,6 @@
     class Window {
         constructor(dataManager) {
             data$1.set(this, { manager: dataManager });
-            console.log("private data for window", getData$1(this));
         }
         get id() {
             return getData$1(this).config.windowId;
@@ -2479,10 +2477,10 @@
             return "window";
         }
         get frameId() {
-            return getData$1(this).config.frameId;
+            return getData$1(this).frame.id;
         }
         get workspaceId() {
-            return getData$1(this).config.workspaceId;
+            return getData$1(this).workspace.id;
         }
         get positionIndex() {
             return getData$1(this).config.positionIndex;
@@ -2516,7 +2514,6 @@
                 const controller = getData$1(this).controller;
                 const itemId = getData$1(this).id;
                 const windowId = yield controller.forceLoadWindow(itemId);
-                console.log("Private data for window", windowId);
                 getData$1(this).config.windowId = windowId;
                 getData$1(this).config.isLoaded = true;
             });
@@ -3001,7 +2998,6 @@
             }
         }
         setWindowData(model, data) {
-            console.log("setting window data", data);
             this.windowPlacementIdData[data.id] = model;
             this.windowsData.set(model, data);
         }
@@ -3181,7 +3177,6 @@
                 yield controller.closeItem(modelData.id);
                 if (modelData.parent instanceof Workspace) {
                     yield modelData.parent.refreshReference();
-                    console.log("workspace reference refreshed", modelData.parent.getAllChildren());
                 }
                 else {
                     yield this.getMyWorkspace(modelData.parent).refreshReference();
@@ -3245,8 +3240,8 @@
                 if (!layoutExists) {
                     throw new Error(`This layout: ${name} cannot be restored, because it doesn't exist.`);
                 }
-                const frameInstance = yield this.frameUtils.getFrameInstance({ frameId: options === null || options === void 0 ? void 0 : options.frameId });
-                return yield this.base.restoreWorkspace(options, frameInstance);
+                const frameInstance = yield this.frameUtils.getFrameInstance({ frameId: options === null || options === void 0 ? void 0 : options.frameId, newFrame: options === null || options === void 0 ? void 0 : options.newFrame });
+                return yield this.base.restoreWorkspace(name, options, frameInstance);
             });
         }
         add(type, parentId, parentType, definition) {
@@ -3640,7 +3635,7 @@
                 return this.ioc.getModel("workspace", workspaceConfig);
             });
         }
-        restoreWorkspace(options, frameInstance) {
+        restoreWorkspace(name, options, frameInstance) {
             return __awaiter(this, void 0, void 0, function* () {
                 const snapshot = yield this.bridge.send(OPERATIONS.openWorkspace.name, { name, restoreOptions: options }, frameInstance);
                 const frameSummary = yield this.bridge.send(OPERATIONS.getFrameSummary.name, { itemId: snapshot.config.frameId }, frameInstance);
@@ -3957,7 +3952,6 @@
                 case "workspace": {
                     const { snapshot, frame } = createConfig;
                     const newWorkspace = new Workspace(this.privateDataManager);
-                    console.log("building children with this snapshot", snapshot);
                     const children = this.buildChildren(snapshot.children, frame, newWorkspace, newWorkspace);
                     const workspacePrivateData = {
                         id: snapshot.id,

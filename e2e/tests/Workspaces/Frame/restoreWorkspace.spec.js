@@ -113,7 +113,6 @@ describe('restoreWorkspace() Should', function () {
     it("restore the layout with the given title when a title is passed", async () => {
         const title = "myNewTitle";
         const secondWorkspace = await frame.restoreWorkspace(layoutName, { title });
-        const frames = await glue.workspaces.getAllFrames();
 
         expect(secondWorkspace.title).to.eql(title);
     });
