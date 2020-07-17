@@ -37,6 +37,7 @@ export class JSONStore implements RemoteStore {
             const decodeResult = layoutDecoder.run(layout);
 
             if (!decodeResult.ok) {
+                // tslint:disable-next-line:no-console
                 console.warn(`Fetched layout: ${layout.name} is discarded, because it failed the validation: ${JSON.stringify(decodeResult)}`);
             }
 

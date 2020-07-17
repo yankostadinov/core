@@ -1,10 +1,9 @@
-import { Decoder, oneOf, constant, string, object, optional, anyJson, boolean, array } from "decoder-validate";
+import { Decoder, oneOf, constant, object, optional, anyJson, boolean, array } from "decoder-validate";
 import { Glue42Web } from "../../../web";
 import { WorkspaceComponent } from "@glue42/workspaces-api";
 import { workspaceComponentDecoder } from "./workspace";
 import { windowComponentDecoder } from "./window";
-
-export const nonEmptyStringDecoder: Decoder<string> = string().where((s) => s.length > 0, "Expected a non-empty string");
+import { nonEmptyStringDecoder } from "./simple";
 
 export const layoutTypeDecoder: Decoder<Glue42Web.Layouts.LayoutType> = oneOf<Glue42Web.Layouts.LayoutType>(
     constant("Global"),

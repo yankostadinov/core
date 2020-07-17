@@ -359,6 +359,32 @@ export namespace Glue42Web {
          * @docmenuorder 1
          */
         export interface API {
+            
+            /**
+             * Fetches a saved layout or returns undefined if a layout with the provided name and type does not exist.
+             * @param type Type of the layout to fetch.
+             * @param name Name of the layout to fetch.
+             */
+            get?(name: string, type: LayoutType): Promise<Layout | undefined>;
+
+            /**
+             * Returns a lightweight, summarized version of all layouts of the provided type.
+             * @param type Type of the layouts to fetch.
+             */
+            getAll?(type: LayoutType): Promise<LayoutSummary[]>;
+        
+            /**
+             * Returns all layouts from the provided type.
+             * @param type Type of the layouts to export.
+             */
+            export(layoutType?: LayoutType): Promise<Layout[]>;
+        
+            /**
+             * Stores a full layout.
+             * @param layout The layout object to be stored.
+             */
+            import(layouts: Layout[]): Promise<void>;
+
             /**
              * Saves a new layout.
              * @param layout Options for saving a layout.

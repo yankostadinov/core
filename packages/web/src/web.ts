@@ -43,7 +43,7 @@ const hookCloseEvents = (api: Glue42Web.API, config: Glue42Web.Config, control: 
                             layoutName,
                             context: {},
                             metadata: {},
-                            parentInfo: layoutsController?.getLocalLayoutComponent({}, true) as Glue42Web.Layouts.LayoutComponent
+                            parentInfo: layoutsController?.getLocalLayoutComponent({}, true) as Glue42Web.Layouts.WindowComponent
                         }
                     };
                     control.send(command, { windowId: firstChild });

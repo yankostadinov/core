@@ -1,6 +1,6 @@
 import { Decoder, object, constant, optional, anyJson, boolean } from "decoder-validate";
-import { nonEmptyStringDecoder } from ".";
 import { Glue42Web } from "../../../web";
+import { nonEmptyStringDecoder } from "./simple";
 
 export const windowComponentDecoder: Decoder<Glue42Web.Layouts.WindowComponent> = object({
     type: constant("window"),

@@ -1,6 +1,7 @@
 import { Glue42Web } from "../../web";
 import { LayoutsController } from "./controller";
-import { layoutTypeDecoder, nonEmptyStringDecoder, newLayoutOptionsDecoder, restoreOptionsDecoder, layoutDecoder } from "./validation";
+import { layoutTypeDecoder, newLayoutOptionsDecoder, restoreOptionsDecoder, layoutDecoder } from "./validation/";
+import { nonEmptyStringDecoder } from "./validation/simple";
 
 export class Layouts implements Glue42Web.Layouts.API {
 
@@ -27,10 +28,10 @@ export class Layouts implements Glue42Web.Layouts.API {
         return this.controller.export(layoutType);
     }
 
-    public import(layout: Glue42Web.Layouts.Layout): Promise<void> {
-        layoutDecoder.runWithException(layout);
+    public import(layouts: Glue42Web.Layouts.Layout[]): Promise<void> {
+        layouts.forEach((layout) => layoutDecoder.runWithException(layout));
 
-        return this.controller.import(layout);
+        return this.controller.import(layouts);
     }
 
     public save(layout: Glue42Web.Layouts.NewLayoutOptions): Promise<Glue42Web.Layouts.Layout> {

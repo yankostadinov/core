@@ -2,7 +2,7 @@
 
 import { Decoder, object, constant, optional, anyJson, array, oneOf, lazy } from "decoder-validate";
 import { WindowLayoutItem, GroupLayoutItem, ColumnLayoutItem, RowLayoutItem, WorkspaceComponent } from "@glue42/workspaces-api";
-import { nonEmptyStringDecoder } from ".";
+import { nonEmptyStringDecoder } from "./simple";
 
 export const windowLayoutItemDecoder: Decoder<WindowLayoutItem> = object({
     type: constant("window"),

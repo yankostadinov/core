@@ -24,7 +24,7 @@ export interface SaveAutoLayoutCommand extends LayoutRemoteCommand<SaveAutoLayou
 
 export interface SaveAutoLayoutCommandArgs {
     layoutName: string;
-    parentInfo: Glue42Web.Layouts.LayoutComponent;
+    parentInfo: Glue42Web.Layouts.WindowComponent;
     childWindows: string[];
     closeEveryone: boolean;
     context: object;

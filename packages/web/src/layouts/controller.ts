@@ -35,8 +35,8 @@ export class LayoutsController {
         return globalLayouts.concat(workspaceLayouts);
     }
 
-    public async import(layout: Glue42Web.Layouts.Layout): Promise<void> {
-        return this.storage.store(layout, layout.type);
+    public async import(layouts: Glue42Web.Layouts.Layout[]): Promise<void> {
+        await Promise.all(layouts.map((layout) => this.storage.store(layout, layout.type)));
     }
 
     public async save(layoutOptions: Glue42Web.Layouts.NewLayoutOptions, autoSave = false): Promise<Glue42Web.Layouts.Layout> {
@@ -90,7 +90,7 @@ export class LayoutsController {
             return;
         }
         // set the context to our window
-        const mainComponent = layout.components.find((c) => c.state.main);
+        const mainComponent = layout.components.find((c) => (c as Glue42Web.Layouts.WindowComponent).state.main) as Glue42Web.Layouts.WindowComponent;
         my.setContext(mainComponent?.state.context);
 
         try {
@@ -120,7 +120,7 @@ export class LayoutsController {
         return this.storage.get(name, type);
     }
 
-    public getLocalLayoutComponent(context?: object, main = false): Glue42Web.Layouts.LayoutComponent {
+    public getLocalLayoutComponent(context?: object, main = false): Glue42Web.Layouts.WindowComponent {
         let requestResult: Glue42Web.Layouts.SaveRequestResponse | undefined;
         const my = this.windows.my() as LocalWebWindow;
 
@@ -164,8 +164,8 @@ export class LayoutsController {
         });
     }
 
-    private async getRemoteWindowsInfo(windows: string[]): Promise<Glue42Web.Layouts.LayoutComponent[]> {
-        const promises: Array<Promise<Glue42Web.Interop.InvocationResult<Glue42Web.Layouts.LayoutComponent>>> = [];
+    private async getRemoteWindowsInfo(windows: string[]): Promise<Glue42Web.Layouts.WindowComponent[]> {
+        const promises: Array<Promise<Glue42Web.Interop.InvocationResult<Glue42Web.Layouts.WindowComponent>>> = [];
         for (const id of windows) {
             const interopServer = this.interop.servers().find((s) => s.windowId === id);
             if (!interopServer || !interopServer.getMethods) {
@@ -174,7 +174,7 @@ export class LayoutsController {
             const methods = interopServer.getMethods();
             if (methods.find((m) => m.name === SaveContextMethodName)) {
                 try {
-                    promises.push(this.interop.invoke<Glue42Web.Layouts.LayoutComponent>(SaveContextMethodName, {}, { windowId: id }));
+                    promises.push(this.interop.invoke<Glue42Web.Layouts.WindowComponent>(SaveContextMethodName, {}, { windowId: id }));
                 } catch  {
                     // swallow
                 }
