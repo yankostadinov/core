@@ -24,7 +24,7 @@ export interface WorkspacesController {
     exportLayout(predicate?: (layout: WorkspaceLayout) => boolean): Promise<WorkspaceLayout[]>;
     bundleTo(type: "row" | "column", workspaceId: string): Promise<void>;
     saveLayout(config: WorkspaceLayoutSaveConfig): Promise<WorkspaceLayout>;
-    importLayout(layout: WorkspaceLayout): Promise<void>;
+    importLayout(layouts: WorkspaceLayout[]): Promise<void>;
     restoreItem(itemId: string): Promise<void>;
     maximizeItem(itemId: string): Promise<void>;
     focusItem(itemId: string): Promise<void>;

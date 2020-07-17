@@ -179,8 +179,8 @@ export class EnterpriseController implements WorkspacesController {
         return await this.bridge.send(OPERATIONS.saveLayout.name, { name: config.name, workspaceId: config.workspaceId });
     }
 
-    public async importLayout(layout: WorkspaceLayout): Promise<void> {
-        await this.bridge.send(OPERATIONS.saveLayout.name, layout);
+    public async importLayout(layouts: WorkspaceLayout[]): Promise<void> {
+        await Promise.all(layouts.map((layout) => this.bridge.send(OPERATIONS.saveLayout.name, layout)));
     }
 
     public async bundleTo(type: "row" | "column", workspaceId: string): Promise<void> {

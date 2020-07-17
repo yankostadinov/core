@@ -188,8 +188,8 @@ export class CoreController implements WorkspacesController {
         }, []);
     }
 
-    public async importLayout(layout: WorkspaceLayout): Promise<void> {
-        await this.layouts.import(layout);
+    public async importLayout(layouts: WorkspaceLayout[]): Promise<void> {
+        await this.layouts.import(layouts);
     }
 
     public async saveLayout(config: WorkspaceLayoutSaveConfig): Promise<WorkspaceLayout> {

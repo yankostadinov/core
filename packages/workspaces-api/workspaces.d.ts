@@ -307,7 +307,7 @@ export interface API {
         getSummaries(): Promise<WorkspaceLayoutSummary[]>;
         delete(name: string): Promise<void>;
         export(predicate?: (layout: WorkspaceLayout) => boolean): Promise<WorkspaceLayout[]>;
-        import(layout: WorkspaceLayout): Promise<void>;
+        import(layouts: WorkspaceLayout[]): Promise<void>;
         save(config: WorkspaceLayoutSaveConfig): Promise<WorkspaceLayout>;
     };
     onFrameOpened(callback: (frame: Frame) => void): Promise<Unsubscribe>;

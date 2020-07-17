@@ -119,9 +119,9 @@ export const composeAPI = (glue: any, ioc: IoC): API => {
             checkThrowCallback(predicate, true);
             return controller.exportLayout(predicate);
         },
-        import: async (layout: WorkspaceLayout): Promise<void> => {
-            workspaceLayoutDecoder.runWithException(layout);
-            return controller.importLayout(layout);
+        import: async (layouts: WorkspaceLayout[]): Promise<void> => {
+            layouts.forEach((layout) => workspaceLayoutDecoder.runWithException(layout));
+            return controller.importLayout(layouts);
         },
         save: async (config: WorkspaceLayoutSaveConfig): Promise<WorkspaceLayout> => {
             const verifiedConfig = workspaceLayoutSaveConfigDecoder.runWithException(config);
