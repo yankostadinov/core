@@ -1,10 +1,11 @@
 import { ServerApp, ServerSettings, SharedAsset } from "./user.config";
 
-export type CliCommand = "serve" | "build" | "init" | "version";
+export type CliCommand = "serve" | "build" | "init" | "version" | "workspaces";
 
 export interface CliConfig extends FullDevConfig {
     rootDirectory: string;
     command: CliCommand;
+    workspaces: boolean;
 }
 
 export interface FullDevConfig {
@@ -27,7 +28,12 @@ export interface CliGlueAssets {
         location: string;
         gwLogAppender?: string;
     };
+    workspaces?: {
+        appLocation: string;
+        manifestLocation: string;
+    };
     config: string;
+    layouts: string;
     route: string;
 }
 
