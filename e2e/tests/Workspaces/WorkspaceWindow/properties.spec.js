@@ -41,7 +41,7 @@ describe("properties: ", () => {
         ]
     };
     let workspace;
-    // BUG
+
     before(async () => {
         await Promise.all([glueReady, gtfReady]);
         workspace = await glue.workspaces.createWorkspace(threeContainersConfig);

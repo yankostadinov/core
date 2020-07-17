@@ -49,7 +49,7 @@ describe('export() Should ', function () {
             expect(exportedLayouts.length).to.eql(i + 1);
         });
 
-        it.skip(`return ${i + 1} layouts with the correct names`, async () => {
+        it(`return ${i + 1} layouts with the correct names`, async () => {
             const currentLayouts = [];
             const savePromises = Array.from({ length: i + 1 }).map(async () => {
                 const workspace = await glue.workspaces.createWorkspace(basicConfig);
@@ -70,7 +70,7 @@ describe('export() Should ', function () {
                 const currentLayout = layouts.find(l => l.name === cl);
 
                 expect(currentLayout).to.not.be.undefined;
-                expect(currentLayout.layout).to.not.be.undefined;
+                expect(currentLayout.components).to.not.be.undefined;
             });
         });
     })

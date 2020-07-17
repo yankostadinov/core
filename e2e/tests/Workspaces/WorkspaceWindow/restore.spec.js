@@ -20,8 +20,6 @@ describe("restore() Should", () => {
         await Promise.all([glueReady, gtfReady]);
     });
 
-    // BUG
-
     beforeEach(async () => {
         workspace = await glue.workspaces.createWorkspace(basicConfig);
         await workspace.addWindow(windowConfig);

@@ -138,7 +138,9 @@ export interface Workspace {
 
 export interface WorkspaceLayout {
     name: string;
-    layout: WorkspaceItem;
+    type: "Workspace";
+    metadata?: object;
+    components: Array<{ type: "Workspace"; state: WorkspaceItem }>
 }
 
 export interface FrameLayoutConfig {

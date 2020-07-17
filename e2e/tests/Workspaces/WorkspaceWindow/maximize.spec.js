@@ -16,7 +16,7 @@ describe("maximize() Should", () => {
 
     let workspace = undefined;
     let window = undefined;
-    // BUG
+
     before(() => {
         return Promise.all([glueReady, gtfReady]);
     });

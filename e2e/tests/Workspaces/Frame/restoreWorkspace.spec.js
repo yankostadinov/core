@@ -22,7 +22,6 @@ describe('restoreWorkspace() Should', function () {
         return Promise.all([glueReady, gtfReady]);
     });
 
-    // BUG
     beforeEach(async () => {
         workspace = await glue.workspaces.createWorkspace(basicConfig);
         frame = (await glue.workspaces.getAllFrames())[0];

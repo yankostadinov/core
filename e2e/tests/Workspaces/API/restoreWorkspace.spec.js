@@ -23,7 +23,6 @@ describe('restoreWorkspace() Should', function () {
 
     beforeEach(async () => {
         workspace = await glue.workspaces.createWorkspace(basicConfig);
-        // BUG
         await workspace.saveLayout(layoutName);
     });
 

@@ -82,7 +82,7 @@ describe("moveTo() Should", async () => {
             newFrame: true
         }
     }
-    // BUG
+
     before(async () => {
         await Promise.all([glueReady, gtfReady]);
     });
@@ -183,15 +183,15 @@ describe("moveTo() Should", async () => {
         expect(secondWindows.length).to.eql(2);
     });
 
-    it.skip("move the window from one row to another when the target is a row in the same workspace", () => {
-        // TODO
-    });
+    // it.skip("move the window from one row to another when the target is a row in the same workspace", () => {
+    //     // TODO
+    // });
 
-    it.skip("move the window from one column to another when the target is a column in the same workspace", () => {
-        // TODO
-    });
+    // it.skip("move the window from one column to another when the target is a column in the same workspace", () => {
+    //     // TODO
+    // });
 
-    it.skip("move the window from one group to another when the target is a group in the same workspace", () => {
-        // TODO
-    });
+    // it.skip("move the window from one group to another when the target is a group in the same workspace", () => {
+    //     // TODO
+    // });
 });
