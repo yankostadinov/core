@@ -326,6 +326,6 @@ export interface API {
     onParentRemoved(callback: (removed: { id: string; workspaceId: string; frameId: string }) => void): Promise<Unsubscribe>;
 }
 
-export type WorkspacesFactoryFunction = (glue: any, config?: any) => API;
+export type WorkspacesFactoryFunction = (glue: any, config?: any) => Promise<void>;
 declare const WorkspacesFactory: WorkspacesFactoryFunction;
 export default WorkspacesFactory;
