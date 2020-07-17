@@ -60,7 +60,7 @@ class LayoutsManager {
         return rendererFriendlyFrameConfig;
     }
     async getSavedWorkspaceNames() {
-        const allLayouts = await window.glue.layouts.getAll();
+        const allLayouts = await window.glue.layouts.getAll(this._layoutsType);
         const workspaceLayouts = allLayouts.filter((l) => l.type === this._layoutsType);
         return workspaceLayouts.map((wl) => wl.name);
     }
@@ -76,7 +76,7 @@ class LayoutsManager {
         return rendererFriendlyConfig;
     }
     async delete(name) {
-        await window.glue.layouts.remove(name, this._layoutsType);
+        await window.glue.layouts.remove(this._layoutsType, name);
     }
     async save(name, workspace) {
         if (!workspace.layout) {
@@ -97,7 +97,7 @@ class LayoutsManager {
                     }
                 }]
         };
-        await window.glue.layouts.import(layoutToImport);
+        await window.glue.layouts.import([layoutToImport]);
         return layoutToImport;
     }
     async saveWorkspacesFrame(workspaces) {
@@ -119,6 +119,7 @@ class LayoutsManager {
         await this.applyWindowLayoutState(workspaceConfig);
         const workspaceItem = converter_1.default.convertToAPIConfig(workspaceConfig);
         this.removeWorkspaceItemIds(workspaceItem);
+        // The excess properties should be cleaned
         this.windowSummariesToWindowLayout(workspaceItem);
         this.addWindowUrlsToWindows(workspaceItem);
         return workspaceItem;

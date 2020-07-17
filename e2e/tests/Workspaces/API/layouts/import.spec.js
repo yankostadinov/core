@@ -50,7 +50,7 @@ describe('import() Should ', function () {
     });
 
     it("import the layout when the layout is valid", async () => {
-        await glue.workspaces.layouts.import(basicImport);
+        await glue.workspaces.layouts.import([basicImport]);
 
         const summaries = await glue.workspaces.layouts.getSummaries();
 
@@ -65,7 +65,7 @@ describe('import() Should ', function () {
         }).catch(() => done());
     });
 
-    Array.from([null, undefined, [], "layout", 42]).forEach((input) => {
+    Array.from([null, undefined, {}, "layout", 42]).forEach((input) => {
         it(`reject when the layout is a ${JSON.stringify(input)}`, (done) => {
             glue.workspaces.layouts.import(input).then(() => {
                 done("Should not resolve");

@@ -1401,9 +1401,9 @@
                 return yield this.bridge.send(OPERATIONS.saveLayout.name, { name: config.name, workspaceId: config.workspaceId });
             });
         }
-        importLayout(layout) {
+        importLayout(layouts) {
             return __awaiter(this, void 0, void 0, function* () {
-                yield this.bridge.send(OPERATIONS.saveLayout.name, layout);
+                yield Promise.all(layouts.map((layout) => this.bridge.send(OPERATIONS.saveLayout.name, layout)));
             });
         }
         bundleTo(type, workspaceId) {
@@ -2144,6 +2144,7 @@
         refreshReference() {
             return __awaiter(this, void 0, void 0, function* () {
                 const newSnapshot = (yield getData(this).controller.getSnapshot(this.id, "workspace"));
+                console.log("new workspace snapshot", newSnapshot);
                 const existingChildren = newSnapshot.children.reduce((foundChildren, child) => {
                     let foundChild;
                     if (child.type === "window") {
@@ -2350,6 +2351,7 @@
                 const wrappedCallback = (payload) => __awaiter(this, void 0, void 0, function* () {
                     yield this.refreshReference();
                     const windowParent = this.getParent((parent) => parent.id === payload.windowSummary.parentId);
+                    console.log("workspace window added payload", payload);
                     const foundWindow = windowParent.getChild((child) => {
                         console.log("checking child", child);
                         return child.type === "window" && child.positionIndex === payload.windowSummary.config.positionIndex;
@@ -2393,6 +2395,7 @@
                 const id = getData(this).id;
                 const wrappedCallback = (payload) => __awaiter(this, void 0, void 0, function* () {
                     yield this.refreshReference();
+                    console.log("payload for window loaded", payload);
                     const foundWindow = this.getWindow((win) => {
                         console.log("Window checked", win);
                         return win.id && win.id === payload.windowSummary.config.windowId;
@@ -3402,9 +3405,9 @@
                 }, []);
             });
         }
-        importLayout(layout) {
+        importLayout(layouts) {
             return __awaiter(this, void 0, void 0, function* () {
-                yield this.layouts.import(layout);
+                yield this.layouts.import(layouts);
             });
         }
         saveLayout(config) {
@@ -4144,9 +4147,9 @@
                 checkThrowCallback(predicate, true);
                 return controller.exportLayout(predicate);
             }),
-            import: (layout) => __awaiter(void 0, void 0, void 0, function* () {
-                workspaceLayoutDecoder.runWithException(layout);
-                return controller.importLayout(layout);
+            import: (layouts) => __awaiter(void 0, void 0, void 0, function* () {
+                layouts.forEach((layout) => workspaceLayoutDecoder.runWithException(layout));
+                return controller.importLayout(layouts);
             }),
             save: (config) => __awaiter(void 0, void 0, void 0, function* () {
                 const verifiedConfig = workspaceLayoutSaveConfigDecoder.runWithException(config);

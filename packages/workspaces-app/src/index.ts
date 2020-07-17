@@ -15,7 +15,7 @@ const config = {
 
 window.$ = jquery;
 
-GlueWeb(config as any).then((glue) => {
+GlueWeb(config).then((glue) => {
     window.glue = glue;
     return manager.init(glue.agm.instance.peerId);
 }).then(() => {

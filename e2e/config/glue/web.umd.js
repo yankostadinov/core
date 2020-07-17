@@ -1109,512 +1109,6 @@
         return Windows;
     }());
 
-    var Layouts = (function () {
-        function Layouts(controller) {
-            this.controller = controller;
-        }
-        Layouts.prototype.getAll = function (type) {
-            return this.controller.getAll(type);
-        };
-        Layouts.prototype.get = function (name, type) {
-            return this.controller.get(name, type);
-        };
-        Layouts.prototype.export = function (layoutType) {
-            return __awaiter(this, void 0, void 0, function () {
-                return __generator(this, function (_a) {
-                    return [2, this.controller.export(layoutType)];
-                });
-            });
-        };
-        Layouts.prototype.import = function (layout) {
-            return this.controller.import(layout);
-        };
-        Layouts.prototype.save = function (layout) {
-            return this.controller.save(layout);
-        };
-        Layouts.prototype.restore = function (options) {
-            return this.controller.restore(options);
-        };
-        Layouts.prototype.remove = function (type, name) {
-            return this.controller.remove(type, name);
-        };
-        return Layouts;
-    }());
-
-    var CONTEXT_PREFIX = "___channel___";
-    var SharedContextSubscriber = (function () {
-        function SharedContextSubscriber(contexts) {
-            this.contexts = contexts;
-        }
-        SharedContextSubscriber.prototype.subscribe = function (callback) {
-            this.callback = callback;
-        };
-        SharedContextSubscriber.prototype.subscribeFor = function (name, callback) {
-            if (!this.isChannel(name)) {
-                return Promise.reject(new Error("Channel with name: " + name + " doesn't exist!"));
-            }
-            var contextName = this.createContextName(name);
-            return this.contexts.subscribe(contextName, function (data, _, __, ___, extraData) {
-                callback(data.data, data, extraData === null || extraData === void 0 ? void 0 : extraData.updaterId);
-            });
-        };
-        SharedContextSubscriber.prototype.switchChannel = function (name) {
-            return __awaiter(this, void 0, void 0, function () {
-                var contextName, _a;
-                var _this = this;
-                return __generator(this, function (_b) {
-                    switch (_b.label) {
-                        case 0:
-                            this.unsubscribe();
-                            contextName = this.createContextName(name);
-                            _a = this;
-                            return [4, this.contexts.subscribe(contextName, function (data, _, __, ___, extraData) {
-                                    if (_this.callback) {
-                                        _this.callback(data.data, data, extraData === null || extraData === void 0 ? void 0 : extraData.updaterId);
-                                    }
-                                })];
-                        case 1:
-                            _a.unsubscribeFunc = _b.sent();
-                            return [2];
-                    }
-                });
-            });
-        };
-        SharedContextSubscriber.prototype.unsubscribe = function () {
-            if (this.unsubscribeFunc) {
-                this.unsubscribeFunc();
-            }
-        };
-        SharedContextSubscriber.prototype.add = function (name, data) {
-            var contextName = this.createContextName(name);
-            return this.contexts.set(contextName, data);
-        };
-        SharedContextSubscriber.prototype.all = function () {
-            var contextNames = this.contexts.all();
-            var channelContextNames = contextNames.filter(function (contextName) { return contextName.startsWith(CONTEXT_PREFIX); });
-            var channelNames = channelContextNames.map(function (channelContextName) { return channelContextName.substr(CONTEXT_PREFIX.length); });
-            return channelNames;
-        };
-        SharedContextSubscriber.prototype.getContextData = function (name) {
-            var _this = this;
-            return new Promise(function (resolve, reject) {
-                if (!_this.isChannel(name)) {
-                    return reject(new Error("A channel with name: " + name + " doesn't exist!"));
-                }
-                var contextName = _this.createContextName(name);
-                _this.contexts.subscribe(contextName, function (data) {
-                    resolve(data);
-                }).then(function (unsubscribeFunc) { return unsubscribeFunc(); });
-            });
-        };
-        SharedContextSubscriber.prototype.update = function (name, data) {
-            var contextName = this.createContextName(name);
-            return this.contexts.update(contextName, data);
-        };
-        SharedContextSubscriber.prototype.createContextName = function (name) {
-            return CONTEXT_PREFIX + name;
-        };
-        SharedContextSubscriber.prototype.isChannel = function (name) {
-            return this.all().some(function (channelName) { return channelName === name; });
-        };
-        return SharedContextSubscriber;
-    }());
-
-    var Channels = (function () {
-        function Channels(contexts, channels) {
-            var _this = this;
-            this.subsKey = "subs";
-            this.changedKey = "changed";
-            this.registry = lib$1();
-            this.shared = new SharedContextSubscriber(contexts);
-            this.shared.subscribe(this.handler.bind(this));
-            this.readyPromise = Promise.resolve(channels === null || channels === void 0 ? void 0 : channels.reduce(function (promise, channel) {
-                return promise.then(function () { return _this.add(channel); });
-            }, Promise.resolve({})));
-        }
-        Channels.prototype.subscribe = function (callback) {
-            if (typeof callback !== "function") {
-                throw new Error("Please provide the callback as a function!");
-            }
-            return this.registry.add(this.subsKey, callback);
-        };
-        Channels.prototype.subscribeFor = function (name, callback) {
-            return __awaiter(this, void 0, void 0, function () {
-                var unsubscribeFunc;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            if (typeof name !== "string") {
-                                throw new Error("Please provide the name as a string!");
-                            }
-                            if (typeof callback !== "function") {
-                                throw new Error("Please provide the callback as a function!");
-                            }
-                            return [4, this.shared.subscribeFor(name, callback)];
-                        case 1:
-                            unsubscribeFunc = _a.sent();
-                            return [2, unsubscribeFunc];
-                    }
-                });
-            });
-        };
-        Channels.prototype.publish = function (data, name) {
-            return __awaiter(this, void 0, void 0, function () {
-                var context_1;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            if (typeof data !== "object") {
-                                throw new Error("Please provide the data as an object!");
-                            }
-                            if (!name) return [3, 2];
-                            if (typeof name !== "string") {
-                                throw new Error("Please provide the name as a string!");
-                            }
-                            return [4, this.get(name)];
-                        case 1:
-                            context_1 = _a.sent();
-                            return [2, this.shared.update(context_1.name, { data: data })];
-                        case 2:
-                            if (!this.currentContext) {
-                                throw new Error("Not joined to any channel!");
-                            }
-                            return [2, this.shared.update(this.currentContext, { data: data })];
-                    }
-                });
-            });
-        };
-        Channels.prototype.all = function () {
-            var channelNames = this.shared.all();
-            return Promise.resolve(channelNames);
-        };
-        Channels.prototype.list = function () {
-            return __awaiter(this, void 0, void 0, function () {
-                var channelNames, channelContexts;
-                var _this = this;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4, this.all()];
-                        case 1:
-                            channelNames = _a.sent();
-                            return [4, Promise.all(channelNames.map(function (channelName) { return _this.get(channelName); }))];
-                        case 2:
-                            channelContexts = _a.sent();
-                            return [2, channelContexts];
-                    }
-                });
-            });
-        };
-        Channels.prototype.get = function (name) {
-            if (typeof name !== "string") {
-                return Promise.reject(new Error("Please provide the channel name as a string!"));
-            }
-            return this.shared.getContextData(name);
-        };
-        Channels.prototype.join = function (name) {
-            return __awaiter(this, void 0, void 0, function () {
-                var doesChannelExist, channelExistsPromise;
-                var _this = this;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            if (typeof name !== "string") {
-                                throw new Error("Please provide the channel name as a string!");
-                            }
-                            doesChannelExist = function (channelName) {
-                                var channelNames = _this.shared.all();
-                                return channelNames.includes(channelName);
-                            };
-                            if (!!doesChannelExist(name)) return [3, 2];
-                            channelExistsPromise = new Promise(function (resolve, reject) {
-                                var timeoutId;
-                                var intervalId = setInterval(function () {
-                                    if (doesChannelExist(name)) {
-                                        clearTimeout(timeoutId);
-                                        clearInterval(intervalId);
-                                        resolve();
-                                    }
-                                }, 100);
-                                timeoutId = setTimeout(function () {
-                                    clearInterval(intervalId);
-                                    return reject(new Error("A channel with name: " + name + " doesn't exist!"));
-                                }, 3000);
-                            });
-                            return [4, channelExistsPromise];
-                        case 1:
-                            _a.sent();
-                            _a.label = 2;
-                        case 2: return [4, this.shared.switchChannel(name)];
-                        case 3:
-                            _a.sent();
-                            this.currentContext = name;
-                            this.registry.execute(this.changedKey, name);
-                            return [2];
-                    }
-                });
-            });
-        };
-        Channels.prototype.leave = function () {
-            this.currentContext = undefined;
-            this.registry.execute(this.changedKey, undefined);
-            this.shared.unsubscribe();
-            return Promise.resolve();
-        };
-        Channels.prototype.current = function () {
-            return this.currentContext;
-        };
-        Channels.prototype.my = function () {
-            return this.current();
-        };
-        Channels.prototype.changed = function (callback) {
-            if (typeof callback !== "function") {
-                throw new Error("Please provide the callback as a function!");
-            }
-            return this.registry.add(this.changedKey, callback);
-        };
-        Channels.prototype.onChanged = function (callback) {
-            return this.changed(callback);
-        };
-        Channels.prototype.add = function (info) {
-            return __awaiter(this, void 0, void 0, function () {
-                var context;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            if (typeof info !== "object") {
-                                throw new Error("Please provide the info as an object!");
-                            }
-                            if (typeof info.name === "undefined") {
-                                throw new Error("info.name is missing!");
-                            }
-                            if (typeof info.name !== "string") {
-                                throw new Error("Please provide the info.name as a string!");
-                            }
-                            if (typeof info.meta === "undefined") {
-                                throw new Error("info.meta is missing!");
-                            }
-                            if (typeof info.meta !== "object") {
-                                throw new Error("Please provide the info.meta as an object!");
-                            }
-                            if (typeof info.meta.color === "undefined") {
-                                throw new Error("info.meta.color is missing!");
-                            }
-                            if (typeof info.meta.color !== "string") {
-                                throw new Error("Please provide the info.meta.color as a string!");
-                            }
-                            context = {
-                                name: info.name,
-                                meta: info.meta || {},
-                                data: info.data || {}
-                            };
-                            return [4, this.shared.update(info.name, context)];
-                        case 1:
-                            _a.sent();
-                            return [2, context];
-                    }
-                });
-            });
-        };
-        Channels.prototype.ready = function () {
-            return this.readyPromise;
-        };
-        Channels.prototype.handler = function (data, context, updaterId) {
-            this.registry.execute(this.subsKey, data, context, updaterId);
-        };
-        return Channels;
-    }());
-
-    var fetchTimeout = function (url, timeoutMilliseconds) {
-        if (timeoutMilliseconds === void 0) { timeoutMilliseconds = 1000; }
-        return new Promise(function (resolve, reject) {
-            var timeoutHit = false;
-            var timeout = setTimeout(function () {
-                timeoutHit = true;
-                reject(new Error("Fetch request for: " + url + " timed out at: " + timeoutMilliseconds + " milliseconds"));
-            }, timeoutMilliseconds);
-            fetch(url)
-                .then(function (response) {
-                if (!timeoutHit) {
-                    clearTimeout(timeout);
-                    resolve(response);
-                }
-            })
-                .catch(function (err) {
-                if (!timeoutHit) {
-                    clearTimeout(timeout);
-                    reject(err);
-                }
-            });
-        });
-    };
-
-    var Application = (function () {
-        function Application(_appManager, _props, _windows) {
-            var _this = this;
-            var _a, _b;
-            this._appManager = _appManager;
-            this._props = _props;
-            this._windows = _windows;
-            this._registry = lib$1();
-            var url = typeof ((_a = _props === null || _props === void 0 ? void 0 : _props.userProperties) === null || _a === void 0 ? void 0 : _a.manifest) !== "undefined" ? JSON.parse(_props === null || _props === void 0 ? void 0 : _props.userProperties.manifest).url : (_b = _props === null || _props === void 0 ? void 0 : _props.userProperties) === null || _b === void 0 ? void 0 : _b.details.url;
-            this._url = url;
-            _appManager.onInstanceStarted(function (instance) {
-                if (instance.application.name === _this.name) {
-                    _this._registry.execute("instanceStarted", instance);
-                }
-            });
-            _appManager.onInstanceStopped(function (instance) {
-                if (instance.application.name === _this.name) {
-                    _this._registry.execute("instanceStopped", instance);
-                }
-            });
-        }
-        Object.defineProperty(Application.prototype, "name", {
-            get: function () {
-                return this._props.name;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Application.prototype, "title", {
-            get: function () {
-                return this._props.title || "";
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Application.prototype, "version", {
-            get: function () {
-                return this._props.version || "";
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Application.prototype, "userProperties", {
-            get: function () {
-                return this._props.userProperties || {};
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Application.prototype, "instances", {
-            get: function () {
-                var _this = this;
-                return this._appManager.instances().filter(function (instance) { return instance.application.name === _this.name; });
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Application.prototype.start = function (context, options) {
-            var _this = this;
-            return new Promise(function (resolve, reject) {
-                var _a, _b;
-                var unsubscribeFunc;
-                var timeoutId = setTimeout(function () {
-                    unsubscribeFunc();
-                    reject("Application \"" + _this.name + "\" start timeout!");
-                }, 3000);
-                unsubscribeFunc = _this._appManager.onInstanceStarted(function (instance) {
-                    if (instance.application.name === _this.name) {
-                        clearTimeout(timeoutId);
-                        unsubscribeFunc();
-                        resolve(instance);
-                    }
-                });
-                var openOptions = __assign(__assign(__assign({}, (_b = (_a = _this._props) === null || _a === void 0 ? void 0 : _a.userProperties) === null || _b === void 0 ? void 0 : _b.details), options), { context: context || (options === null || options === void 0 ? void 0 : options.context) });
-                if (!_this._url) {
-                    throw new Error("Application " + _this.name + " doesn't have a URL.");
-                }
-                _this._windows.open(_this.name, _this._url, openOptions);
-            });
-        };
-        Application.prototype.onInstanceStarted = function (callback) {
-            this._registry.add("instanceStarted", callback);
-        };
-        Application.prototype.onInstanceStopped = function (callback) {
-            this._registry.add("instanceStopped", callback);
-        };
-        Application.prototype.updateFromProps = function (props) {
-            var _this = this;
-            var _a, _b;
-            var url = typeof ((_a = props === null || props === void 0 ? void 0 : props.userProperties) === null || _a === void 0 ? void 0 : _a.manifest) !== "undefined" ? JSON.parse(props === null || props === void 0 ? void 0 : props.userProperties.manifest).url : (_b = props === null || props === void 0 ? void 0 : props.userProperties) === null || _b === void 0 ? void 0 : _b.details.url;
-            this._url = url;
-            Object.keys(props).forEach(function (key) {
-                _this._props[key] = props[key];
-            });
-        };
-        return Application;
-    }());
-
-    var RemoteInstance = (function () {
-        function RemoteInstance(id, application, control, context, agm) {
-            this.id = id;
-            this.application = application;
-            this.control = control;
-            this.context = context;
-            this.agm = agm;
-            this.WINDOW_DID_NOT_HAVE_TIME_TO_RESPOND = "Peer has left while waiting for result";
-        }
-        RemoteInstance.prototype.stop = function () {
-            return __awaiter(this, void 0, void 0, function () {
-                var error_1;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            _a.trys.push([0, 2, , 3]);
-                            return [4, this.callControl("stop", {}, false)];
-                        case 1:
-                            _a.sent();
-                            return [3, 3];
-                        case 2:
-                            error_1 = _a.sent();
-                            if (error_1.message !== this.WINDOW_DID_NOT_HAVE_TIME_TO_RESPOND) {
-                                throw new Error(error_1);
-                            }
-                            return [3, 3];
-                        case 3: return [2];
-                    }
-                });
-            });
-        };
-        RemoteInstance.prototype.callControl = function (command, args, skipResult) {
-            if (skipResult === void 0) { skipResult = false; }
-            return this.control.send({ command: command, domain: "appManager", args: args, skipResult: skipResult }, { instance: this.id });
-        };
-        return RemoteInstance;
-    }());
-
-    var LocalInstance = (function () {
-        function LocalInstance(id, control, _appManager, agm) {
-            this.id = id;
-            this.control = control;
-            this._appManager = _appManager;
-            this.agm = agm;
-            this.context = {};
-            this.startedByScript = false;
-            this.application = undefined;
-            control.setLocalInstance(this);
-        }
-        LocalInstance.prototype.stop = function () {
-            var _this = this;
-            return new Promise(function (resolve, reject) {
-                if (_this.startedByScript) {
-                    var unsubscribe_1 = _this._appManager.onInstanceStopped(function (instance) {
-                        if (instance.id === _this.id) {
-                            unsubscribe_1();
-                            resolve();
-                        }
-                    });
-                    window.close();
-                }
-                else {
-                    reject("Can't close a window that wasn't started by a script.");
-                }
-            });
-        };
-        return LocalInstance;
-    }());
-
     /**
      * Wraps values in an `Ok` type.
      *
@@ -2391,6 +1885,8 @@
     var string = Decoder.string;
     /** See `Decoder.number` */
     var number = Decoder.number;
+    /** See `Decoder.boolean` */
+    var boolean = Decoder.boolean;
     /** See `Decoder.anyJson` */
     var anyJson = Decoder.anyJson;
     /** See `Decoder.constant` */
@@ -2403,37 +1899,621 @@
     var optional = Decoder.optional;
     /** See `Decoder.oneOf` */
     var oneOf = Decoder.oneOf;
+    /** See `Decoder.lazy` */
+    var lazy = Decoder.lazy;
 
     var nonEmptyStringDecoder = string().where(function (s) { return s.length > 0; }, "Expected a non-empty string");
+
+    var windowLayoutItemDecoder = object({
+        type: constant("window"),
+        config: object({
+            appName: nonEmptyStringDecoder,
+            url: optional(nonEmptyStringDecoder)
+        })
+    });
+    var groupLayoutItemDecoder = object({
+        type: constant("group"),
+        config: anyJson(),
+        children: array(oneOf(windowLayoutItemDecoder))
+    });
+    var columnLayoutItemDecoder = object({
+        type: constant("column"),
+        config: anyJson(),
+        children: array(oneOf(groupLayoutItemDecoder, windowLayoutItemDecoder, lazy(function () { return columnLayoutItemDecoder; }), lazy(function () { return rowLayoutItemDecoder; })))
+    });
+    var rowLayoutItemDecoder = object({
+        type: constant("row"),
+        config: anyJson(),
+        children: array(oneOf(columnLayoutItemDecoder, groupLayoutItemDecoder, windowLayoutItemDecoder, lazy(function () { return rowLayoutItemDecoder; })))
+    });
+    var workspaceComponentDecoder = object({
+        type: constant("Workspace"),
+        state: object({
+            config: anyJson(),
+            children: array(oneOf(rowLayoutItemDecoder, columnLayoutItemDecoder, groupLayoutItemDecoder, windowLayoutItemDecoder))
+        })
+    });
+
+    var windowComponentDecoder = object({
+        type: constant("window"),
+        componentType: constant("application"),
+        state: object({
+            name: anyJson(),
+            context: anyJson(),
+            url: nonEmptyStringDecoder,
+            bounds: anyJson(),
+            id: nonEmptyStringDecoder,
+            parentId: optional(nonEmptyStringDecoder),
+            main: boolean()
+        })
+    });
+
+    var layoutTypeDecoder = oneOf(constant("Global"), constant("Workspace"));
+    var newLayoutOptionsDecoder = object({
+        name: nonEmptyStringDecoder,
+        context: optional(anyJson()),
+        metadata: optional(anyJson())
+    });
+    var restoreOptionsDecoder = object({
+        name: nonEmptyStringDecoder,
+        context: optional(anyJson()),
+        closeRunningInstance: optional(boolean())
+    });
+    var layoutDecoder = object({
+        name: nonEmptyStringDecoder,
+        type: layoutTypeDecoder,
+        context: optional(anyJson()),
+        metadata: optional(anyJson()),
+        components: array(oneOf(workspaceComponentDecoder, windowComponentDecoder))
+    });
+
+    var Layouts = (function () {
+        function Layouts(controller) {
+            this.controller = controller;
+        }
+        Layouts.prototype.getAll = function (type) {
+            layoutTypeDecoder.runWithException(type);
+            return this.controller.getAll(type);
+        };
+        Layouts.prototype.get = function (name, type) {
+            nonEmptyStringDecoder.runWithException(name);
+            layoutTypeDecoder.runWithException(type);
+            return this.controller.get(name, type);
+        };
+        Layouts.prototype.export = function (layoutType) {
+            return __awaiter(this, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    if (layoutType) {
+                        layoutTypeDecoder.runWithException(layoutType);
+                    }
+                    return [2, this.controller.export(layoutType)];
+                });
+            });
+        };
+        Layouts.prototype.import = function (layouts) {
+            layouts.forEach(function (layout) { return layoutDecoder.runWithException(layout); });
+            return this.controller.import(layouts);
+        };
+        Layouts.prototype.save = function (layout) {
+            newLayoutOptionsDecoder.runWithException(layout);
+            return this.controller.save(layout);
+        };
+        Layouts.prototype.restore = function (options) {
+            restoreOptionsDecoder.runWithException(options);
+            return this.controller.restore(options);
+        };
+        Layouts.prototype.remove = function (type, name) {
+            nonEmptyStringDecoder.runWithException(name);
+            layoutTypeDecoder.runWithException(type);
+            return this.controller.remove(type, name);
+        };
+        return Layouts;
+    }());
+
+    var CONTEXT_PREFIX = "___channel___";
+    var SharedContextSubscriber = (function () {
+        function SharedContextSubscriber(contexts) {
+            this.contexts = contexts;
+        }
+        SharedContextSubscriber.prototype.subscribe = function (callback) {
+            this.callback = callback;
+        };
+        SharedContextSubscriber.prototype.subscribeFor = function (name, callback) {
+            if (!this.isChannel(name)) {
+                return Promise.reject(new Error("Channel with name: " + name + " doesn't exist!"));
+            }
+            var contextName = this.createContextName(name);
+            return this.contexts.subscribe(contextName, function (data, _, __, ___, extraData) {
+                callback(data.data, data, extraData === null || extraData === void 0 ? void 0 : extraData.updaterId);
+            });
+        };
+        SharedContextSubscriber.prototype.switchChannel = function (name) {
+            return __awaiter(this, void 0, void 0, function () {
+                var contextName, _a;
+                var _this = this;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0:
+                            this.unsubscribe();
+                            contextName = this.createContextName(name);
+                            _a = this;
+                            return [4, this.contexts.subscribe(contextName, function (data, _, __, ___, extraData) {
+                                    if (_this.callback) {
+                                        _this.callback(data.data, data, extraData === null || extraData === void 0 ? void 0 : extraData.updaterId);
+                                    }
+                                })];
+                        case 1:
+                            _a.unsubscribeFunc = _b.sent();
+                            return [2];
+                    }
+                });
+            });
+        };
+        SharedContextSubscriber.prototype.unsubscribe = function () {
+            if (this.unsubscribeFunc) {
+                this.unsubscribeFunc();
+            }
+        };
+        SharedContextSubscriber.prototype.add = function (name, data) {
+            var contextName = this.createContextName(name);
+            return this.contexts.set(contextName, data);
+        };
+        SharedContextSubscriber.prototype.all = function () {
+            var contextNames = this.contexts.all();
+            var channelContextNames = contextNames.filter(function (contextName) { return contextName.startsWith(CONTEXT_PREFIX); });
+            var channelNames = channelContextNames.map(function (channelContextName) { return channelContextName.substr(CONTEXT_PREFIX.length); });
+            return channelNames;
+        };
+        SharedContextSubscriber.prototype.getContextData = function (name) {
+            var _this = this;
+            return new Promise(function (resolve, reject) {
+                if (!_this.isChannel(name)) {
+                    return reject(new Error("A channel with name: " + name + " doesn't exist!"));
+                }
+                var contextName = _this.createContextName(name);
+                _this.contexts.subscribe(contextName, function (data) {
+                    resolve(data);
+                }).then(function (unsubscribeFunc) { return unsubscribeFunc(); });
+            });
+        };
+        SharedContextSubscriber.prototype.update = function (name, data) {
+            var contextName = this.createContextName(name);
+            return this.contexts.update(contextName, data);
+        };
+        SharedContextSubscriber.prototype.createContextName = function (name) {
+            return CONTEXT_PREFIX + name;
+        };
+        SharedContextSubscriber.prototype.isChannel = function (name) {
+            return this.all().some(function (channelName) { return channelName === name; });
+        };
+        return SharedContextSubscriber;
+    }());
+
+    var Channels = (function () {
+        function Channels(contexts, channels) {
+            var _this = this;
+            this.subsKey = "subs";
+            this.changedKey = "changed";
+            this.registry = lib$1();
+            this.shared = new SharedContextSubscriber(contexts);
+            this.shared.subscribe(this.handler.bind(this));
+            this.readyPromise = Promise.resolve(channels === null || channels === void 0 ? void 0 : channels.reduce(function (promise, channel) {
+                return promise.then(function () { return _this.add(channel); });
+            }, Promise.resolve({})));
+        }
+        Channels.prototype.subscribe = function (callback) {
+            if (typeof callback !== "function") {
+                throw new Error("Please provide the callback as a function!");
+            }
+            return this.registry.add(this.subsKey, callback);
+        };
+        Channels.prototype.subscribeFor = function (name, callback) {
+            return __awaiter(this, void 0, void 0, function () {
+                var unsubscribeFunc;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            if (typeof name !== "string") {
+                                throw new Error("Please provide the name as a string!");
+                            }
+                            if (typeof callback !== "function") {
+                                throw new Error("Please provide the callback as a function!");
+                            }
+                            return [4, this.shared.subscribeFor(name, callback)];
+                        case 1:
+                            unsubscribeFunc = _a.sent();
+                            return [2, unsubscribeFunc];
+                    }
+                });
+            });
+        };
+        Channels.prototype.publish = function (data, name) {
+            return __awaiter(this, void 0, void 0, function () {
+                var context_1;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            if (typeof data !== "object") {
+                                throw new Error("Please provide the data as an object!");
+                            }
+                            if (!name) return [3, 2];
+                            if (typeof name !== "string") {
+                                throw new Error("Please provide the name as a string!");
+                            }
+                            return [4, this.get(name)];
+                        case 1:
+                            context_1 = _a.sent();
+                            return [2, this.shared.update(context_1.name, { data: data })];
+                        case 2:
+                            if (!this.currentContext) {
+                                throw new Error("Not joined to any channel!");
+                            }
+                            return [2, this.shared.update(this.currentContext, { data: data })];
+                    }
+                });
+            });
+        };
+        Channels.prototype.all = function () {
+            var channelNames = this.shared.all();
+            return Promise.resolve(channelNames);
+        };
+        Channels.prototype.list = function () {
+            return __awaiter(this, void 0, void 0, function () {
+                var channelNames, channelContexts;
+                var _this = this;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4, this.all()];
+                        case 1:
+                            channelNames = _a.sent();
+                            return [4, Promise.all(channelNames.map(function (channelName) { return _this.get(channelName); }))];
+                        case 2:
+                            channelContexts = _a.sent();
+                            return [2, channelContexts];
+                    }
+                });
+            });
+        };
+        Channels.prototype.get = function (name) {
+            if (typeof name !== "string") {
+                return Promise.reject(new Error("Please provide the channel name as a string!"));
+            }
+            return this.shared.getContextData(name);
+        };
+        Channels.prototype.join = function (name) {
+            return __awaiter(this, void 0, void 0, function () {
+                var doesChannelExist, channelExistsPromise;
+                var _this = this;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            if (typeof name !== "string") {
+                                throw new Error("Please provide the channel name as a string!");
+                            }
+                            doesChannelExist = function (channelName) {
+                                var channelNames = _this.shared.all();
+                                return channelNames.includes(channelName);
+                            };
+                            if (!!doesChannelExist(name)) return [3, 2];
+                            channelExistsPromise = new Promise(function (resolve, reject) {
+                                var timeoutId;
+                                var intervalId = setInterval(function () {
+                                    if (doesChannelExist(name)) {
+                                        clearTimeout(timeoutId);
+                                        clearInterval(intervalId);
+                                        resolve();
+                                    }
+                                }, 100);
+                                timeoutId = setTimeout(function () {
+                                    clearInterval(intervalId);
+                                    return reject(new Error("A channel with name: " + name + " doesn't exist!"));
+                                }, 3000);
+                            });
+                            return [4, channelExistsPromise];
+                        case 1:
+                            _a.sent();
+                            _a.label = 2;
+                        case 2: return [4, this.shared.switchChannel(name)];
+                        case 3:
+                            _a.sent();
+                            this.currentContext = name;
+                            this.registry.execute(this.changedKey, name);
+                            return [2];
+                    }
+                });
+            });
+        };
+        Channels.prototype.leave = function () {
+            this.currentContext = undefined;
+            this.registry.execute(this.changedKey, undefined);
+            this.shared.unsubscribe();
+            return Promise.resolve();
+        };
+        Channels.prototype.current = function () {
+            return this.currentContext;
+        };
+        Channels.prototype.my = function () {
+            return this.current();
+        };
+        Channels.prototype.changed = function (callback) {
+            if (typeof callback !== "function") {
+                throw new Error("Please provide the callback as a function!");
+            }
+            return this.registry.add(this.changedKey, callback);
+        };
+        Channels.prototype.onChanged = function (callback) {
+            return this.changed(callback);
+        };
+        Channels.prototype.add = function (info) {
+            return __awaiter(this, void 0, void 0, function () {
+                var context;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            if (typeof info !== "object") {
+                                throw new Error("Please provide the info as an object!");
+                            }
+                            if (typeof info.name === "undefined") {
+                                throw new Error("info.name is missing!");
+                            }
+                            if (typeof info.name !== "string") {
+                                throw new Error("Please provide the info.name as a string!");
+                            }
+                            if (typeof info.meta === "undefined") {
+                                throw new Error("info.meta is missing!");
+                            }
+                            if (typeof info.meta !== "object") {
+                                throw new Error("Please provide the info.meta as an object!");
+                            }
+                            if (typeof info.meta.color === "undefined") {
+                                throw new Error("info.meta.color is missing!");
+                            }
+                            if (typeof info.meta.color !== "string") {
+                                throw new Error("Please provide the info.meta.color as a string!");
+                            }
+                            context = {
+                                name: info.name,
+                                meta: info.meta || {},
+                                data: info.data || {}
+                            };
+                            return [4, this.shared.update(info.name, context)];
+                        case 1:
+                            _a.sent();
+                            return [2, context];
+                    }
+                });
+            });
+        };
+        Channels.prototype.ready = function () {
+            return this.readyPromise;
+        };
+        Channels.prototype.handler = function (data, context, updaterId) {
+            this.registry.execute(this.subsKey, data, context, updaterId);
+        };
+        return Channels;
+    }());
+
+    var fetchTimeout = function (url, timeoutMilliseconds) {
+        if (timeoutMilliseconds === void 0) { timeoutMilliseconds = 1000; }
+        return new Promise(function (resolve, reject) {
+            var timeoutHit = false;
+            var timeout = setTimeout(function () {
+                timeoutHit = true;
+                reject(new Error("Fetch request for: " + url + " timed out at: " + timeoutMilliseconds + " milliseconds"));
+            }, timeoutMilliseconds);
+            fetch(url)
+                .then(function (response) {
+                if (!timeoutHit) {
+                    clearTimeout(timeout);
+                    resolve(response);
+                }
+            })
+                .catch(function (err) {
+                if (!timeoutHit) {
+                    clearTimeout(timeout);
+                    reject(err);
+                }
+            });
+        });
+    };
+
+    var Application = (function () {
+        function Application(_appManager, _props, _windows) {
+            var _this = this;
+            var _a, _b;
+            this._appManager = _appManager;
+            this._props = _props;
+            this._windows = _windows;
+            this._registry = lib$1();
+            var url = typeof ((_a = _props === null || _props === void 0 ? void 0 : _props.userProperties) === null || _a === void 0 ? void 0 : _a.manifest) !== "undefined" ? JSON.parse(_props === null || _props === void 0 ? void 0 : _props.userProperties.manifest).url : (_b = _props === null || _props === void 0 ? void 0 : _props.userProperties) === null || _b === void 0 ? void 0 : _b.details.url;
+            this._url = url;
+            _appManager.onInstanceStarted(function (instance) {
+                if (instance.application.name === _this.name) {
+                    _this._registry.execute("instanceStarted", instance);
+                }
+            });
+            _appManager.onInstanceStopped(function (instance) {
+                if (instance.application.name === _this.name) {
+                    _this._registry.execute("instanceStopped", instance);
+                }
+            });
+        }
+        Object.defineProperty(Application.prototype, "name", {
+            get: function () {
+                return this._props.name;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Application.prototype, "title", {
+            get: function () {
+                return this._props.title || "";
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Application.prototype, "version", {
+            get: function () {
+                return this._props.version || "";
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Application.prototype, "userProperties", {
+            get: function () {
+                return this._props.userProperties || {};
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Application.prototype, "instances", {
+            get: function () {
+                var _this = this;
+                return this._appManager.instances().filter(function (instance) { return instance.application.name === _this.name; });
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Application.prototype.start = function (context, options) {
+            var _this = this;
+            return new Promise(function (resolve, reject) {
+                var _a, _b;
+                var unsubscribeFunc;
+                var timeoutId = setTimeout(function () {
+                    unsubscribeFunc();
+                    reject("Application \"" + _this.name + "\" start timeout!");
+                }, 3000);
+                unsubscribeFunc = _this._appManager.onInstanceStarted(function (instance) {
+                    if (instance.application.name === _this.name) {
+                        clearTimeout(timeoutId);
+                        unsubscribeFunc();
+                        resolve(instance);
+                    }
+                });
+                var openOptions = __assign(__assign(__assign({}, (_b = (_a = _this._props) === null || _a === void 0 ? void 0 : _a.userProperties) === null || _b === void 0 ? void 0 : _b.details), options), { context: context || (options === null || options === void 0 ? void 0 : options.context) });
+                if (!_this._url) {
+                    throw new Error("Application " + _this.name + " doesn't have a URL.");
+                }
+                _this._windows.open(_this.name, _this._url, openOptions);
+            });
+        };
+        Application.prototype.onInstanceStarted = function (callback) {
+            this._registry.add("instanceStarted", callback);
+        };
+        Application.prototype.onInstanceStopped = function (callback) {
+            this._registry.add("instanceStopped", callback);
+        };
+        Application.prototype.updateFromProps = function (props) {
+            var _this = this;
+            var _a, _b;
+            var url = typeof ((_a = props === null || props === void 0 ? void 0 : props.userProperties) === null || _a === void 0 ? void 0 : _a.manifest) !== "undefined" ? JSON.parse(props === null || props === void 0 ? void 0 : props.userProperties.manifest).url : (_b = props === null || props === void 0 ? void 0 : props.userProperties) === null || _b === void 0 ? void 0 : _b.details.url;
+            this._url = url;
+            Object.keys(props).forEach(function (key) {
+                _this._props[key] = props[key];
+            });
+        };
+        return Application;
+    }());
+
+    var RemoteInstance = (function () {
+        function RemoteInstance(id, application, control, context, agm) {
+            this.id = id;
+            this.application = application;
+            this.control = control;
+            this.context = context;
+            this.agm = agm;
+            this.WINDOW_DID_NOT_HAVE_TIME_TO_RESPOND = "Peer has left while waiting for result";
+        }
+        RemoteInstance.prototype.stop = function () {
+            return __awaiter(this, void 0, void 0, function () {
+                var error_1;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            _a.trys.push([0, 2, , 3]);
+                            return [4, this.callControl("stop", {}, false)];
+                        case 1:
+                            _a.sent();
+                            return [3, 3];
+                        case 2:
+                            error_1 = _a.sent();
+                            if (error_1.message !== this.WINDOW_DID_NOT_HAVE_TIME_TO_RESPOND) {
+                                throw new Error(error_1);
+                            }
+                            return [3, 3];
+                        case 3: return [2];
+                    }
+                });
+            });
+        };
+        RemoteInstance.prototype.callControl = function (command, args, skipResult) {
+            if (skipResult === void 0) { skipResult = false; }
+            return this.control.send({ command: command, domain: "appManager", args: args, skipResult: skipResult }, { instance: this.id });
+        };
+        return RemoteInstance;
+    }());
+
+    var LocalInstance = (function () {
+        function LocalInstance(id, control, _appManager, agm) {
+            this.id = id;
+            this.control = control;
+            this._appManager = _appManager;
+            this.agm = agm;
+            this.context = {};
+            this.startedByScript = false;
+            this.application = undefined;
+            control.setLocalInstance(this);
+        }
+        LocalInstance.prototype.stop = function () {
+            var _this = this;
+            return new Promise(function (resolve, reject) {
+                if (_this.startedByScript) {
+                    var unsubscribe_1 = _this._appManager.onInstanceStopped(function (instance) {
+                        if (instance.id === _this.id) {
+                            unsubscribe_1();
+                            resolve();
+                        }
+                    });
+                    window.close();
+                }
+                else {
+                    reject("Can't close a window that wasn't started by a script.");
+                }
+            });
+        };
+        return LocalInstance;
+    }());
+
+    var nonEmptyStringDecoder$1 = string().where(function (s) { return s.length > 0; }, "Expected a non-empty string");
     var fdc3AppImageDecoder = object({
-        url: optional(nonEmptyStringDecoder)
+        url: optional(nonEmptyStringDecoder$1)
     });
     var fdc3IconDecoder = object({
-        icon: optional(nonEmptyStringDecoder)
+        icon: optional(nonEmptyStringDecoder$1)
     });
     var fdc3IntentDecoder = object({
-        name: nonEmptyStringDecoder,
+        name: nonEmptyStringDecoder$1,
         displayName: optional(string()),
         contexts: optional(array(string())),
         customConfig: optional(object())
     });
     var glue42CoreCreateOptionsDecoder = object({
-        url: nonEmptyStringDecoder,
+        url: nonEmptyStringDecoder$1,
         top: optional(number()),
         left: optional(number()),
         width: optional(number()),
         height: optional(number()),
         context: optional(anyJson()),
-        relativeTo: optional(nonEmptyStringDecoder),
+        relativeTo: optional(nonEmptyStringDecoder$1),
         relativeDirection: optional(oneOf(constant("top"), constant("left"), constant("right"), constant("bottom")))
     });
     var fdc3ApplicationConfigDecoder = object({
-        name: nonEmptyStringDecoder,
+        name: nonEmptyStringDecoder$1,
         title: optional(string()),
         version: optional(string()),
-        appId: nonEmptyStringDecoder,
-        manifest: nonEmptyStringDecoder,
-        manifestType: nonEmptyStringDecoder,
+        appId: nonEmptyStringDecoder$1,
+        manifest: nonEmptyStringDecoder$1,
+        manifestType: nonEmptyStringDecoder$1,
         tooltip: optional(string()),
         description: optional(string()),
         contactEmail: optional(string()),
@@ -2445,7 +2525,7 @@
         intents: optional(array(fdc3IntentDecoder))
     });
     var glue42CoreApplicationConfigDecoder = object({
-        name: nonEmptyStringDecoder,
+        name: nonEmptyStringDecoder$1,
         title: optional(string()),
         version: optional(string()),
         details: glue42CoreCreateOptionsDecoder,
@@ -2887,10 +2967,16 @@
                 });
             });
         };
-        LayoutsController.prototype.import = function (layout) {
+        LayoutsController.prototype.import = function (layouts) {
             return __awaiter(this, void 0, void 0, function () {
+                var _this = this;
                 return __generator(this, function (_a) {
-                    return [2, this.storage.store(layout, layout.type)];
+                    switch (_a.label) {
+                        case 0: return [4, Promise.all(layouts.map(function (layout) { return _this.storage.store(layout, layout.type); }))];
+                        case 1:
+                            _a.sent();
+                            return [2];
+                    }
                 });
             });
         };
@@ -3569,6 +3655,8 @@
                 return __generator(this, function (_b) {
                     switch (_b.label) {
                         case 0:
+                            layoutDecoder.runWithException(layout);
+                            layoutTypeDecoder.runWithException(layoutType);
                             _a = layoutType;
                             switch (_a) {
                                 case "Workspace": return [3, 1];
@@ -3601,10 +3689,11 @@
         }
         JSONStore.prototype.getAll = function (layoutType) {
             return __awaiter(this, void 0, void 0, function () {
-                var fetchUrl, response, layouts, error_1, layoutProp;
+                var fetchUrl, response, layouts, error_1, layoutProp, layoutsToVerify;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
+                            layoutTypeDecoder.runWithException(layoutType);
                             fetchUrl = this.storeBaseUrl + "/glue.layouts.json";
                             return [4, this.fetchTimeout(fetchUrl)];
                         case 1:
@@ -3627,7 +3716,14 @@
                                 return [2, []];
                             }
                             layoutProp = layoutType === "Global" ? "globals" : "workspaces";
-                            return [2, layouts[layoutProp] || []];
+                            layoutsToVerify = (layouts[layoutProp] || []);
+                            return [2, layoutsToVerify.filter(function (layout) {
+                                    var decodeResult = layoutDecoder.run(layout);
+                                    if (!decodeResult.ok) {
+                                        console.warn("Fetched layout: " + layout.name + " is discarded, because it failed the validation: " + JSON.stringify(decodeResult));
+                                    }
+                                    return decodeResult.ok;
+                                })];
                     }
                 });
             });
